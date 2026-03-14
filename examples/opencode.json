@@ -1,0 +1,303 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "alibaba-coding-plan": {
+      "name": "Alibaba Coding Plan",
+      "npm": "@ai-sdk/anthropic",
+      "api": "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1",
+      "env": [
+        "BAILIAN_CODING_PLAN_API_KEY"
+      ],
+      "models": {
+        "qwen3.5-plus": {
+          "name": "Qwen3.5 Plus",
+          "reasoning": true,
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "video"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 65536
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
+        },
+        "glm-5": {
+          "name": "GLM-5",
+          "reasoning": true,
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 202752,
+            "output": 16384
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
+        },
+        "kimi-k2.5": {
+          "name": "Kimi K2.5",
+          "reasoning": true,
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "video"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 262144,
+            "output": 32768
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
+        }
+      }
+    }
+  },
+  "agent": {
+    "product-owner": {
+      "description": "Invoke when a new feature, change request, or product requirement needs to be defined. Writes user stories with acceptance criteria and immediately delegates to project-manager. Never writes code.",
+      "model": "alibaba-coding-plan/qwen3.5-plus",
+      "temperature": 0.7,
+      "steps": 10,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      }
+    },
+    "project-manager": {
+      "description": "Invoke after product-owner delivers a user story. Breaks stories into tasks, assigns backend tasks to backend-lead and frontend tasks to frontend-lead. Never writes code. Always calls both leads in the same response.",
+      "model": "alibaba-coding-plan/glm-5",
+      "temperature": 0.5,
+      "steps": 15,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      }
+    },
+    "backend-lead": {
+      "description": "Invoke when backend tasks arrive from project-manager. Assesses task complexity and immediately delegates to senior-backend (complex/moderate) or junior-backend (simple CRUD/tests). Also invoke for backend architecture decisions and API design.",
+      "model": "alibaba-coding-plan/glm-5",
+      "temperature": 0.3,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      }
+    },
+    "frontend-lead": {
+      "description": "Invoke when frontend tasks arrive from project-manager. Assesses task complexity and immediately delegates to senior-frontend (complex components/SSR/state) or junior-frontend (simple styling/tests). Also invoke for frontend architecture decisions.",
+      "model": "zai-coding-plan/glm-4.7",
+      "temperature": 0.4,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      }
+    },
+    "senior-backend": {
+      "description": "Invoke for complex backend tasks: new architecture, third-party integrations, ClickHouse queries, Octane/Swoole-sensitive code, complex Eloquent, queue/event design, security-critical flows. Implements with full tool access.",
+      "model": "alibaba-coding-plan/glm-5",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      },
+      "task_permissions": {
+        "bash": "allow",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "senior-frontend": {
+      "description": "Invoke for complex frontend tasks: new Inertia page components, Pinia stores, composables, SSR-sensitive code, complex Vue state, Inertia shared data changes. Implements with full tool access.",
+      "model": "zai-coding-plan/glm-4.7",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      },
+      "task_permissions": {
+        "bash": "allow",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "junior-backend": {
+      "description": "Invoke for simple, well-defined backend tasks: CRUD endpoints following existing patterns, migration files, unit tests for existing Actions, isolated bug fixes. Does not make architectural decisions.",
+      "model": "zai-coding-plan/glm-4.7",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      },
+      "task_permissions": {
+        "bash": "ask",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "junior-frontend": {
+      "description": "Invoke for simple, well-defined frontend tasks: Tailwind styling fixes, small presentational components following existing patterns, component tests. Does not touch Inertia config, Pinia stores, or SSR setup.",
+      "model": "zai-coding-plan/glm-4.7",
+      "mode": "subagent",
+      "temperature": 0.4,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      },
+      "task_permissions": {
+        "bash": "ask",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "tester": {
+      "description": "Invoke after any feature is implemented. Writes test plans, creates PHPUnit/Pest tests, verifies acceptance criteria, and reports bugs with severity. Also invoked before any PR is merged.",
+      "model": "alibaba-coding-plan/kimi-k2.5",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "steps": 30,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      },
+      "task_permissions": {
+        "bash": "allow",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "researcher": {
+      "description": "Invoke when evaluating a new package, library, or architectural pattern. Researches options, evaluates Octane/Swoole compatibility, and produces a comparison report with recommendation. Never writes production code.",
+      "model": "alibaba-coding-plan/kimi-k2.5",
+      "mode": "subagent",
+      "temperature": 0.6,
+      "steps": 20,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": false,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      }
+    },
+    "debugger": {
+      "description": "Invoke when a bug's root cause is not immediately obvious. Reads code, logs, and stack traces to produce a root cause analysis and fix recommendation. Never modifies code — analysis only.",
+      "model": "alibaba-coding-plan/glm-5",
+      "mode": "subagent",
+      "temperature": 0.1,
+      "steps": 25,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": true
+      }
+    },
+    "code-reviewer": {
+      "description": "Invoke before any PR is merged. Reviews for Octane static state issues, N+1 queries, ClickHouse misuse, SSR-unsafe frontend code, security vulnerabilities, and adherence to coding standards. Produces severity-labeled report.",
+      "model": "zai-coding-plan/glm-4.7",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      }
+    },
+    "architect": {
+      "description": "Invoke before introducing a new service, significantly changing DB schema, adding a new queue/event pattern, or making any decision with cross-cutting architectural impact. Writes ADRs and evaluates Octane/Swoole implications.",
+      "model": "alibaba-coding-plan/glm-5",
+      "mode": "subagent",
+      "temperature": 0.4,
+      "steps": 20,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      }
+    }
+  },
+  "mcp": {
+   
+  }
+}

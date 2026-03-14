@@ -1,0 +1,293 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "my-provider": {
+      "name": "My Provider",
+      "npm": "@ai-sdk/openai",
+      "api": "https://api.my-provider.com/v1",
+      "env": [
+        "MY_PROVIDER_API_KEY"
+      ],
+      "models": {
+        "my-strong-model": {
+          "name": "Strong Model",
+          "reasoning": true,
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 128000,
+            "output": 16384
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
+        },
+        "my-fast-model": {
+          "name": "Fast Model",
+          "reasoning": true,
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 128000,
+            "output": 16384
+          },
+          "cost": {
+            "input": 0,
+            "output": 0
+          }
+        }
+      }
+    }
+  },
+  "agent": {
+    "product-owner": {
+      "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.7,
+      "steps": 10,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      }
+    },
+    "project-manager": {
+      "description": "Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.5,
+      "steps": 15,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      }
+    },
+    "architect": {
+      "description": "Invoke before major structural decisions: protocol/transport choice, new services, schema changes. Writes ADRs. Never writes production code.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.4,
+      "steps": 20,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      }
+    },
+    "backend-lead": {
+      "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple). Triggers QA and review phases.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.3,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      }
+    },
+    "frontend-lead": {
+      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple). Triggers QA and review phases.",
+      "model": "my-provider/my-fast-model",
+      "temperature": 0.4,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      }
+    },
+    "senior-backend": {
+      "description": "Invoke for complex backend tasks: new architecture, integrations, performance-critical code, security flows. Full tool access.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "task_permissions": {
+        "bash": "allow",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "senior-frontend": {
+      "description": "Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code, complex components. Full tool access.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "task_permissions": {
+        "bash": "allow",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "junior-backend": {
+      "description": "Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Does not make architectural decisions.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "task_permissions": {
+        "bash": "ask",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "junior-frontend": {
+      "description": "Invoke for simple frontend tasks: styling, small presentational components, component tests. Does not touch config, stores, or SSR setup.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "temperature": 0.4,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "task_permissions": {
+        "bash": "ask",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "tester": {
+      "description": "Invoke after implementation is complete. Writes and runs tests, verifies acceptance criteria, reports bugs. Spawned in parallel per scope by leads.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "steps": 30,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "task_permissions": {
+        "bash": "allow",
+        "write": "allow",
+        "edit": "allow"
+      }
+    },
+    "code-reviewer": {
+      "description": "Invoke after all tests pass. Reviews code quality, security, and standards. Spawned in parallel per scope by leads. Never modifies code.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "steps": 20,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      }
+    },
+    "debugger": {
+      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only \u2014 never modifies code.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "temperature": 0.1,
+      "steps": 25,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": true
+      }
+    },
+    "researcher": {
+      "description": "Invoke to evaluate a technology, library, or pattern. Produces comparison report with recommendation. Never writes production code.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "temperature": 0.6,
+      "steps": 20,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": false,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      }
+    }
+  },
+  "mcp": {}
+}

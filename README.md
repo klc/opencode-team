@@ -10,12 +10,12 @@ A production-ready multi-agent software development team for [OpenCode](https://
 flowchart TD
     User(["👤 User"])
 
-    User -->|"/new-feature"| PO
-    User -->|"/task /quick-fix /hotfix"| BL
-    User -->|"/bugfix"| DBG
-    User -->|"/refactor /add-test"| BL
-    User -->|"/research /tech-decision"| RES
-    User -->|"/standup /sprint"| PM
+    User -->|"/team:new-feature"| PO
+    User -->|"/team:task /team:quick-fix /team:hotfix"| BL
+    User -->|"/team:bugfix"| DBG
+    User -->|"/team:refactor /team:add-test"| BL
+    User -->|"/team:research /team:tech-decision"| RES
+    User -->|"/team:standup /team:sprint"| PM
 
     PO["🧭 Product Owner\nClarifies scope\nWrites user stories"]
     AR["🏛️ Architect\nTechnical decisions\nADR writing"]

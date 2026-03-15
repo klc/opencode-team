@@ -3,7 +3,7 @@ description: Senior Frontend Developer - Complex UI components, state management
 model: my-provider/my-fast-model
 mode: subagent
 hidden: true
-color: #fdba74
+color: '#fdba74'
 temperature: 0.3
 tools:
   todowrite: true

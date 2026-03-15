@@ -3,7 +3,7 @@ description: Junior Backend Developer - Straightforward backend tasks, CRUD, bug
 model: my-provider/my-fast-model
 mode: subagent
 hidden: true
-color: #a7f3d0
+color: '#a7f3d0'
 temperature: 0.2
 tools:
   todowrite: true

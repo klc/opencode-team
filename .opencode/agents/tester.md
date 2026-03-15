@@ -3,7 +3,7 @@ description: QA Tester - Test planning, test writing, bug reporting, and quality
 model: my-provider/my-fast-model
 mode: subagent
 hidden: true
-color: #fbbf24
+color: '#fbbf24'
 temperature: 0.2
 tools:
   todowrite: true

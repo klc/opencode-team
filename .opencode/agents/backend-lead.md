@@ -2,7 +2,7 @@
 description: Backend Team Lead - Architecture decisions, task delegation, and backend quality ownership
 model: my-provider/my-strong-model
 mode: all
-color: #34d399
+color: '#34d399'
 temperature: 0.3
 tools:
   todowrite: true

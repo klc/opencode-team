@@ -2,7 +2,7 @@
 description: Architect - System architecture design, technical decision evaluation, and ADR writing
 model: my-provider/my-strong-model
 mode: all
-color: #f472b6
+color: '#f472b6'
 temperature: 0.4
 ---
 

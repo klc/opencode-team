@@ -2,7 +2,7 @@
 description: Frontend Team Lead - UI architecture decisions, task delegation, and frontend quality ownership
 model: my-provider/my-fast-model
 mode: all
-color: #fb923c
+color: '#fb923c'
 temperature: 0.3
 tools:
   todowrite: true

@@ -3,7 +3,7 @@ description: Code Reviewer - Pull request review, code quality analysis, and sec
 model: my-provider/my-fast-model
 mode: subagent
 hidden: true
-color: #f59e0b
+color: '#f59e0b'
 temperature: 0.2
 tools:
   todowrite: true

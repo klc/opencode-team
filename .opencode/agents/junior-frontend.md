@@ -3,7 +3,7 @@ description: Junior Frontend Developer - Simple UI components, styling fixes, an
 model: my-provider/my-fast-model
 mode: subagent
 hidden: true
-color: #fed7aa
+color: '#fed7aa'
 temperature: 0.4
 tools:
   todowrite: true

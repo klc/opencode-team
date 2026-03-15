@@ -3,7 +3,7 @@ description: Debugger - Error analysis, root cause identification, log analysis,
 model: my-provider/my-strong-model
 mode: subagent
 hidden: true
-color: #f87171
+color: '#f87171'
 temperature: 0.1
 ---
 

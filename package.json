@@ -1,11 +1,12 @@
 {
   "name": "opencode-agent-team",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "description": "Multi-agent software development team for OpenCode",
   "type": "module",
   "scripts": {
     "install-team": "node install.mjs",
-    "update-team": "node update.mjs"
+    "update-team": "node update.mjs",
+    "update-team:dry": "node update.mjs --dry-run"
   },
   "engines": {
     "node": ">=18.0.0"

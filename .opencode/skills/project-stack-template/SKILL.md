@@ -1,3 +1,8 @@
+---
+name: project-stack-template
+description: Template for documenting this project stack. Copy to project-stack/SKILL.md and fill in your stack details.
+---
+
 # Project Stack — Template
 
 > ⚠️ This is a TEMPLATE. Copy this file to `.opencode/skills/project-stack/SKILL.md`

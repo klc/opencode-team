@@ -3,6 +3,7 @@
 // Updates agents, commands, and skills while preserving your existing model assignments.
 // Node.js 18+, no external dependencies
 
+import { createInterface } from 'readline'
 import { spawnSync } from 'child_process'
 import { existsSync, readdirSync, copyFileSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
@@ -10,6 +11,9 @@ import { homedir } from 'os'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// ── CLI flags ────────────────────────────────────────────────
+const DRY_RUN = process.argv.includes('--dry-run') || process.argv.includes('-n')
 
 // ── ANSI colors ─────────────────────────────────────────────
 const c = {
@@ -24,6 +28,7 @@ const yellow = s => `${c.yellow}${s}${c.reset}`
 const red    = s => `${c.red}${s}${c.reset}`
 
 const ok   = msg => console.log(`  ${green('✓')} ${msg}`)
+const dryok = msg => DRY_RUN ? console.log(`  ${dim('[dry-run]')} ${msg}`) : ok(msg)
 const warn = msg => console.log(`  ${yellow('⚠')}  ${msg}`)
 const err  = msg => console.log(`  ${red('✗')} ${msg}`)
 const step = msg => console.log(`\n${bold(cyan('▶ ' + msg))}`)
@@ -139,12 +144,73 @@ function updateOpencodeJson(installDir, currentModels) {
 }
 
 // ── Main ─────────────────────────────────────────────────────
+// ── Changelog ───────────────────────────────────────────────
+const CHANGELOG = [
+  { version: '1.4.0', changes: [
+    'feat: designer agent — establishes visual design system, writes project-design skill',
+    'feat: /team:designer command — define or update design system with a brief',
+    'feat: frontend agents load project-design skill before writing UI code',
+    'feat: code-reviewer checks design system compliance on frontend code',
+  ]},
+  { version: '1.3.0', changes: [
+    'feat: review now runs before tests (review → test order)',
+    'feat: security-auditor and performance-analyst agents added',
+    'feat: /team:audit command — parallel security + perf + quality audit',
+    'feat: color coding for all agents in TUI',
+    'feat: internal subagents hidden from autocomplete',
+    'fix: skill frontmatter added — skills now discoverable by OpenCode',
+    'fix: removed all Laravel-specific references from generic files',
+    'fix: team:init writes to .opencode/skills/ (correct path)',
+  ]},
+  { version: '1.2.0', changes: [
+    'feat: update.mjs — preserves model assignments on update',
+    'feat: install.mjs — cross-platform Node.js installer',
+    'feat: AGENTS.md auto-created on project install',
+    'fix: global install no longer overwrites provider/MCP settings',
+  ]},
+  { version: '1.1.0', changes: [
+    'feat: review → test order (review before QA)',
+    'feat: team:init scans project and generates project-stack skill',
+    'fix: agent mode: all for leads (work as both primary and subagent)',
+    'fix: steps limits raised for complex pipelines',
+  ]},
+]
+
+function showChangelog(installedDir) {
+  // Try to detect installed version from a marker file
+  const markerPath = join(installedDir, '.team-version')
+  const currentVersion = CHANGELOG[0].version
+
+  console.log(`
+  ${bold('Changelog — what is new:')}`)
+
+  // Show all entries if no version marker, otherwise just latest
+  const entries = existsSync(markerPath)
+    ? CHANGELOG.slice(0, 1)
+    : CHANGELOG
+
+  for (const entry of entries) {
+    console.log(`
+  ${bold(cyan('v' + entry.version))}`)
+    for (const change of entry.changes) {
+      const icon = change.startsWith('feat') ? green('+') : change.startsWith('fix') ? yellow('~') : dim('·')
+      console.log(`    ${icon} ${dim(change.replace(/^(feat|fix): /, ''))}`)
+    }
+  }
+  console.log('')
+}
+
 async function main() {
   console.log('')
   console.log(bold(cyan('╔══════════════════════════════════════════╗')))
   console.log(bold(cyan('║     OpenCode Agent Team — Update         ║')))
   console.log(bold(cyan('╚══════════════════════════════════════════╝')))
   console.log('')
+
+  if (DRY_RUN) {
+    console.log(`  ${yellow('⚠')}  ${bold('Dry-run mode')} — no files will be written`)
+    console.log('')
+  }
 
   const sourceDir = join(__dirname, '.opencode')
   if (!existsSync(sourceDir)) {
@@ -174,6 +240,9 @@ async function main() {
     installDirs = [{ label: detected.type, dir: detected.dir }]
   }
 
+  // Show changelog
+  showChangelog(installDirs[0].dir)
+
   // ── Process each installation ────────────────────────────────
   for (const { label, dir } of installDirs) {
     step(`Updating ${label} installation (${dir})...`)
@@ -192,20 +261,28 @@ async function main() {
     }
 
     // Step 2: Copy new agent, command, and skill files (skip opencode.json)
-    copyDir(sourceDir, dir, ['opencode.json'])
-    ok('Copied updated agent, command, and skill files')
+    if (!DRY_RUN) {
+      copyDir(sourceDir, dir, ['opencode.json'])
+      ok('Copied updated agent, command, and skill files')
+    } else {
+      dryok('Would copy updated agent, command, and skill files')
+    }
 
     // Step 3: Re-apply model assignments to the freshly copied agent files
     const agentsDir = join(dir, 'agents')
     let restored = 0
     for (const [agentName, model] of Object.entries(currentModels)) {
       const agentFile = join(agentsDir, `${agentName}.md`)
-      if (existsSync(agentFile)) {
-        applyModel(agentFile, model)
+      if (existsSync(agentFile) || DRY_RUN) {
+        if (!DRY_RUN) applyModel(agentFile, model)
         restored++
       }
     }
-    ok(`Restored ${restored} model assignments to agent files`)
+    if (DRY_RUN) {
+      dryok(`Would restore ${restored} model assignments to agent files`)
+    } else {
+      ok(`Restored ${restored} model assignments to agent files`)
+    }
 
     // Step 4: Update model fields in opencode.json agent block
     // (preserve provider, mcp, instructions — only update agent.model fields)
@@ -218,6 +295,21 @@ async function main() {
   }
 
   // ── Done ───────────────────────────────────────────────────
+  // Write version marker
+  if (!DRY_RUN) {
+    for (const { dir } of installDirs) {
+      writeFileSync(join(dir, '.team-version'), CHANGELOG[0].version)
+    }
+  }
+
+  if (DRY_RUN) {
+    console.log('')
+    console.log(bold(yellow('Dry-run complete — no files were modified.')))
+    console.log(`  Run ${cyan('node update.mjs')} without --dry-run to apply changes.`)
+    console.log('')
+    return
+  }
+
   console.log('')
   console.log(bold(green('╔══════════════════════════════════════════╗')))
   console.log(bold(green('║     Update complete! 🎉                  ║')))

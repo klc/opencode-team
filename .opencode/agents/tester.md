@@ -2,6 +2,8 @@
 description: QA Tester - Test planning, test writing, bug reporting, and quality assurance
 model: my-provider/my-fast-model
 mode: subagent
+hidden: true
+color: #fbbf24
 temperature: 0.2
 tools:
   todowrite: true
@@ -74,7 +76,7 @@ Use the test commands from the `project-stack` skill.
 
 ### If quality gate PASS
 
-Report to your lead. Do NOT invoke @code-reviewer directly.
+Report to your lead. Code review already passed before you ran — this is the final gate.
 
 ```
 @backend-lead / @frontend-lead

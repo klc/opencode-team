@@ -2,6 +2,8 @@
 description: Junior Backend Developer - Straightforward backend tasks, CRUD, bug fixes, and tests
 model: my-provider/my-fast-model
 mode: subagent
+hidden: true
+color: #a7f3d0
 temperature: 0.2
 tools:
   todowrite: true

@@ -8,6 +8,31 @@ Load the coding-standards skill and git-workflow skill.
 
 You are going to generate the `project-stack` skill for this project by scanning the codebase. This skill is what makes the entire agent team project-aware — without it, no agent knows how to test, build, commit, or structure code correctly.
 
+## Phase 0 — Check for Existing Skill
+
+Before scanning, check if a `project-stack` skill already exists:
+
+```bash
+test -f .opencode/skills/project-stack/SKILL.md && echo "exists" || echo "missing"
+```
+
+**If it exists**, ask the user:
+
+```
+A project-stack skill already exists. What would you like to do?
+
+A) Update it — re-scan the project and overwrite with fresh content
+B) Keep it — skip skill generation and go straight to AGENTS.md setup
+C) Review it — show me the current skill content first
+```
+
+Wait for the user's response before continuing.
+- If **A**: proceed with Phase 1 as normal, overwrite the existing file
+- If **B**: skip to Phase 6 (AGENTS.md)
+- If **C**: show the current file content, then ask A or B again
+
+---
+
 ## Phase 1 — Automated Discovery
 
 Run these commands to gather raw data. Do not skip any — even empty results are useful.

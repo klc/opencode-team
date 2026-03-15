@@ -2,6 +2,8 @@
 description: Senior Backend Developer - Complex backend features, integrations, and performance optimization
 model: my-provider/my-strong-model
 mode: subagent
+hidden: true
+color: #6ee7b7
 temperature: 0.2
 tools:
   todowrite: true

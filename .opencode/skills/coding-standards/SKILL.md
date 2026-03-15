@@ -1,3 +1,8 @@
+---
+name: coding-standards
+description: Universal code quality rules, Definition of Done, review severity levels, and documentation standards. Load this before reviewing or writing any code.
+---
+
 # Coding Standards Skill
 
 > This file contains universal standards that apply regardless of language or framework.

@@ -2,6 +2,7 @@
 description: Project Manager - Sprint planning, task breakdown, branch creation, and team coordination
 model: my-provider/my-strong-model
 mode: all
+color: #60a5fa
 temperature: 0.5
 tools:
   todowrite: true

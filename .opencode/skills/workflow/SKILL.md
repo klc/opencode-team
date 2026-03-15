@@ -1,3 +1,8 @@
+---
+name: workflow
+description: Full team delegation chain, execution phases, parallelization rules, todo board protocol, and agent invocation templates.
+---
+
 # Workflow Skill
 
 ## Team Hierarchy
@@ -64,24 +69,9 @@ leads delegate to developers (parallel instances as needed)
 developers implement + commit + mark todo completed + report to lead
 ```
 
-### Phase 2 — QA
+### Phase 2 — Review
 
 Triggered by leads when ALL their parallel developers report complete.
-
-```
-backend-lead  → @tester (one per independent scope, in parallel)
-frontend-lead → @tester (one per independent scope, in parallel)
-    ↓
-Each tester reports PASS or FAIL to their lead (never directly to reviewer)
-    ↓
-If FAIL → lead reassigns fix to developer → developer fixes + commits → lead re-triggers tester for that scope
-    ↓
-When ALL testers for a lead report PASS → lead signals ready for review
-```
-
-### Phase 3 — Review
-
-Triggered by leads when ALL their testers report PASS.
 
 ```
 backend-lead  → @code-reviewer (one per independent scope, in parallel)
@@ -89,10 +79,27 @@ frontend-lead → @code-reviewer (one per independent scope, in parallel)
     ↓
 Each reviewer reports verdict to their lead (never directly to developer)
     ↓
-If BLOCKED or CHANGES REQUIRED → lead reassigns fix to developer → developer fixes + commits → lead re-triggers reviewer for that scope
+If BLOCKED or CHANGES REQUIRED → lead reassigns fix to developer → developer fixes + commits → lead re-triggers reviewer for that scope only
     ↓
-When ALL reviewers approve → feature is complete
+When ALL reviewers approve → lead moves to QA
 ```
+
+### Phase 3 — QA
+
+Triggered by leads when ALL their reviewers approve.
+
+```
+backend-lead  → @tester (one per independent scope, in parallel)
+frontend-lead → @tester (one per independent scope, in parallel)
+    ↓
+Each tester reports PASS or FAIL to their lead (never directly to reviewer)
+    ↓
+If FAIL → lead reassigns fix to developer → developer fixes + commits → lead re-triggers tester for that scope only
+    ↓
+When ALL testers PASS → feature is complete
+```
+
+> **Why review before test?** Reviewers can block architectural or structural changes that would make tests obsolete. Running tests first on code that gets rejected wastes time and creates conflicting fix commits.
 
 ---
 

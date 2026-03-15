@@ -2,6 +2,8 @@
 description: Debugger - Error analysis, root cause identification, log analysis, and fix recommendation
 model: my-provider/my-strong-model
 mode: subagent
+hidden: true
+color: #f87171
 temperature: 0.1
 ---
 

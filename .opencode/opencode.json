@@ -14,7 +14,8 @@
         "webfetch": false,
         "websearch": false
       },
-      "mode": "all"
+      "mode": "all",
+      "color": "#a78bfa"
     },
     "project-manager": {
       "description": "Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.",
@@ -31,7 +32,8 @@
         "todowrite": true,
         "todoread": true
       },
-      "mode": "all"
+      "mode": "all",
+      "color": "#60a5fa"
     },
     "architect": {
       "description": "Invoke before major structural decisions: protocol/transport choice, new services, schema changes. Writes ADRs. Never writes production code.",
@@ -46,7 +48,8 @@
         "webfetch": true,
         "websearch": true
       },
-      "mode": "all"
+      "mode": "all",
+      "color": "#f472b6"
     },
     "backend-lead": {
       "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple). Triggers QA and review phases.",
@@ -63,7 +66,8 @@
         "todowrite": true,
         "todoread": true
       },
-      "mode": "all"
+      "mode": "all",
+      "color": "#34d399"
     },
     "frontend-lead": {
       "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple). Triggers QA and review phases.",
@@ -80,7 +84,8 @@
         "todowrite": true,
         "todoread": true
       },
-      "mode": "all"
+      "mode": "all",
+      "color": "#fb923c"
     },
     "senior-backend": {
       "description": "Invoke for complex backend tasks: new architecture, integrations, performance-critical code, security flows. Full tool access.",
@@ -101,7 +106,9 @@
       "permission": {
         "bash": "allow",
         "edit": "allow"
-      }
+      },
+      "color": "#6ee7b7",
+      "hidden": true
     },
     "senior-frontend": {
       "description": "Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code, complex components. Full tool access.",
@@ -122,7 +129,9 @@
       "permission": {
         "bash": "allow",
         "edit": "allow"
-      }
+      },
+      "color": "#fdba74",
+      "hidden": true
     },
     "junior-backend": {
       "description": "Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Does not make architectural decisions.",
@@ -143,7 +152,9 @@
       "permission": {
         "bash": "ask",
         "edit": "allow"
-      }
+      },
+      "color": "#a7f3d0",
+      "hidden": true
     },
     "junior-frontend": {
       "description": "Invoke for simple frontend tasks: styling, small presentational components, component tests. Does not touch config, stores, or SSR setup.",
@@ -164,7 +175,9 @@
       "permission": {
         "bash": "ask",
         "edit": "allow"
-      }
+      },
+      "color": "#fed7aa",
+      "hidden": true
     },
     "tester": {
       "description": "Invoke after implementation is complete. Writes and runs tests, verifies acceptance criteria, reports bugs. Spawned in parallel per scope by leads.",
@@ -185,7 +198,9 @@
       "permission": {
         "bash": "allow",
         "edit": "allow"
-      }
+      },
+      "color": "#fbbf24",
+      "hidden": true
     },
     "code-reviewer": {
       "description": "Invoke after all tests pass. Reviews code quality, security, and standards. Spawned in parallel per scope by leads. Never modifies code.",
@@ -202,10 +217,12 @@
         "websearch": false,
         "todowrite": true,
         "todoread": true
-      }
+      },
+      "color": "#f59e0b",
+      "hidden": true
     },
     "debugger": {
-      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only — never modifies code.",
+      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only \u2014 never modifies code.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "temperature": 0.1,
@@ -217,7 +234,9 @@
         "read": true,
         "webfetch": false,
         "websearch": true
-      }
+      },
+      "color": "#f87171",
+      "hidden": true
     },
     "researcher": {
       "description": "Invoke to evaluate a technology, library, or pattern. Produces comparison report with recommendation. Never writes production code.",
@@ -229,6 +248,58 @@
         "bash": false,
         "write": true,
         "edit": false,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      },
+      "color": "#818cf8"
+    },
+    "security-auditor": {
+      "description": "Invoke for security audits \u2014 OWASP Top 10, auth flaws, injection vulnerabilities, sensitive data exposure. More thorough than code-reviewer's security checklist.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "#ef4444",
+      "temperature": 0.1,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": true
+      }
+    },
+    "performance-analyst": {
+      "description": "Invoke to identify performance bottlenecks \u2014 N+1 queries, missing indexes, bundle size, slow endpoints, cache opportunities.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "#06b6d4",
+      "temperature": 0.2,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      }
+    },
+    "designer": {
+      "description": "Invoke to establish or update the project's visual design system. Creates the project-design skill that all frontend developers follow. Use /team:designer with a design brief.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": false,
+      "color": "#e879f9",
+      "temperature": 0.7,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
         "read": true,
         "webfetch": true,
         "websearch": true

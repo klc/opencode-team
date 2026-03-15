@@ -2,6 +2,7 @@
 description: Backend Team Lead - Architecture decisions, task delegation, and backend quality ownership
 model: my-provider/my-strong-model
 mode: all
+color: #34d399
 temperature: 0.3
 tools:
   todowrite: true
@@ -52,8 +53,8 @@ Every task must pass before moving to QA:
 Use `todoread` then `todowrite` to update statuses.
 
 - **When you assign a task to a developer** → update that task to `in-progress`
-- **When a developer reports complete** → keep as `in-progress` until tester confirms
-- **When tester is triggered** → task stays `in-progress`
+- **When a developer reports complete** → keep as `in-progress` until reviewer confirms
+- **When reviewer approves** → keep as `in-progress` until tester confirms
 
 ---
 
@@ -87,7 +88,22 @@ When a developer reports implementation complete:
 2. **Wait for ALL parallel tasks to complete before triggering QA** — the Task tool blocks until each developer subagent finishes, so invoke all parallel developers first, then wait for all to return
 3. If a task is unsatisfactory: send it back with specific feedback
 
-Once all backend tasks are done, spawn parallel testers:
+Once all backend tasks are done, **first spawn parallel reviewers** (one per independent scope):
+
+```
+@code-reviewer
+
+Scope: Backend — [area name]
+Feature: [feature name]
+Files to review: [specific files]
+Special attention: [security-sensitive? complex logic? new pattern?]
+```
+
+Wait for ALL reviewers to report back.
+
+**If any reviewer returns BLOCKED or CHANGES REQUIRED** → delegate fix to the appropriate developer → wait for fix + commit → re-invoke that reviewer only.
+
+**When ALL reviewers APPROVE** → then spawn parallel testers (one per independent scope):
 
 ```
 @tester
@@ -102,29 +118,19 @@ Acceptance criteria:
   - [ ] [criterion]
 ```
 
-One tester per independent area. When ALL testers report PASS → invoke reviewers and wait for all of them to complete.
-
-## Triggering Parallel Code Review
-
-When ALL backend testers report PASS, spawn parallel reviewers:
-
-```
-@code-reviewer
-
-Scope: Backend — [area name]
-Feature: [feature name]
-All tests passing: yes
-Files to review: [specific files]
-Special attention: [security-sensitive? complex logic? new pattern?]
-```
-
-Each reviewer reports back to you. When ALL approve → backend is done.
+Wait for ALL testers to report back. When ALL PASS → backend is done.
 
 ---
 
-## Receiving Failure Reports from QA / Review
+## Receiving Failure Reports
 
-When @tester or @code-reviewer reports a failure:
+**From @code-reviewer (BLOCKED or CHANGES REQUIRED):**
+Fix first — do not run tests until review passes.
+
+**From @tester (FAIL):**
+Fix and re-test — reviewer already approved so only re-run tester for the failing scope.
+
+In both cases:
 
 1. Assess complexity of the fix
 2. Delegate to the appropriate developer:

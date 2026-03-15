@@ -1,3 +1,8 @@
+---
+name: git-workflow
+description: Conventional commit format, branch strategy, and commit checklist. Load this before committing or creating branches.
+---
+
 # Git Workflow Skill
 
 ## Commit Convention

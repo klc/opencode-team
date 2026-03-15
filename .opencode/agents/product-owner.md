@@ -2,6 +2,7 @@
 description: Product Owner - Clarifies requirements, writes user stories, and owns the product backlog
 model: my-provider/my-strong-model
 mode: all
+color: #a78bfa
 temperature: 0.5
 ---
 

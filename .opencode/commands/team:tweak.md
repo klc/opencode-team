@@ -1,6 +1,5 @@
 ---
 description: Small, focused change — a single file, function, config, or copy edit. Skips product-owner and project-manager, goes directly to the right lead.
-agent: backend-lead
 subtask: true
 ---
 

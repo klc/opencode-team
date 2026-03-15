@@ -1,6 +1,6 @@
 ---
 description: Product Owner - Clarifies requirements, writes user stories, and owns the product backlog
-model: alibaba-coding-plan/qwen3.5-plus
+model: my-provider/my-strong-model
 mode: all
 temperature: 0.5
 ---

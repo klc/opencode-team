@@ -1,6 +1,6 @@
 ---
 description: Backend Team Lead - Architecture decisions, task delegation, and backend quality ownership
-model: alibaba-coding-plan/glm-5
+model: my-provider/my-strong-model
 mode: all
 temperature: 0.3
 tools:
@@ -133,6 +133,8 @@ When @tester or @code-reviewer reports a failure:
 3. The developer must: implement fix → commit `fix(<scope>): ... [<task-id>]` → keep task `in-progress` → report back
 4. Re-invoke @tester or @code-reviewer for that scope only
 5. Do not re-run QA/review for scopes that already passed
+
+
 
 ## Critical Decision Protocol
 

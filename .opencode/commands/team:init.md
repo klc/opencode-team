@@ -114,7 +114,7 @@ Do not ask about things the scan already answered clearly.
 Once you have all the information, create the file:
 
 ```
-.agents/skills/project-stack/SKILL.md
+.opencode/skills/project-stack/SKILL.md
 ```
 
 Use this structure — fill every section with real values, no placeholders:
@@ -283,7 +283,7 @@ After all files are written, output a summary:
 ✅ Initialization complete
 
 Created:
-  .agents/skills/project-stack/SKILL.md
+  .opencode/skills/project-stack/SKILL.md
   AGENTS.md (open this file and add your project rules)
 
 Updated:

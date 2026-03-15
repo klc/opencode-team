@@ -1,6 +1,6 @@
 ---
 description: Junior Backend Developer - Straightforward backend tasks, CRUD, bug fixes, and tests
-model: zai-coding-plan/glm-4.7
+model: my-provider/my-fast-model
 mode: subagent
 temperature: 0.2
 tools:

@@ -1,6 +1,5 @@
 ---
 description: Refactor existing code without changing behavior. Improves structure, readability, or performance. Runs tests before and after to confirm no regression.
-agent: backend-lead
 subtask: true
 ---
 

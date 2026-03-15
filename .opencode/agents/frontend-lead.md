@@ -1,6 +1,6 @@
 ---
 description: Frontend Team Lead - UI architecture decisions, task delegation, and frontend quality ownership
-model: zai-coding-plan/glm-4.7
+model: my-provider/my-fast-model
 mode: all
 temperature: 0.3
 tools:
@@ -132,6 +132,8 @@ When @tester or @code-reviewer reports a failure:
 3. The developer must: implement fix → commit `fix(<scope>): ... [<task-id>]` → keep task `in-progress` → report back
 4. Re-invoke @tester or @code-reviewer for that scope only
 5. Do not re-run QA/review for scopes that already passed
+
+
 
 ## Critical Decision Protocol
 

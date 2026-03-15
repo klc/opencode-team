@@ -1,6 +1,6 @@
 ---
 description: Senior Backend Developer - Complex backend features, integrations, and performance optimization
-model: alibaba-coding-plan/glm-5
+model: my-provider/my-strong-model
 mode: subagent
 temperature: 0.2
 tools:

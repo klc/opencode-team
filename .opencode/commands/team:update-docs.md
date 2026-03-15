@@ -1,6 +1,5 @@
 ---
 description: Update project documentation — README, API docs, architecture diagrams, or inline code comments. Pass the area or file to document.
-agent: backend-lead
 subtask: true
 ---
 

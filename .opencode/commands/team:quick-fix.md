@@ -1,6 +1,5 @@
 ---
-description: Small, contained fix that doesn't need the full team chain. Typos, config values, copy changes, single-line corrections. Skips product-owner, project-manager, and QA — goes directly to the right developer.
-agent: backend-lead
+description: Small, contained fix that doesn't need the full team chain. Typos, config values, copy changes, single-line corrections. Goes directly to the right developer, then review.
 subtask: true
 ---
 
@@ -17,25 +16,26 @@ This command is for changes that meet ALL of these criteria:
 - No new logic — only corrections to existing behavior
 - No schema changes
 - No new dependencies
-- Takes less than 30 minutes to implement
 
-If the fix does not meet ALL criteria above, stop and tell the user to use `/new-feature` or `/bugfix` instead.
+If the fix does not meet ALL criteria above, stop and tell the user to use `/team:new-feature` or `/team:bugfix` instead.
 
 ## Execution
 
-1. Determine whether the fix is backend or frontend:
-   - Backend fix → delegate to @senior-backend or @junior-backend (your call based on complexity)
-   - Frontend fix → immediately invoke @frontend-lead with this same request
+1. Determine scope and delegate using the Task tool:
+   - Backend fix → Task: @senior-backend or @junior-backend
+   - Frontend fix → Task: @senior-frontend or @junior-frontend
+   - Both → Task both in parallel
 
-2. The developer must:
+2. In the Task call, instruct the developer to:
    - Implement the fix
-   - Run the relevant tests from the project-stack skill
+   - Run the relevant tests (see project-stack skill for the command)
    - Commit: `git commit -m "fix(<scope>): <what was fixed>"`
-   - Report back with modified files and test results
+   - Return a completion report
 
-3. Once the developer confirms the fix:
-   - Invoke @code-reviewer with the changed files
-   - If approved: done
-   - If changes required: delegate the fix back to the developer, re-review
+3. When the developer reports done → Task: @code-reviewer with the changed files
+4. If approved: report done to user
+5. If changes required: send back to developer, re-review
 
-Do NOT create a todo list for quick fixes. Do NOT invoke @tester for quick fixes unless the reviewer specifically flags a test gap.
+Do NOT read agent files from disk. Do NOT use bash to find agent files.
+Do NOT create a todo list for quick fixes.
+Do NOT invoke @tester unless the reviewer specifically flags a test gap.

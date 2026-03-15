@@ -1,59 +1,5 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "my-provider": {
-      "name": "My Provider",
-      "npm": "@ai-sdk/openai",
-      "api": "https://api.my-provider.com/v1",
-      "env": [
-        "MY_PROVIDER_API_KEY"
-      ],
-      "models": {
-        "my-strong-model": {
-          "name": "Strong Model",
-          "reasoning": true,
-          "tool_call": true,
-          "modalities": {
-            "input": [
-              "text"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "limit": {
-            "context": 128000,
-            "output": 16384
-          },
-          "cost": {
-            "input": 0,
-            "output": 0
-          }
-        },
-        "my-fast-model": {
-          "name": "Fast Model",
-          "reasoning": true,
-          "tool_call": true,
-          "modalities": {
-            "input": [
-              "text"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "limit": {
-            "context": 128000,
-            "output": 16384
-          },
-          "cost": {
-            "input": 0,
-            "output": 0
-          }
-        }
-      }
-    }
-  },
   "agent": {
     "product-owner": {
       "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.",
@@ -288,6 +234,5 @@
         "websearch": true
       }
     }
-  },
-  "mcp": {}
+  }
 }

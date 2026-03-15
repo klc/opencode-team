@@ -162,7 +162,7 @@ Commands are the entry points. Pick the one that matches the scope of your work.
 
 | Command | Use when |
 |---|---|
-| `/team:init` | **Start here.** Scans the project, auto-detects the stack, asks targeted questions for gaps, and writes `.agents/skills/project-stack/SKILL.md` — the file that makes every other agent project-aware |
+| `/team:init` | **Start here.** Scans the project, auto-detects the stack, asks targeted questions for gaps, and writes `.opencode/skills/project-stack/SKILL.md` — the file that makes every other agent project-aware |
 
 ### Maintenance
 
@@ -203,7 +203,7 @@ Example — you type `/team:new-feature live chat`:
 
 ### Setup
 
-1. Copy `.opencode/skills/project-stack-template/SKILL.md` to `.agents/skills/project-stack/SKILL.md`
+1. Copy `.opencode/skills/project-stack-template/SKILL.md` to `.opencode/skills/project-stack/SKILL.md`
 2. Fill in every section for your project
 3. Delete the template notice at the top
 
@@ -368,7 +368,7 @@ export MY_PROVIDER_API_KEY=sk-...
 ```
 
 `team:init` will:
-- Scan the project and write `.agents/skills/project-stack/SKILL.md`
+- Scan the project and write `.opencode/skills/project-stack/SKILL.md`
 - Create `AGENTS.md` in the project root with placeholder sections
 - Add `"instructions": ["AGENTS.md"]` to `opencode.json`
 
@@ -382,7 +382,7 @@ nano AGENTS.md
 ```
 
 > **Manually creating the stack skill?**
-> Copy `.opencode/skills/project-stack-template/SKILL.md` to `.agents/skills/project-stack/SKILL.md` and fill it in instead of running `/team:init`. Also create `AGENTS.md` manually and add `"instructions": ["AGENTS.md"]` to `opencode.json`.
+> Copy `.opencode/skills/project-stack-template/SKILL.md` to `.opencode/skills/project-stack/SKILL.md` and fill it in instead of running `/team:init`. Also create `AGENTS.md` manually and add `"instructions": ["AGENTS.md"]` to `opencode.json`.
 
 ---
 
@@ -423,7 +423,7 @@ nano AGENTS.md
 └── skills/
 # project-stack lives in .agents/skills/, not here
     ├── project-stack-template/
-    │   └── SKILL.md          ← copy to .agents/skills/project-stack/SKILL.md
+    │   └── SKILL.md          ← copy to .opencode/skills/project-stack/SKILL.md
     ├── project-stack-template/
     │   └── SKILL.md          ← copy and fill in
     ├── workflow/

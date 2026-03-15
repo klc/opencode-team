@@ -1,6 +1,6 @@
 ---
 description: Project Manager - Sprint planning, task breakdown, branch creation, and team coordination
-model: alibaba-coding-plan/glm-5
+model: my-provider/my-strong-model
 mode: all
 temperature: 0.5
 tools:

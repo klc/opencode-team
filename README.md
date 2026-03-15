@@ -322,6 +322,29 @@ To use a different model for an agent, change the `model` field. The format is a
 
 ## Installation
 
+The easiest way is to run the setup script. Node.js 18+ is required (already installed if you have OpenCode).
+
+```bash
+node install.mjs
+```
+
+Or via npm:
+
+```bash
+npm run install-team
+```
+
+The script will:
+1. Ask whether to install **project-specific** (`.opencode/` in current dir) or **global** (`~/.config/opencode/`)
+2. Fetch your available models via `opencode models`
+3. Ask you to assign a **strong model** (leads, architect, senior devs) and a **fast model** (juniors, tester, reviewer)
+4. Optionally let you customize models per individual agent
+5. Write all agent, command, and skill files
+6. Generate or merge `opencode.json` with your model assignments (global installs only update the `agent` block — provider and MCP settings are preserved)
+7. Create `AGENTS.md` and link it (project installs only)
+
+### Manual installation
+
 ```bash
 # 1. Copy the .opencode folder into your project root
 cp -r opencode-agent-team/.opencode /your-project/.opencode

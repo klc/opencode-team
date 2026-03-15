@@ -1,0 +1,12 @@
+{
+  "name": "opencode-agent-team",
+  "version": "1.0.0",
+  "description": "Multi-agent software development team for OpenCode",
+  "type": "module",
+  "scripts": {
+    "install-team": "node install.mjs"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

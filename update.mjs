@@ -1,0 +1,243 @@
+#!/usr/bin/env node
+// OpenCode Agent Team — Update Script
+// Updates agents, commands, and skills while preserving your existing model assignments.
+// Node.js 18+, no external dependencies
+
+import { spawnSync } from 'child_process'
+import { existsSync, readdirSync, copyFileSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { join, dirname } from 'path'
+import { homedir } from 'os'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+
+// ── ANSI colors ─────────────────────────────────────────────
+const c = {
+  bold: '\x1b[1m', dim: '\x1b[2m', cyan: '\x1b[0;36m',
+  green: '\x1b[0;32m', yellow: '\x1b[1;33m', red: '\x1b[0;31m', reset: '\x1b[0m',
+}
+const bold   = s => `${c.bold}${s}${c.reset}`
+const dim    = s => `${c.dim}${s}${c.reset}`
+const cyan   = s => `${c.cyan}${s}${c.reset}`
+const green  = s => `${c.green}${s}${c.reset}`
+const yellow = s => `${c.yellow}${s}${c.reset}`
+const red    = s => `${c.red}${s}${c.reset}`
+
+const ok   = msg => console.log(`  ${green('✓')} ${msg}`)
+const warn = msg => console.log(`  ${yellow('⚠')}  ${msg}`)
+const err  = msg => console.log(`  ${red('✗')} ${msg}`)
+const step = msg => console.log(`\n${bold(cyan('▶ ' + msg))}`)
+
+// ── Detect install location ──────────────────────────────────
+function detectInstallDir() {
+  const projectDir = join(process.cwd(), '.opencode')
+  const globalDir  = join(homedir(), '.config', 'opencode')
+
+  const inProject = existsSync(join(projectDir, 'agents'))
+  const inGlobal  = existsSync(join(globalDir, 'agents'))
+
+  if (inProject && inGlobal) {
+    return { type: 'both', projectDir, globalDir }
+  } else if (inProject) {
+    return { type: 'project', dir: projectDir }
+  } else if (inGlobal) {
+    return { type: 'global', dir: globalDir }
+  } else {
+    return { type: 'none' }
+  }
+}
+
+// ── Read current model assignments from installed agents ─────
+function readCurrentModels(installDir) {
+  const agentsDir = join(installDir, 'agents')
+  const models = {}
+
+  if (!existsSync(agentsDir)) return models
+
+  for (const file of readdirSync(agentsDir)) {
+    if (!file.endsWith('.md')) continue
+    const agentName = file.replace('.md', '')
+    const content = readFileSync(join(agentsDir, file), 'utf8')
+    const match = content.match(/^model:\s*(.+)$/m)
+    if (match) models[agentName] = match[1].trim()
+  }
+
+  return models
+}
+
+// ── Read agent model assignments from opencode.json ──────────
+function readModelsFromJson(installDir) {
+  const jsonPath = join(installDir, 'opencode.json')
+  if (!existsSync(jsonPath)) return {}
+
+  try {
+    const config = JSON.parse(readFileSync(jsonPath, 'utf8'))
+    const models = {}
+    for (const [name, agent] of Object.entries(config.agent || {})) {
+      if (agent.model) models[name] = agent.model
+    }
+    return models
+  } catch {
+    return {}
+  }
+}
+
+// ── Merge models (md files take precedence over json) ────────
+function resolveCurrentModels(installDir) {
+  const fromJson = readModelsFromJson(installDir)
+  const fromMd   = readCurrentModels(installDir)
+  // md files are the source of truth (install script writes both)
+  return { ...fromJson, ...fromMd }
+}
+
+// ── Copy dir recursively, skipping specified files ───────────
+function copyDir(src, dest, skipFiles = []) {
+  if (!existsSync(dest)) mkdirSync(dest, { recursive: true })
+  for (const entry of readdirSync(src, { withFileTypes: true })) {
+    if (skipFiles.includes(entry.name)) continue
+    const srcPath  = join(src, entry.name)
+    const destPath = join(dest, entry.name)
+    if (entry.isDirectory()) {
+      copyDir(srcPath, destPath, skipFiles)
+    } else {
+      copyFileSync(srcPath, destPath)
+    }
+  }
+}
+
+// ── Apply model to agent file ────────────────────────────────
+function applyModel(agentFilePath, model) {
+  let content = readFileSync(agentFilePath, 'utf8')
+  content = content.replace(/^model:.*$/m, `model: ${model}`)
+  writeFileSync(agentFilePath, content)
+}
+
+// ── Update agent block in opencode.json ──────────────────────
+function updateOpencodeJson(installDir, currentModels) {
+  const jsonPath = join(installDir, 'opencode.json')
+  if (!existsSync(jsonPath)) return
+
+  let config
+  try {
+    config = JSON.parse(readFileSync(jsonPath, 'utf8'))
+  } catch {
+    warn('Could not parse opencode.json — skipping json update')
+    return
+  }
+
+  // Update model field in each agent entry, preserving everything else
+  let updated = 0
+  for (const [name, agent] of Object.entries(config.agent || {})) {
+    if (currentModels[name] && agent.model !== currentModels[name]) {
+      agent.model = currentModels[name]
+      updated++
+    }
+  }
+
+  writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+  if (updated > 0) ok(`Updated ${updated} model references in opencode.json`)
+}
+
+// ── Main ─────────────────────────────────────────────────────
+async function main() {
+  console.log('')
+  console.log(bold(cyan('╔══════════════════════════════════════════╗')))
+  console.log(bold(cyan('║     OpenCode Agent Team — Update         ║')))
+  console.log(bold(cyan('╚══════════════════════════════════════════╝')))
+  console.log('')
+
+  const sourceDir = join(__dirname, '.opencode')
+  if (!existsSync(sourceDir)) {
+    err(`Source directory not found: ${sourceDir}`)
+    console.log('  Make sure you run this script from the opencode-agent-team directory.')
+    process.exit(1)
+  }
+
+  // ── Detect where the team is installed ──────────────────────
+  step('Detecting installation...')
+  const detected = detectInstallDir()
+
+  let installDirs = []
+
+  if (detected.type === 'none') {
+    err('No existing installation found.')
+    console.log(`  Run ${cyan('node install.mjs')} first to do a fresh install.`)
+    process.exit(1)
+  } else if (detected.type === 'both') {
+    ok(`Found both project and global installations`)
+    installDirs = [
+      { label: 'project', dir: detected.projectDir },
+      { label: 'global',  dir: detected.globalDir  },
+    ]
+  } else {
+    ok(`Found ${detected.type} installation: ${detected.dir}`)
+    installDirs = [{ label: detected.type, dir: detected.dir }]
+  }
+
+  // ── Process each installation ────────────────────────────────
+  for (const { label, dir } of installDirs) {
+    step(`Updating ${label} installation (${dir})...`)
+
+    // Step 1: Read current model assignments BEFORE overwriting anything
+    const currentModels = resolveCurrentModels(dir)
+    const modelCount = Object.keys(currentModels).filter(k => !currentModels[k].includes('my-provider')).length
+    ok(`Read ${Object.keys(currentModels).length} model assignments (${modelCount} non-placeholder)`)
+
+    if (Object.keys(currentModels).length > 0) {
+      console.log('')
+      console.log(`  ${dim('Current assignments:')}`)
+      for (const [agent, model] of Object.entries(currentModels)) {
+        console.log(`    ${agent.padEnd(20)} ${dim(model)}`)
+      }
+    }
+
+    // Step 2: Copy new agent, command, and skill files (skip opencode.json)
+    copyDir(sourceDir, dir, ['opencode.json'])
+    ok('Copied updated agent, command, and skill files')
+
+    // Step 3: Re-apply model assignments to the freshly copied agent files
+    const agentsDir = join(dir, 'agents')
+    let restored = 0
+    for (const [agentName, model] of Object.entries(currentModels)) {
+      const agentFile = join(agentsDir, `${agentName}.md`)
+      if (existsSync(agentFile)) {
+        applyModel(agentFile, model)
+        restored++
+      }
+    }
+    ok(`Restored ${restored} model assignments to agent files`)
+
+    // Step 4: Update model fields in opencode.json agent block
+    // (preserve provider, mcp, instructions — only update agent.model fields)
+    const jsonPath = join(dir, 'opencode.json')
+    if (existsSync(jsonPath)) {
+      updateOpencodeJson(dir, currentModels)
+    } else {
+      warn('opencode.json not found — skipping json model update')
+    }
+  }
+
+  // ── Done ───────────────────────────────────────────────────
+  console.log('')
+  console.log(bold(green('╔══════════════════════════════════════════╗')))
+  console.log(bold(green('║     Update complete! 🎉                  ║')))
+  console.log(bold(green('╚══════════════════════════════════════════╝')))
+  console.log('')
+  console.log(`  ${bold('What was updated:')}`)
+  console.log(`    ${green('✓')} Agent prompt files (.opencode/agents/)`)
+  console.log(`    ${green('✓')} Command files (.opencode/commands/)`)
+  console.log(`    ${green('✓')} Skill files (.opencode/skills/)`)
+  console.log('')
+  console.log(`  ${bold('What was preserved:')}`)
+  console.log(`    ${green('✓')} Your model assignments`)
+  console.log(`    ${green('✓')} opencode.json provider settings`)
+  console.log(`    ${green('✓')} opencode.json MCP settings`)
+  console.log(`    ${green('✓')} AGENTS.md project rules`)
+  console.log(`    ${green('✓')} project-stack skill`)
+  console.log('')
+}
+
+main().catch(e => {
+  console.error(red('Update failed:'), e.message)
+  process.exit(1)
+})

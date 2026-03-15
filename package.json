@@ -4,7 +4,8 @@
   "description": "Multi-agent software development team for OpenCode",
   "type": "module",
   "scripts": {
-    "install-team": "node install.mjs"
+    "install-team": "node install.mjs",
+    "update-team": "node update.mjs"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -205,7 +205,7 @@
       }
     },
     "debugger": {
-      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only \u2014 never modifies code.",
+      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only — never modifies code.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "temperature": 0.1,

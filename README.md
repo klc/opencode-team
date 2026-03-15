@@ -1,6 +1,6 @@
 # OpenCode Agent Team
 
-A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, and code reviewer — all coordinated through a strict delegation chain with parallel execution, git integration, and a live todo board.
+A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, designer, security auditor, and performance analyst — all coordinated through a strict delegation chain with parallel execution, git integration, and a live todo board.
 
 ---
 
@@ -10,23 +10,25 @@ A production-ready multi-agent software development team for [OpenCode](https://
 flowchart TD
     User(["👤 User"])
 
-    User -->|"/new-feature"| PO
-    User -->|"/task /quick-fix /hotfix"| BL
-    User -->|"/bugfix"| DBG
-    User -->|"/refactor /add-test"| BL
-    User -->|"/research /tech-decision"| RES
-    User -->|"/standup /sprint"| PM
+    User -->|"/team:new-feature"| PO
+    User -->|"/team:task /team:quick-fix /team:hotfix"| BL
+    User -->|"/team:bugfix"| DBG
+    User -->|"/team:audit"| SA
+    User -->|"/team:designer"| DS
+    User -->|"/team:research /team:tech-decision"| RES
+    User -->|"/team:standup /team:sprint"| PM
 
     PO["🧭 Product Owner\nClarifies scope\nWrites user stories"]
     AR["🏛️ Architect\nTechnical decisions\nADR writing"]
     PM["📋 Project Manager\nCreates branch\nBreaks story into tasks\nUpdates todo list"]
+    DS["🎨 Designer\nVisual design system\nproject-design skill"]
 
     PO -->|"critical tech decisions"| AR
     AR -->|"decisions resolved"| PO
     PO -->|"user story"| PM
 
-    BL["⚙️ Backend Lead\nDelegates & coordinates\nTriggers QA & Review"]
-    FL["🎨 Frontend Lead\nDelegates & coordinates\nTriggers QA & Review"]
+    BL["⚙️ Backend Lead\nDelegates & coordinates\nTriggers Review → QA"]
+    FL["🎨 Frontend Lead\nDelegates & coordinates\nTriggers Review → QA"]
 
     PM -->|"backend tasks"| BL
     PM -->|"frontend tasks"| FL
@@ -44,76 +46,82 @@ flowchart TD
     SB & JB -->|"feat: commit ✓\ntodo: completed"| BL
     SF & JF -->|"feat: commit ✓\ntodo: completed"| FL
 
-    TS["🧪 Tester\nQA per scope\nParallel instances"]
-    CR["🔍 Code Reviewer\nReview per scope\nParallel instances"]
+    CR["🔍 Code Reviewer\nReview first\nParallel per scope"]
+    TS["🧪 Tester\nQA after review\nParallel per scope"]
     DBG["🐛 Debugger\nRoot cause analysis"]
     RES["🔬 Researcher\nTech evaluation\nReports"]
+    SA["🔒 Security Auditor\nOWASP Top 10\nVulnerability report"]
+    PA["⚡ Perf Analyst\nBottleneck detection\nOptimization report"]
 
-    BL -->|"all tasks done"| TS
-    FL -->|"all tasks done"| TS
-
+    BL & FL -->|"all tasks done"| CR
+    CR -->|"✅ APPROVED"| TS
+    CR -->|"🔴 BLOCKED → fix: commit"| BL & FL
     TS -->|"✅ PASS"| BL & FL
     TS -->|"❌ FAIL → fix: commit"| BL & FL
-
-    BL & FL -->|"all tests pass"| CR
-    CR -->|"✅ APPROVED"| BL & FL
-    CR -->|"🔴 BLOCKED → fix: commit"| BL & FL
 ```
 
 ### Execution Phases
 
-Every `/team:new-feature` flows through three strict phases — no phase starts before the previous is complete:
+Every `/team:new-feature` flows through these phases — no phase starts before the previous is complete:
 
 | Phase | Who | What happens |
 |---|---|---|
-| **1 — Planning** | product-owner → architect → project-manager | Scope is clarified, critical tech decisions are made, story is written, branch is created, tasks are added to the todo board |
-| **2 — Implementation** | leads → senior/junior developers | Tasks are delegated in parallel, each developer commits with `feat:` and marks their task `completed` |
-| **3 — QA** | leads → testers (parallel per scope) | Testers verify acceptance criteria, `fix:` commits for failures, re-test until all pass |
-| **4 — Review** | leads → reviewers (parallel per scope) | Code reviewed per scope, `fix:` commits for findings, approved scopes stay approved |
+| **1 — Planning** | product-owner → architect → project-manager | Scope clarified, tech decisions made, story written, branch created, tasks added to todo board |
+| **2 — Implementation** | leads → senior/junior developers | Tasks delegated in parallel, each developer commits with `feat:` and marks task `completed` |
+| **3 — Review** | leads → reviewers (parallel per scope) | Code reviewed first — structural issues caught before tests run |
+| **4 — QA** | leads → testers (parallel per scope) | Tests run only after review passes — `fix:` commits for failures, re-test until all pass |
+
+> **Why review before test?** Reviewers can reject architectural decisions that would make tests obsolete. Running tests on code that gets rejected wastes time and creates conflicting fix commits.
 
 ---
 
 ## Agents
 
-The team has 13 agents. Each agent has a specific role and a strict boundary — leads never write code, developers never skip the lead, and so on.
+The team has **16 agents**. Each agent has a specific role and a strict boundary — leads never write code, developers never skip the lead.
+
+Agents marked with 🔒 are **hidden** — they don't appear in `@` autocomplete and are only invoked by other agents via the Task tool.
 
 | Agent | Role | Mode |
 |---|---|---|
 | `product-owner` | Clarifies scope, writes user stories, owns the backlog | primary |
 | `project-manager` | Creates branches, breaks stories into tasks, coordinates leads | primary |
 | `architect` | Technical decisions, ADR writing, infrastructure design | primary |
-| `backend-lead` | Delegates backend tasks, owns QA and review for backend | primary |
-| `frontend-lead` | Delegates frontend tasks, owns QA and review for frontend | primary |
-| `senior-backend` | Complex backend features, integrations, performance | subagent |
-| `junior-backend` | CRUD, bug fixes, test writing | subagent |
-| `senior-frontend` | Complex components, state management, SSR | subagent |
-| `junior-frontend` | Simple UI, styling fixes, component tests | subagent |
-| `tester` | QA per scope — spawned in parallel by leads | subagent |
-| `code-reviewer` | Review per scope — spawned in parallel by leads | subagent |
-| `debugger` | Root cause analysis for bugs and production incidents | subagent |
+| `backend-lead` | Delegates backend tasks, owns review → QA for backend | primary |
+| `frontend-lead` | Delegates frontend tasks, owns review → QA for frontend | primary |
+| `designer` | Establishes visual design system, writes `project-design` skill | subagent |
+| `senior-backend` 🔒 | Complex backend features, integrations, performance | subagent |
+| `junior-backend` 🔒 | CRUD, bug fixes, test writing | subagent |
+| `senior-frontend` 🔒 | Complex components, state management, SSR | subagent |
+| `junior-frontend` 🔒 | Simple UI, styling fixes, component tests | subagent |
+| `tester` 🔒 | QA per scope — spawned in parallel by leads after review passes | subagent |
+| `code-reviewer` 🔒 | Review per scope — spawned in parallel by leads before QA | subagent |
+| `debugger` 🔒 | Root cause analysis for bugs and production incidents | subagent |
 | `researcher` | Technology research, library comparison, spike reports | subagent |
+| `security-auditor` 🔒 | OWASP Top 10, auth flaws, injection vulnerabilities — deeper than code-reviewer | subagent |
+| `performance-analyst` 🔒 | N+1 queries, missing indexes, bundle size, cache opportunities | subagent |
 
 ### Recommended Models
 
-These are recommendations based on the [OpenCode Arena](https://opencode.ai/arena) benchmarks. Any model supported by your provider will work — swap freely.
-
-| Agent | Recommended Model | Why |
+| Agent | Tier | Why |
 |---|---|---|
-| `product-owner` | `qwen3.5-plus` or any vision-capable model | Reading wireframes/mockups from the user |
-| `project-manager` | `glm-5` or a strong reasoning model | Task decomposition, dependency analysis |
-| `architect` | `glm-5` or best available reasoning model | Highest-stakes decisions in the chain |
-| `backend-lead` | `glm-5` or strong code model | Code quality judgment, complexity assessment |
-| `frontend-lead` | `glm-4.7` or strong code model | UI architecture, SSR awareness |
-| `senior-backend` | `glm-5` or strong code model | Complex implementation |
-| `junior-backend` | `glm-4.7` or fast capable model | Simple tasks, fast iteration |
-| `senior-frontend` | `glm-4.7` or strong code model | Complex component work |
-| `junior-frontend` | `glm-4.7` or fast capable model | Simple tasks, fast iteration |
-| `tester` | Any vision-capable model | Reading screenshots for UI test failures |
-| `code-reviewer` | `glm-4.7` or strong code model | Review quality, security awareness |
-| `debugger` | `glm-5` or best available reasoning model | Root cause analysis is reasoning-heavy |
-| `researcher` | Any vision-capable model | Reading docs, diagrams, papers |
+| `product-owner` | Strong (vision-capable preferred) | May read wireframes/mockups |
+| `project-manager` | Strong | Task decomposition, dependency analysis |
+| `architect` | Strong — best available | Highest-stakes decisions in the chain |
+| `backend-lead` | Strong | Code quality judgment, complexity assessment |
+| `frontend-lead` | Fast | UI architecture, SSR awareness |
+| `designer` | Strong | Design decisions are permanent and affect all frontend |
+| `senior-backend` | Strong | Complex implementation |
+| `senior-frontend` | Fast | Complex component work |
+| `junior-backend` | Fast | Simple tasks, fast iteration |
+| `junior-frontend` | Fast | Simple tasks, fast iteration |
+| `tester` | Fast | Test writing and execution |
+| `code-reviewer` | Fast | Review quality, security awareness |
+| `debugger` | Strong — best available | Root cause analysis is reasoning-heavy |
+| `researcher` | Fast (vision-capable preferred) | Reading docs, diagrams, papers |
+| `security-auditor` | Strong | False negatives are costly — don't cut corners here |
+| `performance-analyst` | Strong | Architectural pattern recognition needed |
 
-> **Cost tip:** Junior agents and code-reviewer handle high-volume, lower-stakes work. Assign your fastest/cheapest capable model there. Reserve your best model for architect, backend-lead, and debugger — they make the decisions that cascade through the rest of the chain.
+> **Cost tip:** Junior agents, tester, and code-reviewer handle high-volume, lower-stakes work — use your fastest model there. Reserve your best model for architect, leads, debugger, security-auditor, and performance-analyst.
 
 ---
 
@@ -121,54 +129,56 @@ These are recommendations based on the [OpenCode Arena](https://opencode.ai/aren
 
 Commands are the entry points. Pick the one that matches the scope of your work.
 
+### Setup
+
+| Command | Use when |
+|---|---|
+| `/team:init` | **Start here.** Scans the project, auto-detects the stack, asks targeted questions for gaps, and writes `.opencode/skills/project-stack/SKILL.md` |
+| `/team:designer <brief>` | Define the project's visual design system — creates `.opencode/skills/project-design/SKILL.md` that all frontend agents follow |
+
 ### Feature development
 
 | Command | Use when |
 |---|---|
-| `/team:new-feature <description>` | Starting a new feature from scratch — runs the full chain: scope clarification → architect decisions → story → implementation → QA → review |
-| `/team:task <description>` | You know exactly what needs to be done and want it built immediately — skips planning, goes directly to the right developer |
-| `/team:quick-fix <description>` | 1–3 file change, no new logic, under 30 minutes — no todo list, no QA, just fix + review |
+| `/team:new-feature <description>` | Full pipeline — scope → architect → implementation → review → QA |
+| `/team:task <description>` | Single well-defined task — skips planning, goes directly to the right developer |
+| `/team:quick-fix <description>` | 1–3 file correction, no new logic — no todo list, just fix + review |
 
 ### Bug handling
 
 | Command | Use when |
 |---|---|
-| `/team:bugfix <description>` | A bug needs investigation — debugger finds root cause, lead coordinates fix, tester verifies |
-| `/team:hotfix <description>` | Production is broken and can't wait — creates hotfix branch, debugger triages, senior developer fixes, fast-tracks review |
+| `/team:bugfix <description>` | Debugger finds root cause, lead coordinates fix, tester verifies |
+| `/team:hotfix <description>` | Production is broken — hotfix branch, debugger triage, fast-track review |
 
-### Code quality
+### Code quality & analysis
 
 | Command | Use when |
 |---|---|
-| `/team:refactor <description>` | Improving code structure without changing behavior — runs tests before and after to confirm no regression |
-| `/team:add-test <description>` | Adding tests to code that lacks coverage — no production code changes |
-| `/team:review <file or area>` | Manually triggering a code review on specific files or an area |
+| `/team:audit [scope]` | Full project audit — security, performance, and code quality in parallel |
+| `/team:refactor <description>` | Improve code structure without changing behavior — tests run before and after |
+| `/team:add-test <description>` | Add tests to code that lacks coverage — no production code changes |
+| `/team:review <file or area>` | Manually trigger a code review |
 
 ### Research & decisions
 
 | Command | Use when |
 |---|---|
-| `/team:research <topic>` | Researching a technology, library, or pattern — produces a comparison report with a recommendation |
-| `/team:tech-decision <question>` | Evaluating an architectural decision — researcher investigates, architect writes an ADR |
+| `/team:research <topic>` | Technology research — comparison report with recommendation |
+| `/team:tech-decision <question>` | Architectural decision — researcher investigates, architect writes ADR |
 
 ### Planning & tracking
 
 | Command | Use when |
 |---|---|
-| `/team:sprint <stories>` | Planning a sprint from a list of user stories — full task breakdown assigned to leads |
-| `/team:standup` | Daily status report — reads the todo board and git log, outputs what's done / in progress / blocked |
-
-### Setup
-
-| Command | Use when |
-|---|---|
-| `/team:init` | **Start here.** Scans the project, auto-detects the stack, asks targeted questions for gaps, and writes `.opencode/skills/project-stack/SKILL.md` — the file that makes every other agent project-aware |
+| `/team:sprint <stories>` | Plan a sprint from user stories — task breakdown assigned to leads |
+| `/team:standup` | Daily status — reads todo board and git log |
 
 ### Maintenance
 
 | Command | Use when |
 |---|---|
-| `/team:update-docs <description>` | Updating README, API docs, architecture docs, or inline comments |
+| `/team:update-docs <description>` | Update README, API docs, architecture docs, or inline comments |
 
 ---
 
@@ -183,113 +193,52 @@ Four agents will stop and ask you before proceeding when they encounter a decisi
 | `backend-lead` | Package selection with compatibility concerns, database design trade-offs, queue vs sync |
 | `frontend-lead` | State management approach, SSR trade-offs, new UI library adoption |
 
-Example — you type `/team:new-feature live chat`:
-
-> **Decision Required: Real-time transport**
->
-> **Option A — WebSocket:** True bidirectional, native support in most frameworks. Requires a persistent connection server.
-> **Option B — SSE:** Server-to-client only, works over HTTP/2, simpler infrastructure. Not suitable for bidirectional chat.
-> **Option C — Long Polling:** Simplest setup, highest latency and server load.
->
-> **My recommendation: Option A (WebSocket)** — chat requires bidirectional communication; SSE cannot satisfy this.
->
-> A) WebSocket  B) SSE  C) Long Polling  — or say "proceed" to go with my recommendation.
-
 ---
 
-## Project Stack Skill — Required Setup
+## Project Skills
 
-**Each project needs its own `project-stack` skill.** This is the only file that makes the team project-specific. Without it, agents won't know your test commands, folder structure, runtime constraints, or naming conventions.
+The team uses three project-specific skills. All are generated automatically — you never write them by hand.
 
-### Setup
-
-1. Copy `.opencode/skills/project-stack-template/SKILL.md` to `.opencode/skills/project-stack/SKILL.md`
-2. Fill in every section for your project
-3. Delete the template notice at the top
-
-The template covers: stack overview, project structure, test & build commands, critical runtime constraints, architecture patterns, naming conventions, and external services.
-
-### Example
-
-This repo includes a ready-made stack skill for **Laravel 12 + Octane/Swoole + Inertia SSR + Vue 3** in [`examples/laravel-octane-inertia/project-stack/SKILL.md`](examples/laravel-octane-inertia/project-stack/SKILL.md).
-
-It covers Octane-specific pitfalls (static state bleeding between requests, ClickHouse write rules) and Inertia SSR rules (no `window`/`document` outside `onMounted`).
+| Skill | Generated by | Purpose |
+|---|---|---|
+| `project-stack` | `/team:init` | Stack, test commands, folder structure, runtime constraints |
+| `project-design` | `/team:designer` | Colors, typography, spacing, component patterns — loaded by all frontend agents |
 
 ---
 
 ## Configuration — opencode.json
 
-The `.opencode/opencode.json` file is the control panel of the team. Without it, no agent runs. It defines three things:
+The `.opencode/opencode.json` file is the control panel of the team. Without it, no agent runs.
 
-### 1. Providers
-
-Tell OpenCode which AI providers to use and how to reach them:
-
-```json
-"provider": {
-  "my-provider": {
-    "name": "My Provider",
-    "npm": "@ai-sdk/openai",
-    "api": "https://api.my-provider.com/v1",
-    "env": ["MY_PROVIDER_API_KEY"],
-    "models": {
-      "my-model": {
-        "name": "My Model",
-        "reasoning": true,
-        "tool_call": true,
-        "modalities": { "input": ["text"], "output": ["text"] },
-        "limit": { "context": 128000, "output": 16384 },
-        "cost": { "input": 0, "output": 0 }
-      }
-    }
-  }
-}
-```
-
-You can define multiple providers and mix models across agents. The included `opencode.json` uses placeholder provider names — replace them with your own. See [OpenCode provider docs](https://opencode.ai/docs/providers) for all supported providers.
-
-### 2. Agent configuration
-
-Each agent gets its own config block. The key fields:
+### Key fields per agent
 
 ```json
 "backend-lead": {
-  "model": "my-provider/my-model",   // which model runs this agent
-  "temperature": 0.3,                 // lower = more deterministic
-  "steps": 20,                        // max tool calls before stopping
-  "tools": {                          // which tools are available
-    "bash": true,
-    "write": true,
-    "edit": true,
-    "read": true,
+  "model": "my-provider/my-model",
+  "mode": "all",           // all | primary | subagent
+  "steps": 100,            // max tool calls — omit for unlimited
+  "hidden": false,         // true = hidden from @ autocomplete
+  "color": "#34d399",      // TUI color (hex in quotes, or theme name)
+  "tools": {
     "todowrite": true,
     "todoread": true
   },
-  "task_permissions": {               // permission level when running as subagent
-    "bash": "allow",                  // allow | ask | deny
-    "write": "allow",
+  "permission": {
+    "bash": "allow",       // allow | ask | deny
     "edit": "allow"
   }
 }
 ```
 
-**`steps`** is important — it prevents runaway loops. Recommended values:
-- Planning agents (product-owner, PM): 10–15
-- Lead agents: 20
-- Senior developers: 40 (complex tasks need more steps)
-- Junior developers: 20
-- Testers / reviewers: 20–30
+**`steps`** prevents runaway loops. Recommended values: leads 100, senior devs 80, junior devs 40, tester/reviewer 60, planning agents 80. Omit for unlimited.
 
-**`task_permissions`** controls what a subagent can do without asking you:
-- Senior developers: `bash: allow` — they can run tests freely
-- Junior developers: `bash: ask` — bash commands need your approval
-- Reviewers / debugger: `write: false` — read-only, cannot modify files
+**`permission`** controls what a subagent can do without asking you. Senior devs: `bash: allow`. Junior devs: `bash: ask`. Reviewers/debugger: no write access.
 
-**`todowrite` / `todoread`** are disabled for subagents by default in OpenCode. They must be explicitly enabled per agent in the tools block — the included config already does this.
+**`todowrite` / `todoread`** are disabled for subagents by default in OpenCode — the config explicitly enables them for agents that need the todo board.
 
-### 3. MCP servers (optional)
+**`color`** must be a hex value in single quotes (`'#34d399'`) or a theme name (`primary`, `accent`, etc.). Without quotes, YAML treats `#` as a comment.
 
-Add any MCP integrations in the `mcp` block. Common ones:
+### MCP servers
 
 ```json
 "mcp": {
@@ -297,24 +246,7 @@ Add any MCP integrations in the `mcp` block. Common ones:
     "type": "local",
     "command": ["npx", "@playwright/mcp@latest"],
     "enabled": true
-  },
-  "context7": {
-    "type": "remote",
-    "url": "https://mcp.context7.com/mcp",
-    "enabled": true
   }
-}
-```
-
-### Swapping models
-
-To use a different model for an agent, change the `model` field. The format is always `"provider-name/model-name"` matching what you defined in the `provider` block.
-
-```json
-// Use a stronger model for architect
-"architect": {
-  "model": "my-provider/my-best-model",
-  ...
 }
 ```
 
@@ -322,67 +254,42 @@ To use a different model for an agent, change the `model` field. The format is a
 
 ## Installation
 
-The easiest way is to run the setup script. Node.js 18+ is required (already installed if you have OpenCode).
+Node.js 18+ required (already installed if you have OpenCode).
 
 ```bash
 node install.mjs
-```
-
-Or via npm:
-
-```bash
+# or
 npm run install-team
 ```
 
 The script will:
-1. Ask whether to install **project-specific** (`.opencode/` in current dir) or **global** (`~/.config/opencode/`)
-2. Fetch your available models via `opencode models`
-3. Ask you to assign a **strong model** (leads, architect, senior devs) and a **fast model** (juniors, tester, reviewer)
-4. Optionally let you customize models per individual agent
-5. Write all agent, command, and skill files
-6. Generate or merge `opencode.json` with your model assignments (global installs only update the `agent` block — provider and MCP settings are preserved)
-7. Create `AGENTS.md` and link it (project installs only)
+1. Ask: **project** (`.opencode/` in current dir) or **global** (`~/.config/opencode/`)
+2. Fetch available models via `opencode models`
+3. Assign a **strong model** and a **fast model** across the team
+4. Optionally customize models per individual agent
+5. Copy all agent, command, and skill files
+6. Generate or merge `opencode.json` — global installs only update the `agent` block, preserving your provider and MCP settings
+7. Create `AGENTS.md` for project installs
 
-### Manual installation
+## Updating
 
-```bash
-# 1. Copy the .opencode folder into your project root
-cp -r opencode-agent-team/.opencode /your-project/.opencode
-```
+When a new version is released, run:
 
 ```bash
-# 2. Edit opencode.json — set your providers and models
-#    Replace "my-provider" and "my-strong-model" / "my-fast-model"
-#    with your actual provider and model names
-nano .opencode/opencode.json
+node update.mjs
+# or
+npm run update-team
 ```
+
+To preview what will change without writing any files:
 
 ```bash
-# 3. Set your API key as an environment variable
-export MY_PROVIDER_API_KEY=sk-...
+node update.mjs --dry-run
+# or
+npm run update-team:dry
 ```
 
-```bash
-# 4. Run team:init inside OpenCode
-/team:init
-```
-
-`team:init` will:
-- Scan the project and write `.opencode/skills/project-stack/SKILL.md`
-- Create `AGENTS.md` in the project root with placeholder sections
-- Add `"instructions": ["AGENTS.md"]` to `opencode.json`
-
-```bash
-# 5. Open AGENTS.md and fill in your project rules
-# Examples:
-#   - "Always respond to me in Turkish"
-#   - "Run php and npm commands inside Docker"
-#   - "Always ask before creating new migrations"
-nano AGENTS.md
-```
-
-> **Manually creating the stack skill?**
-> Copy `.opencode/skills/project-stack-template/SKILL.md` to `.opencode/skills/project-stack/SKILL.md` and fill it in instead of running `/team:init`. Also create `AGENTS.md` manually and add `"instructions": ["AGENTS.md"]` to `opencode.json`.
+The update script reads your current model assignments before overwriting anything and restores them after copying new files. It also shows a changelog of what changed since your last update.
 
 ---
 
@@ -390,23 +297,27 @@ nano AGENTS.md
 
 ```
 .opencode/
-├── opencode.json         ← providers, model assignments, tool permissions
-├── agents/
+├── opencode.json              ← providers, model assignments, tool permissions
+├── agents/                    ← 16 agent prompt files
 │   ├── product-owner.md
 │   ├── project-manager.md
 │   ├── architect.md
+│   ├── designer.md
 │   ├── backend-lead.md
 │   ├── frontend-lead.md
-│   ├── senior-backend.md
-│   ├── junior-backend.md
-│   ├── senior-frontend.md
-│   ├── junior-frontend.md
-│   ├── tester.md
-│   ├── code-reviewer.md
-│   ├── debugger.md
-│   └── researcher.md
-├── commands/
-│   ├── team:init.md          ← start here for every new project
+│   ├── senior-backend.md      ← hidden
+│   ├── junior-backend.md      ← hidden
+│   ├── senior-frontend.md     ← hidden
+│   ├── junior-frontend.md     ← hidden
+│   ├── tester.md              ← hidden
+│   ├── code-reviewer.md       ← hidden
+│   ├── debugger.md            ← hidden
+│   ├── researcher.md
+│   ├── security-auditor.md    ← hidden
+│   └── performance-analyst.md ← hidden
+├── commands/                  ← 17 command files
+│   ├── team:init.md
+│   ├── team:designer.md
 │   ├── team:new-feature.md
 │   ├── team:task.md
 │   ├── team:quick-fix.md
@@ -414,6 +325,7 @@ nano AGENTS.md
 │   ├── team:hotfix.md
 │   ├── team:refactor.md
 │   ├── team:add-test.md
+│   ├── team:audit.md
 │   ├── team:review.md
 │   ├── team:research.md
 │   ├── team:tech-decision.md
@@ -421,22 +333,23 @@ nano AGENTS.md
 │   ├── team:standup.md
 │   └── team:update-docs.md
 └── skills/
-# project-stack lives in .agents/skills/, not here
+    ├── project-stack/         ← YOU CREATE THIS via /team:init
+    │   └── SKILL.md
+    ├── project-design/        ← YOU CREATE THIS via /team:designer
+    │   └── SKILL.md
     ├── project-stack-template/
-    │   └── SKILL.md          ← copy to .opencode/skills/project-stack/SKILL.md
-    ├── project-stack-template/
-    │   └── SKILL.md          ← copy and fill in
+    │   └── SKILL.md           ← template to fill in manually if needed
     ├── workflow/
-    │   └── SKILL.md          ← delegation chain, invocation templates
+    │   └── SKILL.md           ← delegation chain, invocation templates
     ├── coding-standards/
-    │   └── SKILL.md          ← universal quality rules, DoD, review levels
+    │   └── SKILL.md           ← quality rules, DoD, review severity levels
     └── git-workflow/
-        └── SKILL.md          ← conventional commits, branch strategy
+        └── SKILL.md           ← conventional commits, branch strategy
 
 examples/
 └── laravel-octane-inertia/
     └── project-stack/
-        └── SKILL.md          ← ready-made for Laravel 12 + Octane + Inertia SSR
+        └── SKILL.md           ← ready-made for Laravel 12 + Octane + Inertia SSR
 ```
 
 ---
@@ -445,14 +358,15 @@ examples/
 
 Every task produces a commit. No exceptions.
 
-- **Implementation complete** → `feat(<scope>): <description> [<task-id>]`
-- **QA failure fixed** → `fix(<scope>): <description> [<task-id>]`
-- **Review finding fixed** → `fix(<scope>): <description> [<task-id>]`
-- **Refactor** → `refactor(<scope>): <description>`
-- **Tests added** → `test(<scope>): <description>`
-- **Docs updated** → `docs(<scope>): <description>`
+| Commit type | When |
+|---|---|
+| `feat(<scope>): ... [T0X]` | Implementation complete |
+| `fix(<scope>): ... [T0X]` | QA failure or review finding fixed |
+| `refactor(<scope>): ...` | Refactor complete |
+| `test(<scope>): ...` | Tests added |
+| `docs(<scope>): ...` | Documentation updated |
 
-The task ID in every commit (e.g. `[T03]`) links the git history to the todo board. A `git log` shows exactly which commit belongs to which task.
+The task ID in every commit (e.g. `[T03]`) links git history to the todo board.
 
 Feature branches are created by `project-manager` at story start: `feature/<story-slug>`.
 
@@ -460,10 +374,11 @@ Feature branches are created by `project-manager` at story start: `feature/<stor
 
 ## Contributing
 
-PRs welcome. If you've built a project-stack skill for a different stack (Next.js, NestJS, Django, Rails, Go, etc.), add it under `examples/` and open a PR.
+PRs welcome. If you've built a `project-stack` skill for a different stack (Next.js, NestJS, Django, Rails, Go, etc.), add it under `examples/` and open a PR.
 
 When modifying agent prompts, keep these invariants:
 - Delegation chain must remain strict — no step can be skipped
+- Review must run before QA — this order prevents wasted test work
 - Critical Decision Protocol must remain in the four designated agents
 - Todo board and git commit steps must remain mandatory for developers
 - Parallel execution rules must remain — independent tasks always run in parallel

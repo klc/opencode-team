@@ -1,7 +1,7 @@
 ---
-description: Urgent production fix. Creates a hotfix branch, delegates to senior developer, fast-tracks review. Use when something is broken in production and cannot wait for the normal feature cycle.
+description: Urgent production fix. Creates a hotfix branch, debugger triages root cause, senior developer fixes, fast-tracks review.
 agent: backend-lead
-subtask: false
+subtask: true
 ---
 
 Load the project-stack skill and git-workflow skill.

@@ -1,7 +1,7 @@
 ---
 description: Architect - System architecture design, technical decision evaluation, and ADR writing
 model: my-provider/my-strong-model
-mode: subagent
+mode: all
 temperature: 0.4
 ---
 

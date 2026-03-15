@@ -1,7 +1,7 @@
 ---
 description: Frontend Team Lead - UI architecture decisions, task delegation, and frontend quality ownership
 model: zai-coding-plan/glm-4.7
-mode: primary
+mode: all
 temperature: 0.3
 tools:
   todowrite: true
@@ -82,7 +82,7 @@ Use the delegation template from the `workflow` skill.
 When a developer reports implementation complete:
 
 1. Note which task completed
-2. **Wait for ALL parallel tasks to complete before triggering QA**
+2. **Wait for ALL parallel tasks to complete before triggering QA** — the Task tool blocks until each developer subagent finishes, so invoke all parallel developers first, then wait for all to return
 3. Verify no build errors across all completed work
 4. If a task is unsatisfactory: send it back with specific feedback
 
@@ -101,7 +101,7 @@ Acceptance criteria:
   - [ ] [criterion]
 ```
 
-One tester per independent area. When ALL testers report PASS → trigger parallel reviewers.
+One tester per independent area. When ALL testers report PASS → invoke reviewers and wait for all of them to complete.
 
 ## Triggering Parallel Code Review
 

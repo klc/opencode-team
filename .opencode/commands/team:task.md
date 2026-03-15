@@ -1,5 +1,5 @@
 ---
-description: Assign a single well-defined task directly to a developer. Skips product-owner and project-manager. Use when you know exactly what needs to be done and just want it built.
+description: Assign a single well-defined task directly. Skips product-owner and project-manager — goes straight to the right lead and developer, then QA and review.
 agent: backend-lead
 subtask: true
 ---

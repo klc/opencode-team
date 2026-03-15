@@ -1,7 +1,7 @@
 ---
 description: Project Manager - Sprint planning, task breakdown, branch creation, and team coordination
 model: alibaba-coding-plan/glm-5
-mode: primary
+mode: all
 temperature: 0.5
 tools:
   todowrite: true
@@ -95,7 +95,15 @@ Use the invocation templates from the `workflow` skill.
 
 ## Execution Phases
 
-Follow the workflow skill's three-phase model strictly. Your job is Phase 1 only — invoke leads and let the QA and Review phases run automatically through the agent chain.
+Your job is Phase 1 only. After creating the branch, breaking tasks, and updating the todo list:
+
+1. Invoke **@backend-lead** with all backend tasks (if any)
+2. Invoke **@frontend-lead** with all frontend tasks (if any)
+3. **Wait for both leads to complete** — the Task tool will block until each subagent finishes
+4. When both leads report done, summarize the completed feature to the user
+
+You do not call @tester or @code-reviewer — that is the leads' responsibility.
+Each lead will run the full chain internally: developers → testers → reviewers.
 
 ## Sprint Planning Format
 

@@ -4,29 +4,26 @@ agent: product-owner
 subtask: true
 ---
 
-Load the workflow skill, then load the project-stack skill.
+Load the workflow skill and project-stack skill.
 
 A new feature has been requested:
 
 "$ARGUMENTS"
 
-Follow these steps in order:
+Execute the full pipeline in sequence. Do not stop between steps unless user input is required.
 
-**Step 1 — Scope clarification (your job)**
-If the request is ambiguous in ways that would significantly change the user story, ask the user 2–3 targeted questions using the Critical Decision Protocol format. Come with your own assumptions so they can just say "proceed" if you're right.
+**Step 1 — Scope clarification**
+If the request is ambiguous, ask the user using the Critical Decision Protocol format (max 2–3 questions with your own assumptions). If clear, skip to Step 2.
 
-If the request is clear enough, skip directly to Step 2.
+**Step 2 — Architecture decisions**
+Invoke @architect with the feature description and any confirmed scope decisions.
+Wait for architect to return before continuing.
 
-**Step 2 — Architecture check**
-Before writing the user story, invoke @architect with:
-- The feature description
-- Any scope decisions already confirmed
-- The instruction: "Identify any critical technical decisions this feature requires and ask the user before we proceed."
+**Step 3 — Write user story**
+Write a complete user story with acceptance criteria reflecting all confirmed decisions.
 
-Wait for @architect to complete its decision round with the user before continuing.
+**Step 4 — Hand off to project-manager**
+Invoke @project-manager with the user story and wait for it to complete.
+project-manager will: create branch → break tasks → invoke leads → wait for leads → leads wait for developers → developers wait for testers → testers wait for reviewers.
 
-**Step 3 — User story**
-Once scope and architecture are clear, write a complete user story with acceptance criteria that reflects the confirmed decisions.
-
-**Step 4 — Hand off**
-Immediately invoke @project-manager with the completed story.
+When project-manager returns, report the completed feature to the user.

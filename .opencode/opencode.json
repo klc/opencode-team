@@ -59,7 +59,7 @@
       "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.7,
-      "steps": 10,
+      "steps": 80,
       "tools": {
         "bash": false,
         "write": true,
@@ -67,13 +67,14 @@
         "read": true,
         "webfetch": false,
         "websearch": false
-      }
+      },
+      "mode": "all"
     },
     "project-manager": {
       "description": "Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.5,
-      "steps": 15,
+      "steps": 80,
       "tools": {
         "bash": true,
         "write": true,
@@ -83,13 +84,14 @@
         "websearch": false,
         "todowrite": true,
         "todoread": true
-      }
+      },
+      "mode": "all"
     },
     "architect": {
       "description": "Invoke before major structural decisions: protocol/transport choice, new services, schema changes. Writes ADRs. Never writes production code.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.4,
-      "steps": 20,
+      "steps": 60,
       "tools": {
         "bash": false,
         "write": true,
@@ -97,46 +99,14 @@
         "read": true,
         "webfetch": true,
         "websearch": true
-      }
+      },
+      "mode": "all"
     },
     "backend-lead": {
       "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple). Triggers QA and review phases.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.3,
-      "steps": 20,
-      "tools": {
-        "bash": true,
-        "write": true,
-        "edit": true,
-        "read": true,
-        "webfetch": true,
-        "websearch": true,
-        "todowrite": true,
-        "todoread": true
-      }
-    },
-    "frontend-lead": {
-      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple). Triggers QA and review phases.",
-      "model": "my-provider/my-fast-model",
-      "temperature": 0.4,
-      "steps": 20,
-      "tools": {
-        "bash": true,
-        "write": true,
-        "edit": true,
-        "read": true,
-        "webfetch": true,
-        "websearch": true,
-        "todowrite": true,
-        "todoread": true
-      }
-    },
-    "senior-backend": {
-      "description": "Invoke for complex backend tasks: new architecture, integrations, performance-critical code, security flows. Full tool access.",
-      "model": "my-provider/my-strong-model",
-      "mode": "subagent",
-      "temperature": 0.2,
-      "steps": 40,
+      "steps": 100,
       "tools": {
         "bash": true,
         "write": true,
@@ -147,9 +117,43 @@
         "todowrite": true,
         "todoread": true
       },
-      "task_permissions": {
+      "mode": "all"
+    },
+    "frontend-lead": {
+      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple). Triggers QA and review phases.",
+      "model": "my-provider/my-fast-model",
+      "temperature": 0.4,
+      "steps": 100,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "mode": "all"
+    },
+    "senior-backend": {
+      "description": "Invoke for complex backend tasks: new architecture, integrations, performance-critical code, security flows. Full tool access.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "steps": 80,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
         "bash": "allow",
-        "write": "allow",
         "edit": "allow"
       }
     },
@@ -158,7 +162,7 @@
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.3,
-      "steps": 40,
+      "steps": 80,
       "tools": {
         "bash": true,
         "write": true,
@@ -169,9 +173,8 @@
         "todowrite": true,
         "todoread": true
       },
-      "task_permissions": {
+      "permission": {
         "bash": "allow",
-        "write": "allow",
         "edit": "allow"
       }
     },
@@ -180,7 +183,7 @@
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.3,
-      "steps": 20,
+      "steps": 40,
       "tools": {
         "bash": true,
         "write": true,
@@ -191,9 +194,8 @@
         "todowrite": true,
         "todoread": true
       },
-      "task_permissions": {
+      "permission": {
         "bash": "ask",
-        "write": "allow",
         "edit": "allow"
       }
     },
@@ -202,7 +204,7 @@
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.4,
-      "steps": 20,
+      "steps": 40,
       "tools": {
         "bash": true,
         "write": true,
@@ -213,9 +215,8 @@
         "todowrite": true,
         "todoread": true
       },
-      "task_permissions": {
+      "permission": {
         "bash": "ask",
-        "write": "allow",
         "edit": "allow"
       }
     },
@@ -224,7 +225,7 @@
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.2,
-      "steps": 30,
+      "steps": 60,
       "tools": {
         "bash": true,
         "write": true,
@@ -235,9 +236,8 @@
         "todowrite": true,
         "todoread": true
       },
-      "task_permissions": {
+      "permission": {
         "bash": "allow",
-        "write": "allow",
         "edit": "allow"
       }
     },
@@ -246,7 +246,7 @@
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.2,
-      "steps": 20,
+      "steps": 40,
       "tools": {
         "bash": true,
         "write": false,
@@ -263,7 +263,7 @@
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "temperature": 0.1,
-      "steps": 25,
+      "steps": 60,
       "tools": {
         "bash": true,
         "write": false,
@@ -278,7 +278,7 @@
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.6,
-      "steps": 20,
+      "steps": 40,
       "tools": {
         "bash": false,
         "write": true,

@@ -157,7 +157,10 @@ function buildAgentBlock(agentModels) {
     'tester':          'Invoke after implementation is complete. Writes and runs tests, reports bugs. Spawned in parallel per scope by leads.',
     'code-reviewer':   'Invoke after all tests pass. Reviews code quality, security, and standards. Never modifies code.',
     'debugger':        'Invoke when root cause of a bug is unclear. Reads logs and stack traces. Analysis only.',
-    'researcher':      'Invoke to evaluate a technology or pattern. Produces comparison report with recommendation.',
+    'researcher':        'Invoke to evaluate a technology or pattern. Produces comparison report with recommendation.',
+    'designer':          'Invoke to establish or update the project visual design system. Creates the project-design skill that all frontend developers follow.',
+    'security-auditor':  'Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities. More thorough than code-reviewer.',
+    'performance-analyst': 'Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size, cache opportunities.',
   }
 
   const modeMap = {
@@ -167,6 +170,7 @@ function buildAgentBlock(agentModels) {
     'junior-backend': 'subagent', 'junior-frontend': 'subagent',
     'tester': 'subagent', 'code-reviewer': 'subagent',
     'debugger': 'subagent', 'researcher': 'subagent',
+    'designer': 'subagent', 'security-auditor': 'subagent', 'performance-analyst': 'subagent',
   }
 
   const stepsMap = {
@@ -176,6 +180,7 @@ function buildAgentBlock(agentModels) {
     'junior-backend': 40, 'junior-frontend': 40,
     'tester': 60, 'code-reviewer': 40,
     'debugger': 60, 'researcher': 40,
+    'designer': 60, 'security-auditor': 60, 'performance-analyst': 60,
   }
 
   const permissionMap = {
@@ -207,6 +212,13 @@ function buildAgentBlock(agentModels) {
     if (permissionMap[name]) {
       agent.permission = permissionMap[name]
     }
+    // hidden agents — internal use only, not shown in @ autocomplete
+    const hiddenAgents = new Set([
+      'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend',
+      'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst',
+    ])
+    if (hiddenAgents.has(name)) agent.hidden = true
+
     block[name] = agent
   }
   return block
@@ -269,8 +281,11 @@ async function main() {
     'junior-frontend': fastModel,
     'tester':          fastModel,
     'code-reviewer':   fastModel,
-    'debugger':        strongModel,
-    'researcher':      fastModel,
+    'debugger':          strongModel,
+    'researcher':        fastModel,
+    'designer':          strongModel,
+    'security-auditor':  strongModel,
+    'performance-analyst': strongModel,
   }
 
   // ── Step 4: Optional per-agent customization ──────────────

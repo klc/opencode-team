@@ -225,6 +225,100 @@ Use this structure — fill every section with real values, no placeholders:
 [from dependency files + Q&A]
 ```
 
+**Immediately after writing the skill file**, before moving to Phase 5:
+
+Check if Vibe Kanban MCP is configured:
+
+```bash
+grep -q "vibe_kanban" .opencode/opencode.json 2>/dev/null && echo "configured" || echo "not_configured"
+```
+
+**If configured**, ask the user:
+
+```
+Vibe Kanban MCP is active. I can configure agents to create and update Kanban issues automatically.
+
+You can find your Project ID in Vibe Kanban → Project Settings → Project ID (a UUID).
+
+Enter your Vibe Kanban project ID, or press Enter to skip:
+```
+
+If the user provides a project ID, append the following to the **bottom** of `.opencode/skills/project-stack/SKILL.md` (after all other content):
+
+```markdown
+
+---
+
+## Vibe Kanban
+
+**Project ID:** [user-provided UUID]
+**MCP server:** vibe_kanban (configured in opencode.json)
+
+### Status values
+
+Use these exact strings when calling `update_issue(status: ...)`:
+- `"todo"` — not started yet (default when created)
+- `"in_progress"` — actively being worked on
+- `"in_review"` — waiting for code review or blocked
+- `"done"` — completed
+
+### Issue structure per feature
+
+project-manager creates one parent issue for the feature and sub-issues for each task (including [review] and [qa] tasks).
+
+Sub-issues: `create_issue(parent_issue_id: <feature_issue_id>, ...)`
+
+#### Feature (parent issue) — created by project-manager
+```
+create_issue(
+  title: "Feature: [story title]",
+  description: "[user story + acceptance criteria]",
+  priority: "high",
+  project_id: "[project-id from this skill]"
+)
+```
+→ store as `feature_issue_id`
+
+#### Task sub-issues — created by project-manager (one per task including [review] and [qa])
+```
+create_issue(
+  title: "[T01] [backend] task description",
+  priority: "medium",
+  parent_issue_id: "<feature_issue_id>",
+  project_id: "[project-id from this skill]"
+)
+```
+
+### Status update protocol
+
+| Agent | Action | MCP call |
+|---|---|---|
+| project-manager | Creates all issues | `create_issue(...)` → status: `"todo"` |
+| lead | Assigns to developer | `update_issue(task_issue_id, status: "in_progress")` |
+| developer | Done | `update_issue(task_issue_id, status: "done")` |
+| lead | Triggers review | `update_issue(review_issue_id, status: "in_progress")` |
+| code-reviewer | Approved | `update_issue(review_issue_id, status: "done")` |
+| code-reviewer | Blocked | `update_issue(review_issue_id, status: "in_review")` |
+| lead | Triggers QA | `update_issue(qa_issue_id, status: "in_progress")` |
+| tester | PASS | `update_issue(qa_issue_id, status: "done")` |
+| tester | FAIL | `update_issue(qa_issue_id, status: "in_review")` |
+
+### Issue ID passing protocol
+
+project-manager includes all issue IDs in lead delegation messages:
+```
+Kanban task issue ID:    <uuid>
+Kanban review issue ID:  <uuid>
+Kanban qa issue ID:      <uuid>
+Kanban feature issue ID: <uuid>
+```
+Leads forward these to developers, reviewer, and tester.
+```
+
+If the user skips (presses Enter), do NOT add the Vibe Kanban section — agents will use todowrite/todoread only.
+
+---
+
 ## Phase 5 — opencode.json Check
 
 Before writing the skill, check if `opencode.json` has been configured:
@@ -252,136 +346,7 @@ Then continue writing the project-stack skill regardless — the warning is info
 
 ---
 
-## Phase 5b — Vibe Kanban Setup
-
-Check if the Vibe Kanban MCP is configured:
-
-```bash
-grep -q "vibe_kanban" .opencode/opencode.json 2>/dev/null && echo "configured" || echo "not_configured"
-```
-
-**If not configured**, skip this phase silently — Vibe Kanban is optional.
-
-**If configured**, check if the project-stack skill already has a Vibe Kanban section:
-
-```bash
-grep -q "vibe_kanban\|Vibe Kanban" .opencode/skills/project-stack/SKILL.md 2>/dev/null && echo "exists" || echo "missing"
-```
-
-If missing, ask the user:
-
-```
-Vibe Kanban MCP is configured. To let agents create and update Kanban issues automatically,
-I need your Vibe Kanban project ID.
-
-You can find it in Vibe Kanban → Project Settings → Project ID (looks like a UUID).
-
-Enter your Vibe Kanban project ID, or press Enter to skip:
-```
-
-If the user provides a project ID, append this section to `.opencode/skills/project-stack/SKILL.md`:
-
-```markdown
----
-
-## Vibe Kanban
-
-**Project ID:** [user-provided UUID]
-**MCP server:** vibe_kanban (configured in opencode.json)
-
-### Status values
-
-Use these exact strings when calling `update_issue(status: ...)`:
-- `"todo"` — not started yet (default when created)
-- `"in_progress"` — actively being worked on
-- `"in_review"` — waiting for code review
-- `"done"` — completed
-
-### Issue structure per feature
-
-project-manager creates one parent issue for the feature and sub-issues for each task.
-Sub-issues are created with `create_issue(parent_issue_id: <parent_uuid>)`.
-
-#### Feature (parent issue) — created by project-manager
-```
-create_issue(
-  title: "Feature: [story title]",
-  description: "[user story + acceptance criteria]",
-  priority: "high",
-  project_id: "[project-id from this skill]"
-)
-```
-→ store as `feature_issue_id`
-
-#### Per task (sub-issue) — created by project-manager
-```
-create_issue(
-  title: "[T01] [backend/frontend] task title",
-  description: "Acceptance criteria:
-- [ ] ...
-Files: ...",
-  priority: "medium",
-  parent_issue_id: "[feature_issue_id]",
-  project_id: "[project-id from this skill]"
-)
-```
-→ store each as `task_issue_id`; pass to lead in delegation message
-
-#### [qa] and [review] tasks — also created by project-manager as sub-issues
-```
-create_issue(title: "[review] Review [feature name]", parent_issue_id: feature_issue_id, ...)
-create_issue(title: "[qa] Test [feature name]", parent_issue_id: feature_issue_id, ...)
-```
-
-### Status update protocol per agent
-
-| Agent | Action | MCP call |
-|---|---|---|
-| project-manager | Creates all issues | `create_issue(...)` → status: `"todo"` |
-| lead | Assigns task to developer | `update_issue(task_issue_id, status: "in_progress")` |
-| developer | Implementation complete | `update_issue(task_issue_id, status: "done")` |
-| lead | Triggers review | `update_issue(review_issue_id, status: "in_progress")` |
-| code-reviewer | Approved | `update_issue(review_issue_id, status: "done")` |
-| code-reviewer | Blocked | `update_issue(review_issue_id, status: "in_review")` |
-| lead | Triggers QA | `update_issue(qa_issue_id, status: "in_progress")` |
-| tester | PASS | `update_issue(qa_issue_id, status: "done")` |
-| tester | FAIL | `update_issue(qa_issue_id, status: "in_review")` |
-
-### Issue ID passing protocol
-
-1. project-manager creates all issues and includes every `issue_id` in delegation messages to leads
-2. Leads include `task_issue_id`, `review_issue_id`, `qa_issue_id` in every delegation to developers/tester/reviewer
-3. Every completion report back to the lead must include the `issue_id` that was updated
-4. Chain: `create_issue → issue_id → lead delegation → agent → update_issue`
-
-### Delegation message format (with Vibe Kanban)
-
-When project-manager hands off to a lead:
-```
-Task: T01 — [title]
-Kanban task issue ID: <uuid>
-Kanban review issue ID: <uuid>
-Kanban qa issue ID: <uuid>
-Kanban feature issue ID: <uuid>
-[rest of task details]
-```
-```
-
-If the user skips, add a note to the skill:
-
-```markdown
----
-
-## Vibe Kanban
-
-Vibe Kanban MCP is configured but project ID was not provided during /team:init.
-To enable Kanban integration, run /team:init again and enter your project ID.
-```
-
----
-
 ## Phase 6 — Create AGENTS.md
-
 Check if an `AGENTS.md` already exists in the project root:
 
 ```bash
@@ -448,6 +413,8 @@ Detected stack:
   Database: [summary]
   Test:     [command]
   Build:    [command]
+
+Vibe Kanban: [configured with project ID: <uuid> | not configured — todowrite/todoread only]
 
 Assumed (please verify):
   - [anything inferred but not confirmed]

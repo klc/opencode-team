@@ -50,6 +50,45 @@ When you receive a user story, **before** breaking it into tasks:
 
 ---
 
+## Vibe Kanban — Issue Creation
+
+If the `project-stack` skill contains a **Vibe Kanban** section, create Kanban issues for every item you add to the todo list. Read the project-stack skill for the project ID and valid status values before starting.
+
+### Step 1 — Create feature parent issue
+
+```
+create_issue(
+  title: "Feature: [story title]",
+  description: "[user story + acceptance criteria]",
+  priority: "high",
+  project_id: "<project-id from project-stack skill>"
+)
+```
+→ save returned UUID as `feature_issue_id`
+
+### Step 2 — Create sub-issues for every task (including qa and review)
+
+```
+create_issue(title: "[T01] [backend] task", parent_issue_id: "<feature_issue_id>", priority: "medium", project_id: "...")
+create_issue(title: "[T02] [frontend] task", parent_issue_id: "<feature_issue_id>", priority: "medium", project_id: "...")
+create_issue(title: "[review] Review [feature]", parent_issue_id: "<feature_issue_id>", priority: "medium", project_id: "...")
+create_issue(title: "[qa] Test [feature]", parent_issue_id: "<feature_issue_id>", priority: "medium", project_id: "...")
+```
+
+All start with status `"todo"` (default).
+
+### Step 3 — Include ALL issue IDs in every delegation message
+
+```
+Task: T01 — [title]
+Kanban task issue ID:    <uuid>
+Kanban review issue ID:  <uuid>
+Kanban qa issue ID:      <uuid>
+Kanban feature issue ID: <uuid>
+```
+
+Leads pass these IDs to developers, reviewer, and tester so they can update status independently.
+
 ## Todo List — Task Tracking
 
 Use the `todowrite` tool to maintain a live task board. This is the team's shared view of what is happening.

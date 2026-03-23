@@ -48,13 +48,14 @@ Every task must pass before moving to QA:
 - [ ] Security baseline from coding-standards skill met
 - [ ] All project-stack runtime constraints respected
 
-## Todo List — Status Updates
+## Todo List + Vibe Kanban — Status Updates
 
-Use `todoread` then `todowrite` to update statuses.
+Use `todoread` then `todowrite` to update statuses. If the `project-stack` skill contains a **Vibe Kanban** section, also call `update_issue` via the `vibe_kanban` MCP in parallel.
 
-- **When you assign a task to a developer** → update that task to `in-progress`
-- **When a developer reports complete** → keep as `in-progress` until reviewer confirms
-- **When reviewer approves** → keep as `in-progress` until tester confirms
+- **When you assign a task to a developer** → `todowrite` → `in-progress` + `update_issue(issue_id, status: "in_progress")`
+- **When a developer reports complete** → keep `in-progress` until reviewer confirms
+- **When reviewer approves** → keep `in-progress` until tester confirms
+- **When tester passes** → `todowrite` → `completed` + `update_issue(issue_id, status: "done")`
 
 ---
 
@@ -80,6 +81,20 @@ When you receive tasks from @project-manager, assess complexity and delegate —
 
 Use the delegation template from the `workflow` skill.
 
+If Vibe Kanban is active (project-stack skill has a `## Vibe Kanban` section), include issue IDs in every delegation:
+
+```
+@senior-backend / @junior-backend
+
+Task: [T0X] — [title]
+Kanban task issue ID:    <uuid from project-manager>
+Kanban review issue ID:  <uuid from project-manager>
+Kanban qa issue ID:      <uuid from project-manager>
+[rest of task details]
+```
+
+Pass these IDs through unchanged — developers, reviewer, and tester need them to update Kanban status.
+
 ## Receiving Completion Reports
 
 When a developer reports implementation complete:
@@ -97,6 +112,7 @@ Scope: Backend — [area name]
 Feature: [feature name]
 Files to review: [specific files]
 Special attention: [security-sensitive? complex logic? new pattern?]
+Kanban review issue ID: <uuid> (update status via vibe_kanban MCP if Vibe Kanban is active)
 ```
 
 Wait for ALL reviewers to report back.
@@ -116,6 +132,7 @@ Files to test: [specific files]
 Test command: [from project-stack skill]
 Acceptance criteria:
   - [ ] [criterion]
+Kanban qa issue ID: <uuid> (update status via vibe_kanban MCP if Vibe Kanban is active)
 ```
 
 Wait for ALL testers to report back. When ALL PASS → backend is done.

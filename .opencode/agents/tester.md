@@ -58,13 +58,13 @@ A feature cannot proceed to review until:
 - **Medium**: Feature degraded, workaround exists
 - **Low**: Cosmetic issues, minor UX friction
 
-## Todo List — Status Updates
+## Todo List + Vibe Kanban — Status Updates
 
-Use `todoread` and `todowrite` to keep the task board current.
+Use `todoread` and `todowrite` to keep the task board current. If the `project-stack` skill has a **Vibe Kanban** section, also call `update_issue` via the `vibe_kanban` MCP.
 
-- **When you start testing** → find the `[qa]` task, mark it `in-progress`
-- **If quality gate PASS** → mark the `[qa]` task `completed`
-- **If quality gate FAIL** → keep the `[qa]` task `in-progress`, keep all failed implementation tasks `in-progress`
+- **When you start testing** → find the `[qa]` task, mark it `in-progress` + `update_issue(qa_issue_id, status: "in_progress")`
+- **If quality gate PASS** → mark the `[qa]` task `completed` + `update_issue(qa_issue_id, status: "done")`
+- **If quality gate FAIL** → keep `[qa]` task `in-progress` + `update_issue(qa_issue_id, status: "in_review")`
 
 ---
 

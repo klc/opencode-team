@@ -142,6 +142,34 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
   writeFileSync(destPath, JSON.stringify(config, null, 2))
 }
 
+// ── Vibe Kanban MCP helpers ──────────────────────────────────
+const VIBE_KANBAN_MCP_KEY = 'vibe_kanban'
+const VIBE_KANBAN_MCP_CONFIG = {
+  type: 'local',
+  command: 'npx',
+  args: ['-y', 'vibe-kanban@latest', '--mcp'],
+}
+
+function hasVibeKanbanMcp(jsonPath) {
+  if (!existsSync(jsonPath)) return false
+  try {
+    const config = JSON.parse(readFileSync(jsonPath, 'utf8'))
+    return !!(config.mcp && config.mcp[VIBE_KANBAN_MCP_KEY])
+  } catch {
+    return false
+  }
+}
+
+function addVibeKanbanMcp(jsonPath) {
+  let config = {}
+  if (existsSync(jsonPath)) {
+    try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { config = {} }
+  }
+  if (!config.mcp) config.mcp = {}
+  config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
+  writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+}
+
 // ── Build agent config block ─────────────────────────────────
 function buildAgentBlock(agentModels) {
   const descriptions = {
@@ -246,9 +274,25 @@ async function main() {
 
   const installChoice = await ask('Choice [1/2]', '1')
   const isGlobal = installChoice === '2'
+
+  let projectRoot = process.cwd()
+  if (!isGlobal) {
+    console.log('')
+    console.log(`  ${dim('Enter the full path to your project directory.')}`)
+    console.log(`  ${dim('Press Enter to use the current directory:')} ${dim(process.cwd())}`)
+    const inputPath = await ask('Project path', process.cwd())
+    projectRoot = inputPath.startsWith('~')
+      ? join(homedir(), inputPath.slice(1))
+      : inputPath
+    if (!existsSync(projectRoot)) {
+      err(`Directory not found: ${projectRoot}`)
+      process.exit(1)
+    }
+  }
+
   const installDir = isGlobal
     ? join(homedir(), '.config', 'opencode')
-    : join(process.cwd(), '.opencode')
+    : join(projectRoot, '.opencode')
   const installType = isGlobal ? 'global' : 'project'
 
   ok(`Installing as: ${bold(installType)} → ${installDir}`)
@@ -299,7 +343,27 @@ async function main() {
     }
   }
 
-  // ── Step 5: Install files ─────────────────────────────────
+  // ── Step 5: Vibe Kanban integration ──────────────────────
+  step('Vibe Kanban integration (recommended)')
+  console.log('')
+  console.log(`  Vibe Kanban gives the agent team a visual Kanban board.`)
+  console.log(`  The MCP server lets agents create and update issues automatically`)
+  console.log(`  as they work — you see real-time progress on the board.`)
+  console.log('')
+  console.log(`  ${dim('Learn more: https://vibekanban.com')}`)
+  console.log('')
+
+  const vibeInput = await ask('Enable Vibe Kanban integration? [Y/n]', 'y')
+  const useVibeKanban = vibeInput.toLowerCase() !== 'n'
+
+  let vibeKanbanStatus = 'skipped'
+  if (useVibeKanban) {
+    vibeKanbanStatus = 'pending'  // will be applied after opencode.json is written in step 7
+  } else {
+    warn('Vibe Kanban skipped — you can add it later by running the install script again')
+  }
+
+  // ── Step 6: Install files ─────────────────────────────────
   step('Installing files...')
 
   const sourceDir = join(__dirname, '.opencode')
@@ -313,7 +377,7 @@ async function main() {
   copyDir(sourceDir, installDir, ['opencode.json'])
   ok(`Copied agent, command, and skill files to ${installDir}`)
 
-  // ── Step 6: Apply model assignments to agent files ────────
+  // ── Step 7: Apply model assignments to agent files ────────
   step('Applying model assignments...')
   const agentsDir = join(installDir, 'agents')
   for (const [agentName, model] of Object.entries(agentModels)) {
@@ -322,16 +386,29 @@ async function main() {
   }
   ok('Model assignments written to agent files')
 
-  // ── Step 7: Write opencode.json ───────────────────────────
+  // ── Step 8: Write opencode.json ───────────────────────────
   step('Generating opencode.json...')
   const agentBlock  = buildAgentBlock(agentModels)
   const jsonPath    = join(installDir, 'opencode.json')
   writeOpencodeJson(jsonPath, agentBlock, !isGlobal)
 
-  // ── Step 8: Project extras (AGENTS.md) ───────────────────
+  // ── Step 8b: Apply Vibe Kanban MCP ─────────────────────────
+  if (useVibeKanban) {
+    const jsonPath = join(installDir, 'opencode.json')
+    if (hasVibeKanbanMcp(jsonPath)) {
+      ok('Vibe Kanban MCP already configured in opencode.json')
+      vibeKanbanStatus = 'already_configured'
+    } else {
+      addVibeKanbanMcp(jsonPath)
+      ok('Vibe Kanban MCP server added to opencode.json')
+      vibeKanbanStatus = 'added'
+    }
+  }
+
+  // ── Step 9: Project extras (AGENTS.md) ───────────────────
   if (!isGlobal) {
     step('Project-specific setup...')
-    const agentsMd = join(process.cwd(), 'AGENTS.md')
+    const agentsMd = join(projectRoot, 'AGENTS.md')
     if (!existsSync(agentsMd)) {
       writeFileSync(agentsMd, `# Project Rules
 
@@ -373,11 +450,24 @@ async function main() {
     console.log(`    ${agent.padEnd(20)} ${dim(model)}`)
   }
   console.log('')
+  // Vibe Kanban status line
+  if (vibeKanbanStatus === 'added') {
+    console.log(`  ${bold('Vibe Kanban:')} ${green('✓')} MCP server added to opencode.json`)
+    console.log(`  ${dim('Open Vibe Kanban, create a project, then run /team:init')}`)
+  } else if (vibeKanbanStatus === 'already_configured') {
+    console.log(`  ${bold('Vibe Kanban:')} ${green('✓')} Already configured`)
+  } else {
+    console.log(`  ${bold('Vibe Kanban:')} ${dim('Not enabled — re-run install script to add later')}`)
+  }
+  console.log('')
   console.log(`  ${bold('Next steps:')}`)
   if (!isGlobal) {
     console.log(`  1. ${cyan('Edit AGENTS.md')} — add your project rules (language, docker commands, etc.)`)
-    console.log(`  2. ${cyan('Run /team:init')} in OpenCode — auto-generates the project-stack skill`)
-    console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
+    if (vibeKanbanStatus === 'added' || vibeKanbanStatus === 'already_configured') {
+      console.log(`  2. ${cyan('Open Vibe Kanban')} — create a project and note your project ID`)
+    }
+    console.log(`  ${vibeKanbanStatus !== 'skipped' ? '3' : '2'}. ${cyan('Run /team:init')} in OpenCode — auto-generates the project-stack skill`)
+    console.log(`  ${vibeKanbanStatus !== 'skipped' ? '4' : '3'}. ${cyan('/team:new-feature <description>')} — start building`)
   } else {
     console.log(`  1. In each project: ${cyan('run /team:init')} to generate the project-stack skill`)
     console.log(`  2. ${cyan('/team:new-feature <description>')} — start building`)

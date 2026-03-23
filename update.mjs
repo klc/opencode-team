@@ -33,6 +33,16 @@ const warn = msg => console.log(`  ${yellow('⚠')}  ${msg}`)
 const err  = msg => console.log(`  ${red('✗')} ${msg}`)
 const step = msg => console.log(`\n${bold(cyan('▶ ' + msg))}`)
 
+// ── Readline helper ─────────────────────────────────────────
+const rl = createInterface({ input: process.stdin, output: process.stdout })
+const ask = (prompt, defaultVal = '') => new Promise(resolve => {
+  const hint = defaultVal ? ` ${dim(`[${defaultVal}]`)}` : ''
+  rl.question(`  ${bold(prompt)}${hint}: `, answer => {
+    resolve(answer.trim() || defaultVal)
+  })
+})
+const close = () => rl.close()
+
 // ── Detect install location ──────────────────────────────────
 function detectInstallDir() {
   const projectDir = join(process.cwd(), '.opencode')
@@ -144,8 +154,46 @@ function updateOpencodeJson(installDir, currentModels) {
 }
 
 // ── Main ─────────────────────────────────────────────────────
+// ── Vibe Kanban MCP helpers ──────────────────────────────────
+const VIBE_KANBAN_MCP_KEY = 'vibe_kanban'
+const VIBE_KANBAN_MCP_CONFIG = {
+  type: 'local',
+  command: 'npx',
+  args: ['-y', 'vibe-kanban@latest', '--mcp'],
+}
+
+function hasVibeKanbanMcp(jsonPath) {
+  if (!existsSync(jsonPath)) return false
+  try {
+    const config = JSON.parse(readFileSync(jsonPath, 'utf8'))
+    return !!(config.mcp && config.mcp[VIBE_KANBAN_MCP_KEY])
+  } catch {
+    return false
+  }
+}
+
+function addVibeKanbanMcp(jsonPath) {
+  let config = {}
+  if (existsSync(jsonPath)) {
+    try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { config = {} }
+  }
+  if (!config.mcp) config.mcp = {}
+  config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
+  writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+}
+
 // ── Changelog ───────────────────────────────────────────────
 const CHANGELOG = [
+  { version: '1.5.0', changes: [
+    'feat: Vibe Kanban MCP integration — agents create and update Kanban issues automatically',
+    'feat: install.mjs asks to enable Vibe Kanban (default: yes)',
+    'feat: update.mjs checks Vibe Kanban status and offers to enable if missing',
+    'feat: team:init Phase 5b — prompts for project ID, writes Vibe Kanban section to project-stack skill',
+    'feat: project-manager creates feature parent issue + sub-issues for all tasks including qa/review',
+    'feat: leads, developers, reviewer, tester all update issue status via MCP',
+    'fix: correct Vibe Kanban status values — todo/in_progress/in_review/done',
+    'fix: full issue ID chain — project-manager → lead → developer/reviewer/tester',
+  ]},
   { version: '1.4.0', changes: [
     'feat: designer agent — establishes visual design system, writes project-design skill',
     'feat: /team:designer command — define or update design system with a brief',
@@ -292,6 +340,32 @@ async function main() {
     } else {
       warn('opencode.json not found — skipping json model update')
     }
+
+    // Step 5: Vibe Kanban MCP check
+    if (!DRY_RUN && existsSync(jsonPath)) {
+      if (hasVibeKanbanMcp(jsonPath)) {
+        ok('Vibe Kanban MCP already configured — preserved')
+      } else {
+        console.log('')
+        console.log(`  ${yellow('⚠')}  Vibe Kanban MCP is not configured in this installation.`)
+        console.log(`  ${dim('Vibe Kanban gives agents a visual Kanban board with automatic issue tracking.')}`)
+        console.log('')
+        const vibeInput = await ask('Enable Vibe Kanban integration? [Y/n]', 'y')
+        if (vibeInput.toLowerCase() !== 'n') {
+          addVibeKanbanMcp(jsonPath)
+          ok('Vibe Kanban MCP server added to opencode.json')
+          console.log(`  ${dim('Run /team:init to set your project ID and activate full Kanban integration.')}`)
+        } else {
+          warn('Vibe Kanban skipped — run update again to add later')
+        }
+      }
+    } else if (DRY_RUN && existsSync(jsonPath)) {
+      if (hasVibeKanbanMcp(jsonPath)) {
+        dryok('Vibe Kanban MCP already configured — would preserve')
+      } else {
+        dryok('Vibe Kanban MCP not configured — would offer to add')
+      }
+    }
   }
 
   // ── Done ───────────────────────────────────────────────────
@@ -323,10 +397,12 @@ async function main() {
   console.log(`  ${bold('What was preserved:')}`)
   console.log(`    ${green('✓')} Your model assignments`)
   console.log(`    ${green('✓')} opencode.json provider settings`)
-  console.log(`    ${green('✓')} opencode.json MCP settings`)
+  console.log(`    ${green('✓')} opencode.json MCP settings (including Vibe Kanban)`)
   console.log(`    ${green('✓')} AGENTS.md project rules`)
   console.log(`    ${green('✓')} project-stack skill`)
   console.log('')
+
+  close()
 }
 
 main().catch(e => {

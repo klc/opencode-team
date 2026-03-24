@@ -189,6 +189,7 @@ function buildAgentBlock(agentModels) {
     'designer':          'Invoke to establish or update the project visual design system. Creates the project-design skill that all frontend developers follow.',
     'security-auditor':  'Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities. More thorough than code-reviewer.',
     'performance-analyst': 'Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size, cache opportunities.',
+    'librarian':       'Team memory manager. Writes and retrieves structured records from .memory/ — decisions, features, bugs, research, debt.',
   }
 
   const modeMap = {
@@ -198,7 +199,7 @@ function buildAgentBlock(agentModels) {
     'junior-backend': 'subagent', 'junior-frontend': 'subagent',
     'tester': 'subagent', 'code-reviewer': 'subagent',
     'debugger': 'subagent', 'researcher': 'subagent',
-    'designer': 'subagent', 'security-auditor': 'subagent', 'performance-analyst': 'subagent',
+    'designer': 'subagent', 'security-auditor': 'subagent', 'performance-analyst': 'subagent', 'librarian': 'subagent',
   }
 
   const stepsMap = {
@@ -208,7 +209,7 @@ function buildAgentBlock(agentModels) {
     'junior-backend': 40, 'junior-frontend': 40,
     'tester': 60, 'code-reviewer': 40,
     'debugger': 60, 'researcher': 40,
-    'designer': 60, 'security-auditor': 60, 'performance-analyst': 60,
+    'designer': 60, 'security-auditor': 60, 'performance-analyst': 60, 'librarian': 40,
   }
 
   const permissionMap = {
@@ -243,7 +244,7 @@ function buildAgentBlock(agentModels) {
     // hidden agents — internal use only, not shown in @ autocomplete
     const hiddenAgents = new Set([
       'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend',
-      'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst',
+      'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst', 'librarian',
     ])
     if (hiddenAgents.has(name)) agent.hidden = true
 
@@ -330,6 +331,7 @@ async function main() {
     'designer':          strongModel,
     'security-auditor':  strongModel,
     'performance-analyst': strongModel,
+    'librarian':          fastModel,
   }
 
   // ── Step 4: Optional per-agent customization ──────────────

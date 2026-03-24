@@ -346,6 +346,60 @@ Then continue writing the project-stack skill regardless — the warning is info
 
 ---
 
+## Phase 5c — Initialize Memory
+
+Create the team memory structure if it doesn't already exist:
+
+```bash
+mkdir -p .memory/decisions .memory/features .memory/bugs .memory/research .memory/debt
+```
+
+Check if `index.md` exists:
+
+```bash
+test -f .memory/index.md && echo "exists" || echo "missing"
+```
+
+If missing, create it:
+
+```markdown
+# Memory Index
+
+_Last updated: [today's date]_
+
+## decisions
+_No records yet._
+
+## features
+_No records yet._
+
+## bugs
+_No records yet._
+
+## research
+_No records yet._
+
+## debt
+_No records yet._
+```
+
+If the `.memory/` directory already existed, leave all existing files untouched.
+
+Add `.memory/` to `.gitignore` check — it should NOT be ignored (memory should be committed):
+
+```bash
+grep -q "\.memory" .gitignore 2>/dev/null && echo "ignored" || echo "ok"
+```
+
+If `.memory` is in `.gitignore`, warn the user:
+
+```
+⚠️  .memory/ is in your .gitignore. Team memory won't be committed to git.
+Remove it from .gitignore to preserve memory across sessions and team members.
+```
+
+---
+
 ## Phase 6 — Create AGENTS.md
 Check if an `AGENTS.md` already exists in the project root:
 

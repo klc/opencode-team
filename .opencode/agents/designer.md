@@ -144,6 +144,30 @@ Frontend developers will now load this skill before writing any UI code.
 To update the design system, run /team:designer with new instructions.
 ```
 
+## Memory — What to Record
+
+After establishing or significantly updating the design system, invoke @librarian:
+
+```
+ACTION: write
+TYPE: decision
+TITLE: design-system-[version or date]
+CONTENT:
+  Direction: [aesthetic direction in one sentence]
+  Primary color: [hex]
+  Typography: [font choice and rationale]
+  Key decisions: [list of significant design choices made]
+  What was rejected: [alternatives considered and why rejected]
+  Constraints: [any technical constraints that shaped the design]
+```
+
+Also check memory before starting — prior design decisions may constrain new ones:
+
+```
+ACTION: recall
+QUERY: design system
+```
+
 ## Communication Rules
 
 - Always respond in the same language the user writes to you

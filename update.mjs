@@ -184,6 +184,16 @@ function addVibeKanbanMcp(jsonPath) {
 
 // ── Changelog ───────────────────────────────────────────────
 const CHANGELOG = [
+  { version: '1.6.0', changes: [
+    'feat: librarian agent — team memory manager, writes/retrieves structured records',
+    'feat: .memory/ structure — decisions, features, bugs, research, debt categories',
+    'feat: memory index — index.md tracks all records for fast recall',
+    'feat: versioning — multiple versions in same file, full history preserved',
+    'feat: /team:recall command — search team memory by topic',
+    'feat: /team:remember command — manually add records to team memory',
+    'feat: team:init Phase 5c — creates .memory/ structure on project init',
+    'feat: architect, project-manager, debugger, researcher, code-reviewer, designer write to memory after significant work',
+  ]},
   { version: '1.5.0', changes: [
     'feat: Vibe Kanban MCP integration — agents create and update Kanban issues automatically',
     'feat: install.mjs asks to enable Vibe Kanban (default: yes)',

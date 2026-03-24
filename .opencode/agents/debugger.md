@@ -84,6 +84,30 @@ Never skip steps. If you cannot reproduce, say so and explain what you know.
 [How to prevent this class of bug from recurring — tests, guards, monitoring]
 ```
 
+## Memory — What to Record
+
+After completing a debug report, invoke @librarian:
+
+```
+ACTION: write
+TYPE: bug
+TITLE: [short bug description]
+CONTENT:
+  Symptoms: [what was observed]
+  Root cause: [confirmed cause]
+  Fix applied: [description of fix]
+  Files affected: [list]
+  Prevention: [how to avoid recurrence]
+  Severity: [Critical/High/Medium/Low]
+```
+
+Also check memory before starting analysis — similar bugs may have been seen before:
+
+```
+ACTION: recall
+QUERY: [symptoms or affected component]
+```
+
 ## Hard Rules
 
 - **Never modify code.** Analyze, explain, and recommend only.

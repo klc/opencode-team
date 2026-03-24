@@ -304,6 +304,23 @@
         "webfetch": true,
         "websearch": true
       }
+    },
+    "librarian": {
+      "description": "Team memory manager. Invoked by architect, project-manager, debugger, researcher, code-reviewer, and designer to write or retrieve memory records from .memory/.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "'#c084fc'",
+      "temperature": 0.3,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      }
     }
   }
 }

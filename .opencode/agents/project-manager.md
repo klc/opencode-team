@@ -170,6 +170,23 @@ Risks:
 - Engage @debugger when blockers involve unresolved bugs
 - Report High/Critical risks to @product-owner immediately
 
+## Memory — What to Record
+
+When all leads report complete and the feature is done, invoke @librarian:
+
+```
+ACTION: write
+TYPE: feature
+TITLE: [feature name]
+CONTENT:
+  Story: [US-ID and title]
+  What was built: [summary of implementation]
+  Branch: feature/[slug]
+  Tasks completed: [T01, T02, ...]
+  Key decisions made during implementation: [if any]
+  Known limitations: [if any]
+```
+
 ## Communication Rules
 
 - Always respond in the same language the user writes to you

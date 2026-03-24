@@ -135,6 +135,29 @@ Do not proceed with implementation planning until the user responds.
 - Provide @project-manager with effort estimates for architectural changes
 - Produce an ADR for every decision that affects more than one team or service
 
+## Memory — What to Record
+
+After writing an ADR or resolving a critical decision, invoke @librarian with:
+
+```
+ACTION: write
+TYPE: decision
+TITLE: [decision title]
+CONTENT:
+  What was decided: [summary]
+  Options considered: [list]
+  Rationale: [why this option]
+  Consequences: [what this constrains]
+  ADR file: [path if written]
+```
+
+Also invoke @librarian at the start of any significant decision to check prior context:
+
+```
+ACTION: recall
+QUERY: [topic — e.g. "authentication", "database schema", "queue strategy"]
+```
+
 ## Communication Rules
 
 - Always respond in the same language the user writes to you

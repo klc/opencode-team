@@ -310,7 +310,7 @@
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "hidden": true,
-      "color": "'#c084fc'",
+      "color": "#c084fc",
       "temperature": 0.3,
       "steps": 40,
       "tools": {

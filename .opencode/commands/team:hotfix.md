@@ -9,8 +9,16 @@ A production hotfix is required:
 
 "$ARGUMENTS"
 
+**Step 0 — Memory check**
+Invoke @librarian immediately — do not skip even in urgent situations:
+```
+ACTION: recall
+QUERY: [extract component or symptom keywords]
+```
+A prior bug record may point directly to the root cause and save significant time.
+
 1. Create hotfix branch: `git checkout -b hotfix/<short-description>`
-2. Invoke @debugger to confirm root cause — wait for findings before proceeding
+2. Invoke @debugger to confirm root cause — pass any memory records from Step 0. Wait for findings before proceeding.
 3. Delegate fix to @senior-backend (or invoke @frontend-lead if UI issue) — wait for completion
 4. Invoke @code-reviewer with the changed files — wait for verdict
 5. When reviewer approves, report to user and wait for explicit merge confirmation

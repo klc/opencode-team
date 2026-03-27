@@ -9,6 +9,14 @@ A direct task has been assigned:
 
 "$ARGUMENTS"
 
+**Step 0 — Memory check**
+Invoke @librarian before starting:
+```
+ACTION: recall
+QUERY: [extract 2–3 keywords from the task description]
+```
+If relevant prior decisions, bugs, or research records exist, pass them to the developer as context.
+
 1. Determine scope: backend, frontend, or both
 2. Delegate to @senior-backend or @junior-backend (backend), or invoke @frontend-lead (frontend)
 3. Wait for implementation + commits

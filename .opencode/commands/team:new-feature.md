@@ -12,11 +12,19 @@ A new feature has been requested:
 
 Execute the full pipeline in sequence. Do not stop between steps unless user input is required.
 
+**Step 0 — Memory check**
+Before anything else, invoke @librarian:
+```
+ACTION: recall
+QUERY: [extract 2–3 keywords from the feature description]
+```
+If relevant records are found (prior decisions, similar features, known bugs in this area), carry that context into Step 1 and all subsequent steps. If nothing is found, proceed normally.
+
 **Step 1 — Scope clarification**
 If the request is ambiguous, ask the user using the Critical Decision Protocol format (max 2–3 questions with your own assumptions). If clear, skip to Step 2.
 
 **Step 2 — Architecture decisions**
-Invoke @architect with the feature description and any confirmed scope decisions.
+Invoke @architect with the feature description, any confirmed scope decisions, and any relevant memory records from Step 0.
 Wait for architect to return before continuing.
 
 **Step 3 — Write user story**

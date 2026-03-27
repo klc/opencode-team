@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Full team delegation chain, execution phases, parallelization rules, todo board protocol, Vibe Kanban issue tracking, memory protocol, and agent invocation templates.
+description: Full team delegation chain, execution phases, parallelization rules, shared file protocol, error recovery, todo board, Vibe Kanban, memory protocol, and agent invocation templates.
 ---
 
 # Workflow Skill
@@ -21,6 +21,7 @@ product-owner
 **Support agents** (invoked by leads or project-manager as needed):
 - `@tester` — QA, spawned by leads after all reviews pass
 - `@code-reviewer` — code review, spawned by leads before QA
+- `@security-auditor` — deep security review, spawned by leads when security-sensitive scope is detected
 - `@architect` — architecture decisions, invoked before implementation starts
 - `@debugger` — production incidents and hard-to-reproduce bugs
 - `@researcher` — technology evaluation, spike investigations
@@ -61,7 +62,7 @@ project-manager creates feature branch + breaks story into tasks + updates todo 
     ↓
 project-manager assigns to backend-lead and frontend-lead in parallel
     ↓
-leads delegate to developers (parallel instances as needed)
+leads check for shared files, then delegate to developers (parallel instances as needed)
     ↓
 developers implement + commit + mark todo completed + report to lead
 ```
@@ -74,11 +75,13 @@ Triggered by leads when ALL their parallel developers report complete.
 backend-lead  → @code-reviewer (one per independent scope, in parallel)
 frontend-lead → @code-reviewer (one per independent scope, in parallel)
     ↓
+If scope is security-sensitive → lead also spawns @security-auditor in parallel with @code-reviewer
+    ↓
 Each reviewer reports verdict to their lead
     ↓
 If BLOCKED or CHANGES REQUIRED → lead reassigns fix to developer → re-triggers reviewer for that scope only
     ↓
-When ALL reviewers approve → lead moves to QA
+When ALL reviewers (and security-auditor if spawned) approve → lead moves to QA
 ```
 
 ### Phase 3 — QA
@@ -115,6 +118,130 @@ project-manager → @librarian
 - **Dependent tasks → sequential.** If task B requires task A's output, call A first, wait, then call B.
 - **Unlimited instances.** Leads may spawn as many developer, tester, or reviewer instances as needed.
 - **Same scope, sequential.** A single scope must not have two agents working on it simultaneously.
+- **Shared files → always sequential.** See Shared File Protocol below.
+
+---
+
+## Shared File Protocol
+
+**Before delegating parallel tasks**, leads must identify shared files — files that multiple tasks will touch.
+
+### What counts as a shared file
+
+- Type definition files: `types.ts`, `types.d.ts`, `interfaces.ts`
+- Constant and config files: `constants.ts`, `config.ts`, `enums.ts`
+- Database migrations and schema files
+- Global state stores: `store.ts`, Pinia stores shared across features
+- Route definition files
+- i18n / translation files
+- Shared utility files imported by more than one task
+
+### Rules
+
+1. **Identify shared files before starting.** When breaking tasks into parallel work, scan file lists for overlap.
+2. **One developer per shared file at a time.** If T01 and T02 both touch `types.ts`, T01 must complete and commit before T02 starts.
+3. **Pull before editing a shared file.** The developer editing a shared file must run `git pull` first to get the latest version.
+4. **Declare shared file ownership in the delegation message:**
+
+```
+@senior-backend
+
+Task: [T0X] — [title]
+...
+Shared files in this task: types.ts, constants.ts
+⚠️ Wait for T01 to complete before editing these files.
+```
+
+5. **If an unexpected conflict occurs:** Stop immediately, do not attempt to resolve the conflict yourself. Report to the lead with:
+```
+⚠️ Conflict detected in [filename]
+Conflicting tasks: T0X and T0Y
+Please resolve sequencing before I continue.
+```
+
+---
+
+## Security-Sensitive Scope Detection
+
+Leads must assess whether a scope is security-sensitive **before** spawning reviewers.
+
+### Triggers — spawn @security-auditor in parallel with @code-reviewer
+
+A scope is security-sensitive if it touches any of the following:
+
+| Area | Examples |
+|---|---|
+| Authentication / authorization | Login, logout, token handling, password reset, role checks, middleware guards |
+| Payment / financial | Checkout, billing, refunds, subscription management |
+| Personal data | User profile, PII storage or display, GDPR-related flows |
+| File uploads | Any endpoint accepting user-uploaded files |
+| External API integration | Third-party webhooks, OAuth callbacks, API key handling |
+| Admin / privileged actions | Admin panels, bulk operations, data export |
+| Cryptography | Hashing, encryption, key management |
+
+### How to spawn security-auditor alongside code-reviewer
+
+```
+Parallel review tasks:
+
+Task A → @code-reviewer
+  Scope: [area]
+  Files: [list]
+  Special attention: [notes]
+
+Task B → @security-auditor
+  Audit the same scope for security vulnerabilities.
+  Scope: [area]
+  Files: [list]
+  Focus: [most relevant OWASP categories for this scope]
+```
+
+Wait for BOTH to report back. The scope is only approved when both @code-reviewer and @security-auditor approve. A security-auditor BLOCKED verdict is treated identically to a code-reviewer BLOCKED — no QA until resolved.
+
+---
+
+## Error Recovery Protocol
+
+Subagents can fail in two ways: **hard failure** (error, crash, no response) and **soft failure** (partial work, incomplete output, steps limit reached).
+
+### Detecting failure
+
+A lead should treat a subagent as failed if:
+- No completion report is received after a reasonable time
+- The report is missing required fields (modified files, test results)
+- The report explicitly mentions hitting a steps limit or being unable to continue
+- Committed files are missing or the commit was not made
+
+### Recovery steps
+
+**For a developer failure:**
+1. Check git log — determine what was actually committed, if anything
+2. If partially committed: do NOT build on top of partial work. Note exactly which files were modified.
+3. Re-delegate the task with explicit instructions:
+   ```
+   @senior-backend
+
+   RETRY — Task [T0X] did not complete successfully.
+   Last known state: [what was committed / what was not]
+   Continue from: [specific point]
+   Do NOT re-do: [list of already-completed sub-steps]
+   ```
+4. If the same task fails twice → escalate to the user before retrying again.
+
+**For a reviewer or tester failure:**
+1. Re-invoke with the same scope — these agents are stateless, a clean retry is safe.
+2. If it fails twice → reduce the scope (split into smaller chunks) and retry.
+
+**For a lead failure (rare):**
+1. project-manager reports the partial state to the user.
+2. User decides: retry the lead with the remaining tasks, or start fresh from that point.
+
+### Steps limit prevention
+
+Leads should split large scopes proactively:
+- More than 5 independent files → split into two reviewer invocations
+- More than 3 acceptance criteria → split into two tester invocations
+- A developer task estimated at more than 4–5 hours of real work → split before delegating
 
 ---
 
@@ -262,17 +389,19 @@ QUERY: [topic]
 
 Story: US-[ID] — [story title]
 Branch: feature/[slug]
+Memory context: [relevant records from @librarian recall, or "none"]
 
 Tasks assigned to backend:
   T01: [title] — [description] — Acceptance: [criteria]
   T02: [title] — [description] — Acceptance: [criteria]
 
+Shared files: [list any files touched by more than one task, or "none"]
+Task sequencing: T02 depends on T01 / all parallel
+
 Kanban feature issue ID: <uuid>
 Kanban task issue IDs:   T01=<uuid>, T02=<uuid>
 Kanban review issue ID:  <uuid>
 Kanban qa issue ID:      <uuid>
-
-Dependencies: T02 depends on T01 / none
 ```
 
 ### project-manager → frontend-lead
@@ -282,17 +411,19 @@ Dependencies: T02 depends on T01 / none
 
 Story: US-[ID] — [story title]
 Branch: feature/[slug]
+Memory context: [relevant records from @librarian recall, or "none"]
 
 Tasks assigned to frontend:
   T03: [title] — [description] — Acceptance: [criteria]
+
+Shared files: [list or "none"]
+API contract expected from backend: [endpoints / data shape if relevant]
+Dependencies: wait for backend T01 before starting T03 / none
 
 Kanban feature issue ID: <uuid>
 Kanban task issue IDs:   T03=<uuid>
 Kanban review issue ID:  <uuid>
 Kanban qa issue ID:      <uuid>
-
-API contract expected from backend: [endpoints / data shape if relevant]
-Dependencies: wait for backend T01 before starting T03 / none
 ```
 
 ### backend-lead / frontend-lead → developer
@@ -302,10 +433,12 @@ Dependencies: wait for backend T01 before starting T03 / none
 
 Task: [T0X] — [title]
 Description: [what needs to be done]
+Memory context: [relevant records, or "none"]
 Acceptance criteria:
   - [ ] [criterion]
 Constraints: [files NOT to touch, decisions already made]
 Files likely involved: [list if known]
+Shared files in this task: [list with sequencing note, or "none"]
 Depends on: [task title or "none"]
 
 Kanban task issue ID:    <uuid>
@@ -321,11 +454,25 @@ Kanban feature issue ID: <uuid>
 
 Scope: [Backend / Frontend] — [area name]
 Feature: [feature name]
+Security-sensitive: [yes / no — if yes, security-auditor is also running in parallel]
 Files to review: [list]
 Special attention: [security-sensitive? complex logic? new pattern?]
 
 Kanban review issue ID:  <uuid>
 Kanban feature issue ID: <uuid>
+```
+
+### lead → security-auditor (when security-sensitive)
+
+```
+@security-auditor
+
+Scope: [Backend / Frontend] — [area name]
+Feature: [feature name]
+Files to audit: [list]
+Focus areas: [most relevant — auth? payment? file upload? data exposure?]
+
+Report back to me (not to the developer) with your findings.
 ```
 
 ### lead → tester

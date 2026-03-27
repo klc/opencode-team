@@ -30,7 +30,8 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "mode": "all",
       "color": "#60a5fa"
@@ -52,7 +53,7 @@
       "color": "#f472b6"
     },
     "backend-lead": {
-      "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple). Triggers QA and review phases.",
+      "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple). Triggers review then QA phases.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.3,
       "steps": 100,
@@ -64,13 +65,14 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "mode": "all",
       "color": "#34d399"
     },
     "frontend-lead": {
-      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple). Triggers QA and review phases.",
+      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple). Triggers review then QA phases.",
       "model": "my-provider/my-fast-model",
       "temperature": 0.4,
       "steps": 100,
@@ -82,7 +84,8 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "mode": "all",
       "color": "#fb923c"
@@ -101,7 +104,8 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "permission": {
         "bash": "allow",
@@ -124,7 +128,8 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "permission": {
         "bash": "allow",
@@ -147,7 +152,8 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "permission": {
         "bash": "ask",
@@ -170,7 +176,8 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "permission": {
         "bash": "ask",
@@ -180,7 +187,7 @@
       "hidden": true
     },
     "tester": {
-      "description": "Invoke after implementation is complete. Writes and runs tests, verifies acceptance criteria, reports bugs. Spawned in parallel per scope by leads.",
+      "description": "Invoke after review passes. Writes and runs tests, verifies acceptance criteria, reports bugs. Spawned in parallel per scope by leads.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.2,
@@ -193,7 +200,8 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "permission": {
         "bash": "allow",
@@ -203,7 +211,7 @@
       "hidden": true
     },
     "code-reviewer": {
-      "description": "Invoke after all tests pass. Reviews code quality, security, and standards. Spawned in parallel per scope by leads. Never modifies code.",
+      "description": "Invoke before QA. Reviews code quality, security, and standards. Spawned in parallel per scope by leads. Never modifies code.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "temperature": 0.2,
@@ -216,13 +224,14 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true
+        "todoread": true,
+        "vibe_kanban": true
       },
       "color": "#f59e0b",
       "hidden": true
     },
     "debugger": {
-      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only \u2014 never modifies code.",
+      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only — never modifies code.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "temperature": 0.1,
@@ -255,7 +264,7 @@
       "color": "#818cf8"
     },
     "security-auditor": {
-      "description": "Invoke for security audits \u2014 OWASP Top 10, auth flaws, injection vulnerabilities, sensitive data exposure. More thorough than code-reviewer's security checklist.",
+      "description": "Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities, sensitive data exposure. More thorough than code-reviewer's security checklist.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "hidden": true,
@@ -272,7 +281,7 @@
       }
     },
     "performance-analyst": {
-      "description": "Invoke to identify performance bottlenecks \u2014 N+1 queries, missing indexes, bundle size, slow endpoints, cache opportunities.",
+      "description": "Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size, slow endpoints, cache opportunities.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "hidden": true,
@@ -291,7 +300,7 @@
     "designer": {
       "description": "Invoke to establish or update the project's visual design system. Creates the project-design skill that all frontend developers follow. Use /team:designer with a design brief.",
       "model": "my-provider/my-strong-model",
-      "mode": "subagent",
+      "mode": "all",
       "hidden": false,
       "color": "#e879f9",
       "temperature": 0.7,
@@ -306,7 +315,7 @@
       }
     },
     "librarian": {
-      "description": "Team memory manager. Invoked by architect, project-manager, debugger, researcher, code-reviewer, and designer to write or retrieve memory records from .memory/.",
+      "description": "Team memory manager. Invoked by agents to write or retrieve memory records from .memory/. Never writes code or makes technical decisions.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "hidden": true,

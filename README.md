@@ -1,6 +1,6 @@
 # OpenCode Agent Team
 
-A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, designer, security auditor, and performance analyst — all coordinated through a strict delegation chain with parallel execution, git integration, and a live todo board.
+A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, designer, security auditor, performance analyst, and librarian — all coordinated through a strict delegation chain with parallel execution, git integration, and a live todo board.
 
 ---
 
@@ -52,6 +52,7 @@ flowchart TD
     RES["🔬 Researcher\nTech evaluation\nReports"]
     SA["🔒 Security Auditor\nOWASP Top 10\nVulnerability report"]
     PA["⚡ Perf Analyst\nBottleneck detection\nOptimization report"]
+    LB["📚 Librarian\nTeam memory\nDecisions & features"]
 
     BL & FL -->|"all tasks done"| CR
     CR -->|"✅ APPROVED"| TS
@@ -77,7 +78,7 @@ Every `/team:new-feature` flows through these phases — no phase starts before 
 
 ## Agents
 
-The team has **16 agents**. Each agent has a specific role and a strict boundary — leads never write code, developers never skip the lead.
+The team has **17 agents**. Each agent has a specific role and a strict boundary — leads never write code, developers never skip the lead.
 
 Agents marked with 🔒 are **hidden** — they don't appear in `@` autocomplete and are only invoked by other agents via the Task tool.
 
@@ -88,7 +89,7 @@ Agents marked with 🔒 are **hidden** — they don't appear in `@` autocomplete
 | `architect` | Technical decisions, ADR writing, infrastructure design | primary |
 | `backend-lead` | Delegates backend tasks, owns review → QA for backend | primary |
 | `frontend-lead` | Delegates frontend tasks, owns review → QA for frontend | primary |
-| `designer` | Establishes visual design system, writes `project-design` skill | subagent |
+| `designer` | Establishes visual design system, writes `project-design` skill | primary |
 | `senior-backend` 🔒 | Complex backend features, integrations, performance | subagent |
 | `junior-backend` 🔒 | CRUD, bug fixes, test writing | subagent |
 | `senior-frontend` 🔒 | Complex components, state management, SSR | subagent |
@@ -99,6 +100,7 @@ Agents marked with 🔒 are **hidden** — they don't appear in `@` autocomplete
 | `researcher` | Technology research, library comparison, spike reports | subagent |
 | `security-auditor` 🔒 | OWASP Top 10, auth flaws, injection vulnerabilities — deeper than code-reviewer | subagent |
 | `performance-analyst` 🔒 | N+1 queries, missing indexes, bundle size, cache opportunities | subagent |
+| `librarian` 🔒 | Team memory manager — writes/retrieves decisions, features, bugs, research, debt | subagent |
 
 ### Recommended Models
 
@@ -120,6 +122,7 @@ Agents marked with 🔒 are **hidden** — they don't appear in `@` autocomplete
 | `researcher` | Fast (vision-capable preferred) | Reading docs, diagrams, papers |
 | `security-auditor` | Strong | False negatives are costly — don't cut corners here |
 | `performance-analyst` | Strong | Architectural pattern recognition needed |
+| `librarian` | Fast | Structured read/write, no complex reasoning needed |
 
 > **Cost tip:** Junior agents, tester, and code-reviewer handle high-volume, lower-stakes work — use your fastest model there. Reserve your best model for architect, leads, debugger, security-auditor, and performance-analyst.
 
@@ -143,6 +146,7 @@ Commands are the entry points. Pick the one that matches the scope of your work.
 | `/team:new-feature <description>` | Full pipeline — scope → architect → implementation → review → QA |
 | `/team:task <description>` | Single well-defined task — skips planning, goes directly to the right developer |
 | `/team:quick-fix <description>` | 1–3 file correction, no new logic — no todo list, just fix + review |
+| `/team:tweak <description>` | Single file / single function change — skips leads, goes directly to the right developer |
 
 ### Bug handling
 
@@ -173,6 +177,13 @@ Commands are the entry points. Pick the one that matches the scope of your work.
 |---|---|
 | `/team:sprint <stories>` | Plan a sprint from user stories — task breakdown assigned to leads |
 | `/team:standup` | Daily status — reads todo board and git log |
+
+### Memory
+
+| Command | Use when |
+|---|---|
+| `/team:remember <description>` | Manually save something to team memory — decisions, notes, context |
+| `/team:recall <topic>` | Search team memory by topic — retrieves relevant past records |
 
 ### Maintenance
 
@@ -298,7 +309,7 @@ The update script reads your current model assignments before overwriting anythi
 ```
 .opencode/
 ├── opencode.json              ← providers, model assignments, tool permissions
-├── agents/                    ← 16 agent prompt files
+├── agents/                    ← 17 agent prompt files
 │   ├── product-owner.md
 │   ├── project-manager.md
 │   ├── architect.md
@@ -314,13 +325,15 @@ The update script reads your current model assignments before overwriting anythi
 │   ├── debugger.md            ← hidden
 │   ├── researcher.md
 │   ├── security-auditor.md    ← hidden
-│   └── performance-analyst.md ← hidden
-├── commands/                  ← 17 command files
+│   ├── performance-analyst.md ← hidden
+│   └── librarian.md           ← hidden
+├── commands/                  ← 19 command files
 │   ├── team:init.md
 │   ├── team:designer.md
 │   ├── team:new-feature.md
 │   ├── team:task.md
 │   ├── team:quick-fix.md
+│   ├── team:tweak.md
 │   ├── team:bugfix.md
 │   ├── team:hotfix.md
 │   ├── team:refactor.md
@@ -331,6 +344,8 @@ The update script reads your current model assignments before overwriting anythi
 │   ├── team:tech-decision.md
 │   ├── team:sprint.md
 │   ├── team:standup.md
+│   ├── team:remember.md
+│   ├── team:recall.md
 │   └── team:update-docs.md
 └── skills/
     ├── project-stack/         ← YOU CREATE THIS via /team:init
@@ -345,6 +360,14 @@ The update script reads your current model assignments before overwriting anythi
     │   └── SKILL.md           ← quality rules, DoD, review severity levels
     └── git-workflow/
         └── SKILL.md           ← conventional commits, branch strategy
+
+.memory/                       ← team memory (committed to git)
+├── index.md                   ← master index of all records
+├── decisions/
+├── features/
+├── bugs/
+├── research/
+└── debt/
 
 examples/
 └── laravel-octane-inertia/
@@ -374,7 +397,7 @@ Feature branches are created by `project-manager` at story start: `feature/<stor
 
 ## Contributing
 
-PRs welcome. If you've built a `project-stack` skill for a different stack (Next.js, NestJS, Django, Rails, Go, etc.), add it under `examples/` and open a PR.
+PRs welcome. If you've built a `project-stack` skill for a different stack (Next.js, NestJS, Django, Rails, Go, etc.), add it under `examples/` and open a PR — currently only a Laravel example exists.
 
 When modifying agent prompts, keep these invariants:
 - Delegation chain must remain strict — no step can be skipped

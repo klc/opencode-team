@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Full team delegation chain, execution phases, parallelization rules, todo board protocol, and agent invocation templates.
+description: Full team delegation chain, execution phases, parallelization rules, todo board protocol, Vibe Kanban issue tracking, memory protocol, and agent invocation templates.
 ---
 
 # Workflow Skill
@@ -19,11 +19,12 @@ product-owner
 ```
 
 **Support agents** (invoked by leads or project-manager as needed):
-- `@tester` — QA, spawned by leads after all implementation is complete
-- `@code-reviewer` — code review, spawned by leads after all tests pass
+- `@tester` — QA, spawned by leads after all reviews pass
+- `@code-reviewer` — code review, spawned by leads before QA
 - `@architect` — architecture decisions, invoked before implementation starts
 - `@debugger` — production incidents and hard-to-reproduce bugs
 - `@researcher` — technology evaluation, spike investigations
+- `@librarian` — team memory, invoked after significant work completes
 
 ---
 
@@ -41,15 +42,11 @@ frontend-lead     → senior-frontend   (complex / moderate tasks)
 frontend-lead     → junior-frontend   (simple tasks)
 ```
 
-**product-owner** never writes code and never assigns to anyone except project-manager.
-**project-manager** never writes code and never assigns to anyone except leads.
-**leads** assess complexity and delegate — they only implement if an architectural decision must happen inline during coding.
-
 ---
 
 ## Execution Phases
 
-Phases are strictly sequential. Never invoke an agent from a later phase while an earlier phase is still running.
+Phases are strictly sequential.
 
 ### Phase 1 — Planning & Implementation
 
@@ -77,9 +74,9 @@ Triggered by leads when ALL their parallel developers report complete.
 backend-lead  → @code-reviewer (one per independent scope, in parallel)
 frontend-lead → @code-reviewer (one per independent scope, in parallel)
     ↓
-Each reviewer reports verdict to their lead (never directly to developer)
+Each reviewer reports verdict to their lead
     ↓
-If BLOCKED or CHANGES REQUIRED → lead reassigns fix to developer → developer fixes + commits → lead re-triggers reviewer for that scope only
+If BLOCKED or CHANGES REQUIRED → lead reassigns fix to developer → re-triggers reviewer for that scope only
     ↓
 When ALL reviewers approve → lead moves to QA
 ```
@@ -92,11 +89,20 @@ Triggered by leads when ALL their reviewers approve.
 backend-lead  → @tester (one per independent scope, in parallel)
 frontend-lead → @tester (one per independent scope, in parallel)
     ↓
-Each tester reports PASS or FAIL to their lead (never directly to reviewer)
+Each tester reports PASS or FAIL to their lead
     ↓
-If FAIL → lead reassigns fix to developer → developer fixes + commits → lead re-triggers tester for that scope only
+If FAIL → lead reassigns fix to developer → re-triggers tester for that scope only
     ↓
 When ALL testers PASS → feature is complete
+```
+
+### Phase 4 — Memory
+
+Triggered by project-manager when ALL leads report their scopes complete.
+
+```
+project-manager → @librarian
+    Write: feature summary, what was built, key decisions made during implementation
 ```
 
 > **Why review before test?** Reviewers can block architectural or structural changes that would make tests obsolete. Running tests first on code that gets rejected wastes time and creates conflicting fix commits.
@@ -106,7 +112,7 @@ When ALL testers PASS → feature is complete
 ## Parallelization Rules
 
 - **Independent tasks → always parallel.** If two tasks don't share files and don't depend on each other's output, invoke both simultaneously.
-- **Dependent tasks → sequential.** If task B requires task A's output (e.g. a migration before a seeder), call A first, wait, then call B.
+- **Dependent tasks → sequential.** If task B requires task A's output, call A first, wait, then call B.
 - **Unlimited instances.** Leads may spawn as many developer, tester, or reviewer instances as needed.
 - **Same scope, sequential.** A single scope must not have two agents working on it simultaneously.
 
@@ -127,9 +133,109 @@ When ALL testers PASS → feature is complete
 
 ---
 
-## Critical Decision Protocol
+## Vibe Kanban Protocol
 
-These agents must stop and ask the user when they encounter decisions with long-term consequences:
+**Only active when the `project-stack` skill contains a `## Vibe Kanban` section.**
+If that section is absent, skip all Vibe Kanban steps and use todowrite/todoread only.
+
+### Issue creation (project-manager)
+
+project-manager creates all issues at story start — one parent feature issue and one sub-issue per task (including `[review]` and `[qa]` tasks). All start with status `"todo"`.
+
+### Issue ID passing
+
+project-manager includes ALL four IDs in every lead delegation message:
+
+```
+Kanban feature issue ID: <uuid>
+Kanban task issue ID:    <uuid>
+Kanban review issue ID:  <uuid>
+Kanban qa issue ID:      <uuid>
+```
+
+Leads pass the full set to developers, reviewers, and testers unchanged.
+
+### Status update rules
+
+| Agent | When | Call |
+|---|---|---|
+| lead | assigns task to developer | `update_issue(task_issue_id, status: "in_progress")` |
+| developer | implementation done | `update_issue(task_issue_id, status: "done")` |
+| lead | triggers review | `update_issue(review_issue_id, status: "in_progress")` |
+| code-reviewer | approved | `update_issue(review_issue_id, status: "done")` |
+| code-reviewer | blocked / changes | `update_issue(review_issue_id, status: "in_review")` |
+| lead | triggers QA | `update_issue(qa_issue_id, status: "in_progress")` |
+| tester | PASS | `update_issue(qa_issue_id, status: "done")` |
+| tester | FAIL | `update_issue(qa_issue_id, status: "in_review")` |
+| lead | all tasks done | `update_issue(feature_issue_id, status: "done")` |
+
+Valid status strings: `"todo"` · `"in_progress"` · `"in_review"` · `"done"`
+
+---
+
+## Memory Protocol
+
+**Always active.** @librarian is invoked after significant work — not for every small step.
+
+### Who invokes @librarian and when
+
+| Agent | Invokes @librarian when |
+|---|---|
+| project-manager | All leads report complete — feature is done |
+| architect | After writing an ADR or resolving a critical decision |
+| backend-lead | After a bug fix or significant architectural change in their scope |
+| frontend-lead | After a bug fix or significant architectural change in their scope |
+| debugger | After completing a root cause analysis |
+| researcher | After completing a research report |
+| code-reviewer | When deferring a Required finding (technical debt) |
+| designer | After establishing or significantly updating the design system |
+
+Developers (senior/junior) do NOT invoke @librarian directly — their leads handle memory for the scope.
+
+### What to record
+
+```
+project-manager → TYPE: feature
+  TITLE: [feature name]
+  CONTENT: what was built, branch, tasks completed, key implementation decisions
+
+architect → TYPE: decision
+  TITLE: [decision title]
+  CONTENT: options considered, what was decided, rationale, consequences
+
+backend-lead / frontend-lead → TYPE: bug (when fixing)
+  TITLE: [bug description]
+  CONTENT: root cause, fix applied, prevention
+
+debugger → TYPE: bug
+  TITLE: [short bug description]
+  CONTENT: symptoms, root cause, fix, prevention
+
+researcher → TYPE: research
+  TITLE: [research topic]
+  CONTENT: question, recommendation, options, sources
+
+code-reviewer → TYPE: debt (deferred Required findings only)
+  TITLE: [debt description]
+  CONTENT: location, issue, why deferred, estimated effort, risk
+
+designer → TYPE: decision
+  TITLE: design-system-[version or date]
+  CONTENT: direction, primary color, typography, key decisions, what was rejected
+```
+
+### Before starting significant work
+
+architect and researcher should check memory first:
+
+```
+ACTION: recall
+QUERY: [topic]
+```
+
+---
+
+## Critical Decision Protocol
 
 | Agent | Asks about |
 |---|---|
@@ -161,6 +267,11 @@ Tasks assigned to backend:
   T01: [title] — [description] — Acceptance: [criteria]
   T02: [title] — [description] — Acceptance: [criteria]
 
+Kanban feature issue ID: <uuid>
+Kanban task issue IDs:   T01=<uuid>, T02=<uuid>
+Kanban review issue ID:  <uuid>
+Kanban qa issue ID:      <uuid>
+
 Dependencies: T02 depends on T01 / none
 ```
 
@@ -175,6 +286,11 @@ Branch: feature/[slug]
 Tasks assigned to frontend:
   T03: [title] — [description] — Acceptance: [criteria]
 
+Kanban feature issue ID: <uuid>
+Kanban task issue IDs:   T03=<uuid>
+Kanban review issue ID:  <uuid>
+Kanban qa issue ID:      <uuid>
+
 API contract expected from backend: [endpoints / data shape if relevant]
 Dependencies: wait for backend T01 before starting T03 / none
 ```
@@ -185,12 +301,31 @@ Dependencies: wait for backend T01 before starting T03 / none
 @senior-backend / @junior-backend / @senior-frontend / @junior-frontend
 
 Task: [T0X] — [title]
-Description: [what needs to be done, be specific]
+Description: [what needs to be done]
 Acceptance criteria:
   - [ ] [criterion]
 Constraints: [files NOT to touch, decisions already made]
 Files likely involved: [list if known]
 Depends on: [task title or "none"]
+
+Kanban task issue ID:    <uuid>
+Kanban review issue ID:  <uuid>
+Kanban qa issue ID:      <uuid>
+Kanban feature issue ID: <uuid>
+```
+
+### lead → code-reviewer
+
+```
+@code-reviewer
+
+Scope: [Backend / Frontend] — [area name]
+Feature: [feature name]
+Files to review: [list]
+Special attention: [security-sensitive? complex logic? new pattern?]
+
+Kanban review issue ID:  <uuid>
+Kanban feature issue ID: <uuid>
 ```
 
 ### lead → tester
@@ -206,16 +341,24 @@ Files to test: [list]
 Test command: [project-specific test command]
 Acceptance criteria:
   - [ ] [criterion]
+
+Kanban qa issue ID:      <uuid>
+Kanban feature issue ID: <uuid>
 ```
 
-### lead → code-reviewer
+### project-manager → librarian (after feature complete)
 
 ```
-@code-reviewer
+@librarian
 
-Scope: [Backend / Frontend] — [area name]
-Feature: [feature name]
-All tests passing: yes
-Files to review: [list]
-Special attention: [security-sensitive? complex logic? new pattern?]
+ACTION: write
+TYPE: feature
+TITLE: [feature name]
+CONTENT:
+  Story: [US-ID and title]
+  What was built: [summary of implementation]
+  Branch: feature/[slug]
+  Tasks completed: [T01, T02, ...]
+  Key decisions made during implementation: [if any]
+  Known limitations: [if any]
 ```

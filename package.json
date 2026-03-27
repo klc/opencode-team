@@ -1,6 +1,6 @@
 {
   "name": "opencode-agent-team",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Multi-agent software development team for OpenCode",
   "type": "module",
   "scripts": {

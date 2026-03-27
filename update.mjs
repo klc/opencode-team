@@ -27,11 +27,11 @@ const green  = s => `${c.green}${s}${c.reset}`
 const yellow = s => `${c.yellow}${s}${c.reset}`
 const red    = s => `${c.red}${s}${c.reset}`
 
-const ok   = msg => console.log(`  ${green('✓')} ${msg}`)
+const ok    = msg => console.log(`  ${green('✓')} ${msg}`)
 const dryok = msg => DRY_RUN ? console.log(`  ${dim('[dry-run]')} ${msg}`) : ok(msg)
-const warn = msg => console.log(`  ${yellow('⚠')}  ${msg}`)
-const err  = msg => console.log(`  ${red('✗')} ${msg}`)
-const step = msg => console.log(`\n${bold(cyan('▶ ' + msg))}`)
+const warn  = msg => console.log(`  ${yellow('⚠')}  ${msg}`)
+const err   = msg => console.log(`  ${red('✗')} ${msg}`)
+const step  = msg => console.log(`\n${bold(cyan('▶ ' + msg))}`)
 
 // ── Readline helper ─────────────────────────────────────────
 const rl = createInterface({ input: process.stdin, output: process.stdout })
@@ -72,9 +72,13 @@ function readCurrentModels(installDir) {
   for (const file of readdirSync(agentsDir)) {
     if (!file.endsWith('.md')) continue
     const agentName = file.replace('.md', '')
-    const content = readFileSync(join(agentsDir, file), 'utf8')
-    const match = content.match(/^model:\s*(.+)$/m)
-    if (match) models[agentName] = match[1].trim()
+    try {
+      const content = readFileSync(join(agentsDir, file), 'utf8')
+      const match = content.match(/^model:\s*(.+)$/m)
+      if (match) models[agentName] = match[1].trim()
+    } catch (e) {
+      warn(`Could not read agent file ${file}: ${e.message}`)
+    }
   }
 
   return models
@@ -101,30 +105,45 @@ function readModelsFromJson(installDir) {
 function resolveCurrentModels(installDir) {
   const fromJson = readModelsFromJson(installDir)
   const fromMd   = readCurrentModels(installDir)
-  // md files are the source of truth (install script writes both)
   return { ...fromJson, ...fromMd }
 }
 
 // ── Copy dir recursively, skipping specified files ───────────
 function copyDir(src, dest, skipFiles = []) {
-  if (!existsSync(dest)) mkdirSync(dest, { recursive: true })
-  for (const entry of readdirSync(src, { withFileTypes: true })) {
-    if (skipFiles.includes(entry.name)) continue
-    const srcPath  = join(src, entry.name)
-    const destPath = join(dest, entry.name)
-    if (entry.isDirectory()) {
-      copyDir(srcPath, destPath, skipFiles)
-    } else {
-      copyFileSync(srcPath, destPath)
+  try {
+    if (!existsSync(dest)) mkdirSync(dest, { recursive: true })
+    for (const entry of readdirSync(src, { withFileTypes: true })) {
+      if (skipFiles.includes(entry.name)) continue
+      const srcPath  = join(src, entry.name)
+      const destPath = join(dest, entry.name)
+      if (entry.isDirectory()) {
+        copyDir(srcPath, destPath, skipFiles)
+      } else {
+        try {
+          copyFileSync(srcPath, destPath)
+        } catch (e) {
+          throw new Error(`Failed to copy ${srcPath} → ${destPath}: ${e.message}`)
+        }
+      }
     }
+  } catch (e) {
+    throw new Error(`copyDir failed (${src} → ${dest}): ${e.message}`)
   }
 }
 
 // ── Apply model to agent file ────────────────────────────────
 function applyModel(agentFilePath, model) {
-  let content = readFileSync(agentFilePath, 'utf8')
-  content = content.replace(/^model:.*$/m, `model: ${model}`)
-  writeFileSync(agentFilePath, content)
+  try {
+    let content = readFileSync(agentFilePath, 'utf8')
+    const updated = content.replace(/^model:.*$/m, `model: ${model}`)
+    if (updated === content) {
+      warn(`No model: field found in ${agentFilePath} — skipping model restore`)
+      return
+    }
+    writeFileSync(agentFilePath, updated)
+  } catch (e) {
+    warn(`Could not restore model in ${agentFilePath}: ${e.message}`)
+  }
 }
 
 // ── Update agent block in opencode.json ──────────────────────
@@ -140,7 +159,6 @@ function updateOpencodeJson(installDir, currentModels) {
     return
   }
 
-  // Update model field in each agent entry, preserving everything else
   let updated = 0
   for (const [name, agent] of Object.entries(config.agent || {})) {
     if (currentModels[name] && agent.model !== currentModels[name]) {
@@ -149,11 +167,14 @@ function updateOpencodeJson(installDir, currentModels) {
     }
   }
 
-  writeFileSync(jsonPath, JSON.stringify(config, null, 2))
-  if (updated > 0) ok(`Updated ${updated} model references in opencode.json`)
+  try {
+    writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+    if (updated > 0) ok(`Updated ${updated} model references in opencode.json`)
+  } catch (e) {
+    warn(`Could not write opencode.json: ${e.message}`)
+  }
 }
 
-// ── Main ─────────────────────────────────────────────────────
 // ── Vibe Kanban MCP helpers ──────────────────────────────────
 const VIBE_KANBAN_MCP_KEY = 'vibe_kanban'
 const VIBE_KANBAN_MCP_CONFIG = {
@@ -172,14 +193,37 @@ function hasVibeKanbanMcp(jsonPath) {
   }
 }
 
+// Agents that need Vibe Kanban tool access
+const VIBE_KANBAN_AGENTS = new Set([
+  'project-manager',
+  'backend-lead', 'frontend-lead',
+  'senior-backend', 'senior-frontend',
+  'junior-backend', 'junior-frontend',
+  'tester', 'code-reviewer',
+])
+
 function addVibeKanbanMcp(jsonPath) {
   let config = {}
   if (existsSync(jsonPath)) {
     try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { config = {} }
   }
+  // Add MCP server definition
   if (!config.mcp) config.mcp = {}
   config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
-  writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+
+  // Add vibe_kanban: true to each relevant agent's tools block
+  for (const agentName of VIBE_KANBAN_AGENTS) {
+    if (config.agent?.[agentName]) {
+      if (!config.agent[agentName].tools) config.agent[agentName].tools = {}
+      config.agent[agentName].tools.vibe_kanban = true
+    }
+  }
+
+  try {
+    writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+  } catch (e) {
+    warn(`Could not write Vibe Kanban config to opencode.json: ${e.message}`)
+  }
 }
 
 // ── Changelog ───────────────────────────────────────────────
@@ -235,14 +279,12 @@ const CHANGELOG = [
 ]
 
 function showChangelog(installedDir) {
-  // Try to detect installed version from a marker file
   const markerPath = join(installedDir, '.team-version')
   const currentVersion = CHANGELOG[0].version
 
   console.log(`
   ${bold('Changelog — what is new:')}`)
 
-  // Show all entries if no version marker, otherwise just latest
   const entries = existsSync(markerPath)
     ? CHANGELOG.slice(0, 1)
     : CHANGELOG
@@ -274,6 +316,7 @@ async function main() {
   if (!existsSync(sourceDir)) {
     err(`Source directory not found: ${sourceDir}`)
     console.log('  Make sure you run this script from the opencode-agent-team directory.')
+    close()
     process.exit(1)
   }
 
@@ -286,6 +329,7 @@ async function main() {
   if (detected.type === 'none') {
     err('No existing installation found.')
     console.log(`  Run ${cyan('node install.mjs')} first to do a fresh install.`)
+    close()
     process.exit(1)
   } else if (detected.type === 'both') {
     ok(`Found both project and global installations`)
@@ -320,8 +364,15 @@ async function main() {
 
     // Step 2: Copy new agent, command, and skill files (skip opencode.json)
     if (!DRY_RUN) {
-      copyDir(sourceDir, dir, ['opencode.json'])
-      ok('Copied updated agent, command, and skill files')
+      try {
+        copyDir(sourceDir, dir, ['opencode.json'])
+        ok('Copied updated agent, command, and skill files')
+      } catch (e) {
+        err(`File copy failed: ${e.message}`)
+        err('Your existing installation has not been modified.')
+        close()
+        process.exit(1)
+      }
     } else {
       dryok('Would copy updated agent, command, and skill files')
     }
@@ -343,7 +394,6 @@ async function main() {
     }
 
     // Step 4: Update model fields in opencode.json agent block
-    // (preserve provider, mcp, instructions — only update agent.model fields)
     const jsonPath = join(dir, 'opencode.json')
     if (existsSync(jsonPath)) {
       updateOpencodeJson(dir, currentModels)
@@ -379,10 +429,13 @@ async function main() {
   }
 
   // ── Done ───────────────────────────────────────────────────
-  // Write version marker
   if (!DRY_RUN) {
     for (const { dir } of installDirs) {
-      writeFileSync(join(dir, '.team-version'), CHANGELOG[0].version)
+      try {
+        writeFileSync(join(dir, '.team-version'), CHANGELOG[0].version)
+      } catch (e) {
+        warn(`Could not write version marker: ${e.message}`)
+      }
     }
   }
 
@@ -391,6 +444,7 @@ async function main() {
     console.log(bold(yellow('Dry-run complete — no files were modified.')))
     console.log(`  Run ${cyan('node update.mjs')} without --dry-run to apply changes.`)
     console.log('')
+    close()
     return
   }
 
@@ -417,5 +471,6 @@ async function main() {
 
 main().catch(e => {
   console.error(red('Update failed:'), e.message)
+  close()
   process.exit(1)
 })

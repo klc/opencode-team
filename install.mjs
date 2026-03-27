@@ -125,7 +125,6 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
       warn('Could not parse existing opencode.json — creating a new one.')
       config = {}
     }
-    // Only update the agent block — preserve everything else
     config.agent = agentBlock
     ok('Merged agent block into existing opencode.json (provider/MCP settings preserved)')
   } else {
@@ -134,7 +133,6 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
     ok('Created opencode.json')
   }
 
-  // Add instructions only for project installs
   if (isProject && !config.instructions) {
     config.instructions = ['AGENTS.md']
   }
@@ -146,9 +144,23 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
 const VIBE_KANBAN_MCP_KEY = 'vibe_kanban'
 const VIBE_KANBAN_MCP_CONFIG = {
   type: 'local',
-  command: 'npx',
-  args: ['-y', 'vibe-kanban@latest', '--mcp'],
+  command: [
+      "npx",
+      "-y",
+      "vibe-kanban@latest",
+      "--mcp"
+  ],
+  enabled: true
 }
+
+// Agents that need Vibe Kanban tool access
+const VIBE_KANBAN_AGENTS = new Set([
+  'project-manager',
+  'backend-lead', 'frontend-lead',
+  'senior-backend', 'senior-frontend',
+  'junior-backend', 'junior-frontend',
+  'tester', 'code-reviewer',
+])
 
 function hasVibeKanbanMcp(jsonPath) {
   if (!existsSync(jsonPath)) return false
@@ -165,25 +177,35 @@ function addVibeKanbanMcp(jsonPath) {
   if (existsSync(jsonPath)) {
     try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { config = {} }
   }
+  // Add MCP server definition
   if (!config.mcp) config.mcp = {}
   config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
+
+  // Add vibe_kanban: true to each relevant agent's tools block
+  for (const agentName of VIBE_KANBAN_AGENTS) {
+    if (config.agent?.[agentName]) {
+      if (!config.agent[agentName].tools) config.agent[agentName].tools = {}
+      config.agent[agentName].tools.vibe_kanban = true
+    }
+  }
+
   writeFileSync(jsonPath, JSON.stringify(config, null, 2))
 }
 
 // ── Build agent config block ─────────────────────────────────
-function buildAgentBlock(agentModels) {
+function buildAgentBlock(agentModels, includeVibeKanban = false) {
   const descriptions = {
     'product-owner':   'Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.',
     'project-manager': 'Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.',
     'architect':       'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
-    'backend-lead':    'Invoke when backend tasks arrive from project-manager. Delegates to developers. Triggers QA and review.',
-    'frontend-lead':   'Invoke when frontend tasks arrive from project-manager. Delegates to developers. Triggers QA and review.',
+    'backend-lead':    'Invoke when backend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
+    'frontend-lead':   'Invoke when frontend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
     'senior-backend':  'Invoke for complex backend tasks: new architecture, integrations, performance-critical code.',
     'senior-frontend': 'Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code.',
     'junior-backend':  'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes.',
     'junior-frontend': 'Invoke for simple frontend tasks: styling, small presentational components, component tests.',
-    'tester':          'Invoke after implementation is complete. Writes and runs tests, reports bugs. Spawned in parallel per scope by leads.',
-    'code-reviewer':   'Invoke after all tests pass. Reviews code quality, security, and standards. Never modifies code.',
+    'tester':          'Invoke after review passes. Writes and runs tests, reports bugs. Spawned in parallel per scope by leads.',
+    'code-reviewer':   'Invoke before QA. Reviews code quality, security, and standards. Never modifies code.',
     'debugger':        'Invoke when root cause of a bug is unclear. Reads logs and stack traces. Analysis only.',
     'researcher':        'Invoke to evaluate a technology or pattern. Produces comparison report with recommendation.',
     'designer':          'Invoke to establish or update the project visual design system. Creates the project-design skill that all frontend developers follow.',
@@ -194,12 +216,12 @@ function buildAgentBlock(agentModels) {
 
   const modeMap = {
     'product-owner': 'all', 'project-manager': 'all', 'architect': 'all',
-    'backend-lead': 'all', 'frontend-lead': 'all',
+    'backend-lead': 'all', 'frontend-lead': 'all', 'designer': 'all',
     'senior-backend': 'subagent', 'senior-frontend': 'subagent',
     'junior-backend': 'subagent', 'junior-frontend': 'subagent',
     'tester': 'subagent', 'code-reviewer': 'subagent',
     'debugger': 'subagent', 'researcher': 'subagent',
-    'designer': 'subagent', 'security-auditor': 'subagent', 'performance-analyst': 'subagent', 'librarian': 'subagent',
+    'security-auditor': 'subagent', 'performance-analyst': 'subagent', 'librarian': 'subagent',
   }
 
   const stepsMap = {
@@ -227,6 +249,11 @@ function buildAgentBlock(agentModels) {
     'tester', 'code-reviewer',
   ])
 
+  const hiddenAgents = new Set([
+    'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend',
+    'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst', 'librarian',
+  ])
+
   const block = {}
   for (const name of Object.keys(descriptions)) {
     const agent = {
@@ -235,17 +262,19 @@ function buildAgentBlock(agentModels) {
       mode: modeMap[name],
       steps: stepsMap[name],
     }
+
+    const tools = {}
     if (todoAgents.has(name)) {
-      agent.tools = { todowrite: true, todoread: true }
+      tools.todowrite = true
+      tools.todoread  = true
     }
-    if (permissionMap[name]) {
-      agent.permission = permissionMap[name]
+    // Grant vibe_kanban tool access if Vibe Kanban is enabled
+    if (includeVibeKanban && VIBE_KANBAN_AGENTS.has(name)) {
+      tools.vibe_kanban = true
     }
-    // hidden agents — internal use only, not shown in @ autocomplete
-    const hiddenAgents = new Set([
-      'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend',
-      'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst', 'librarian',
-    ])
+    if (Object.keys(tools).length > 0) agent.tools = tools
+
+    if (permissionMap[name]) agent.permission = permissionMap[name]
     if (hiddenAgents.has(name)) agent.hidden = true
 
     block[name] = agent
@@ -287,6 +316,7 @@ async function main() {
       : inputPath
     if (!existsSync(projectRoot)) {
       err(`Directory not found: ${projectRoot}`)
+      close()
       process.exit(1)
     }
   }
@@ -313,7 +343,6 @@ async function main() {
   console.log('')
   const fastModel   = await selectModel('Fast model',   'anthropic/claude-sonnet-4-5', models)
 
-  // Default assignments
   const agentModels = {
     'product-owner':   strongModel,
     'project-manager': strongModel,
@@ -349,8 +378,7 @@ async function main() {
   step('Vibe Kanban integration (recommended)')
   console.log('')
   console.log(`  Vibe Kanban gives the agent team a visual Kanban board.`)
-  console.log(`  The MCP server lets agents create and update issues automatically`)
-  console.log(`  as they work — you see real-time progress on the board.`)
+  console.log(`  Agents create and update issues automatically as they work.`)
   console.log('')
   console.log(`  ${dim('Learn more: https://vibekanban.com')}`)
   console.log('')
@@ -358,10 +386,7 @@ async function main() {
   const vibeInput = await ask('Enable Vibe Kanban integration? [Y/n]', 'y')
   const useVibeKanban = vibeInput.toLowerCase() !== 'n'
 
-  let vibeKanbanStatus = 'skipped'
-  if (useVibeKanban) {
-    vibeKanbanStatus = 'pending'  // will be applied after opencode.json is written in step 7
-  } else {
+  if (!useVibeKanban) {
     warn('Vibe Kanban skipped — you can add it later by running the install script again')
   }
 
@@ -372,10 +397,10 @@ async function main() {
   if (!existsSync(sourceDir)) {
     err(`Source directory not found: ${sourceDir}`)
     console.log('  Make sure you run this script from the opencode-agent-team directory.')
+    close()
     process.exit(1)
   }
 
-  // Copy all files — skip opencode.json, it's handled separately to avoid overwriting provider/MCP settings
   copyDir(sourceDir, installDir, ['opencode.json'])
   ok(`Copied agent, command, and skill files to ${installDir}`)
 
@@ -390,21 +415,17 @@ async function main() {
 
   // ── Step 8: Write opencode.json ───────────────────────────
   step('Generating opencode.json...')
-  const agentBlock  = buildAgentBlock(agentModels)
-  const jsonPath    = join(installDir, 'opencode.json')
+  const agentBlock = buildAgentBlock(agentModels, useVibeKanban)
+  const jsonPath   = join(installDir, 'opencode.json')
   writeOpencodeJson(jsonPath, agentBlock, !isGlobal)
 
-  // ── Step 8b: Apply Vibe Kanban MCP ─────────────────────────
+  // Add Vibe Kanban MCP server definition (tools already in agentBlock)
   if (useVibeKanban) {
-    const jsonPath = join(installDir, 'opencode.json')
-    if (hasVibeKanbanMcp(jsonPath)) {
-      ok('Vibe Kanban MCP already configured in opencode.json')
-      vibeKanbanStatus = 'already_configured'
-    } else {
-      addVibeKanbanMcp(jsonPath)
-      ok('Vibe Kanban MCP server added to opencode.json')
-      vibeKanbanStatus = 'added'
-    }
+    let config = JSON.parse(readFileSync(jsonPath, 'utf8'))
+    if (!config.mcp) config.mcp = {}
+    config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
+    writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+    ok('Vibe Kanban MCP server and agent tool permissions configured')
   }
 
   // ── Step 9: Project extras (AGENTS.md) ───────────────────
@@ -416,13 +437,9 @@ async function main() {
 
 ## Language
 <!-- Set your preferred language for agent responses here -->
-<!-- Example: Always respond to me in Turkish. Keep code, comments, and docs in English. -->
 
 ## Commands
 <!-- Specify how to run commands in this project -->
-<!-- Example: Always run php and npm commands inside Docker:
-  - php → docker compose exec app php ...
-  - npm → docker compose exec node npm ... -->
 
 ## Code Style
 <!-- Any project-specific code style rules beyond what's in the stack skill -->
@@ -452,24 +469,24 @@ async function main() {
     console.log(`    ${agent.padEnd(20)} ${dim(model)}`)
   }
   console.log('')
-  // Vibe Kanban status line
-  if (vibeKanbanStatus === 'added') {
-    console.log(`  ${bold('Vibe Kanban:')} ${green('✓')} MCP server added to opencode.json`)
+  if (useVibeKanban) {
+    console.log(`  ${bold('Vibe Kanban:')} ${green('✓')} MCP server + agent tool permissions configured`)
     console.log(`  ${dim('Open Vibe Kanban, create a project, then run /team:init')}`)
-  } else if (vibeKanbanStatus === 'already_configured') {
-    console.log(`  ${bold('Vibe Kanban:')} ${green('✓')} Already configured`)
   } else {
     console.log(`  ${bold('Vibe Kanban:')} ${dim('Not enabled — re-run install script to add later')}`)
   }
   console.log('')
   console.log(`  ${bold('Next steps:')}`)
   if (!isGlobal) {
-    console.log(`  1. ${cyan('Edit AGENTS.md')} — add your project rules (language, docker commands, etc.)`)
-    if (vibeKanbanStatus === 'added' || vibeKanbanStatus === 'already_configured') {
+    console.log(`  1. ${cyan('Edit AGENTS.md')} — add your project rules`)
+    if (useVibeKanban) {
       console.log(`  2. ${cyan('Open Vibe Kanban')} — create a project and note your project ID`)
+      console.log(`  3. ${cyan('Run /team:init')} — generates project-stack skill and sets Kanban project ID`)
+      console.log(`  4. ${cyan('/team:new-feature <description>')} — start building`)
+    } else {
+      console.log(`  2. ${cyan('Run /team:init')} — generates the project-stack skill`)
+      console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
     }
-    console.log(`  ${vibeKanbanStatus !== 'skipped' ? '3' : '2'}. ${cyan('Run /team:init')} in OpenCode — auto-generates the project-stack skill`)
-    console.log(`  ${vibeKanbanStatus !== 'skipped' ? '4' : '3'}. ${cyan('/team:new-feature <description>')} — start building`)
   } else {
     console.log(`  1. In each project: ${cyan('run /team:init')} to generate the project-stack skill`)
     console.log(`  2. ${cyan('/team:new-feature <description>')} — start building`)
@@ -481,5 +498,6 @@ async function main() {
 
 main().catch(e => {
   console.error(red('Installation failed:'), e.message)
+  close()
   process.exit(1)
 })

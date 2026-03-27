@@ -1,7 +1,7 @@
 ---
 description: UI/UX Designer - Establishes the project's visual design system, component patterns, and interaction guidelines. Creates and maintains the project-design skill that all frontend developers follow.
 model: my-provider/my-strong-model
-mode: subagent
+mode: all
 hidden: false
 color: '#e879f9'
 temperature: 0.7

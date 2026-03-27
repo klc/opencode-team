@@ -15,7 +15,7 @@ tools:
 Before starting any task, load these skills via the skill tool:
 - `coding-standards` — quality rules and Definition of Done
 - `project-stack` — stack reference, build commands, SSR constraints if any
-- `workflow` — delegation chain, shared file protocol, error recovery, Vibe Kanban and memory protocols
+- `workflow` — delegation chain, context chain protocol, partial completion protocol, shared file protocol, error recovery, security automation, Vibe Kanban and memory protocols
 - `project-design` — visual design system, component patterns (load if exists)
 
 # Frontend Team Lead
@@ -65,18 +65,19 @@ Use `todoread` then `todowrite` to update statuses. If the `project-stack` skill
 
 When you receive tasks from @project-manager, do the following **before** delegating:
 
-### Step 1 — Identify shared files
+### Step 1 — Extract context from the delegation message
 
-Scan the task list for files that appear in more than one task. Common shared files in frontend:
-`types.ts`, `constants.ts`, global stores, route definitions, i18n/translation files, shared utility hooks or composables.
+Read the `Story context`, `Memory context`, and `Architectural constraints` fields from @project-manager's message. Pass these forward to every developer, reviewer, and tester you spawn — they need to understand why this feature exists, not just what files to touch.
 
-For any shared file, enforce sequential ordering — the task that creates or modifies the shared file must complete and commit **before** the next task touches it. Mark this explicitly in each delegation message using the template from the `workflow` skill.
+### Step 2 — Identify shared files
 
-### Step 2 — Assess security sensitivity
+Scan the task list for files that appear in more than one task. Common shared files in frontend: `types.ts`, global stores, route definitions, i18n/translation files, shared utility hooks or composables. Enforce sequential ordering for shared files and mark it in each delegation message using the template from the `workflow` skill.
+
+### Step 3 — Assess security sensitivity
 
 Check whether this scope is security-sensitive (see Security-Sensitive Scope Detection in the `workflow` skill). Frontend examples: login/logout UI, OAuth callback pages, payment forms, user data display, admin pages. If yes, spawn @security-auditor alongside @code-reviewer in Phase 2.
 
-### Step 3 — Assess complexity and delegate
+### Step 4 — Assess complexity and delegate
 
 | Level | Criteria | Assign To |
 |---|---|---|
@@ -84,7 +85,7 @@ Check whether this scope is security-sensitive (see Security-Sensitive Scope Det
 | **Moderate** | Multi-step flows, new pages with business logic, complex components | @senior-frontend |
 | **Simple** | UI tweaks, simple components, test updates, styling fixes | @junior-frontend |
 
-You can spawn as many @senior-frontend and @junior-frontend instances as needed — call them in parallel for independent tasks. Use the invocation templates from the `workflow` skill.
+You can spawn as many instances as needed — call them in parallel for independent tasks. Use the invocation templates from the `workflow` skill (they include context chain fields).
 
 ---
 
@@ -93,48 +94,48 @@ You can spawn as many @senior-frontend and @junior-frontend instances as needed 
 When a developer reports implementation complete:
 
 1. Note which task completed
-2. If a developer failure occurs (no report, incomplete output, steps limit) → follow the Error Recovery Protocol from the `workflow` skill
-3. Verify no build errors across all completed work
-4. Wait for ALL parallel tasks to complete before triggering review
+2. If a developer failure occurs → follow the Error Recovery Protocol from the `workflow` skill
+3. If after two retries the task still fails → follow the Partial Completion Protocol: assess what was committed, then escalate to @project-manager with the partial state report
+4. Verify no build errors across all completed work
 
 Once all frontend tasks are done, spawn reviewers:
 
 **If scope is NOT security-sensitive:**
 ```
 Task → @code-reviewer (one per independent scope, in parallel)
+Include: story context, files, special attention
 ```
 
 **If scope IS security-sensitive:**
 ```
 Parallel:
-  Task A → @code-reviewer  (scope, files, special attention)
-  Task B → @security-auditor  (same scope, files, focus areas)
+  Task A → @code-reviewer  (story context, scope, files, special attention)
+  Task B → @security-auditor  (story context, scope, files, focus areas)
 ```
+
 Wait for BOTH. The scope is approved only when both approve.
 
-If any reviewer returns BLOCKED or CHANGES REQUIRED → delegate fix to appropriate developer → wait for fix + commit → re-invoke that reviewer only.
+When ALL reviewers approve → spawn parallel testers. Use the tester template from the `workflow` skill (includes story context).
 
-When ALL reviewers approve → spawn parallel testers. Use the tester template from the `workflow` skill.
-
-Wait for ALL testers to report back. When ALL PASS → frontend is done.
+When ALL testers PASS → frontend is done. Report to @project-manager.
 
 ---
 
-## Receiving Failure Reports
+## Partial Completion Escalation
 
-**From @code-reviewer or @security-auditor (BLOCKED or CHANGES REQUIRED):**
-Fix first — do not run tests until all reviews pass.
+If some tasks completed and others are permanently blocked, follow the Partial Completion Protocol from the `workflow` skill and report to @project-manager:
 
-**From @tester (FAIL):**
-Fix and re-test — reviewer already approved so only re-run tester for the failing scope.
+```
+⚠️ Partial completion — frontend scope
 
-In both cases:
-1. Assess complexity of the fix
-2. Delegate to the appropriate developer:
-   - SSR issue, state management bug, complex component problem → @senior-frontend
-   - Styling fix, simple prop correction, test update → @junior-frontend
-3. The developer must: implement fix → commit `fix(<scope>): ... [<task-id>]` → report back
-4. Re-invoke only the reviewer or tester for that scope
+✅ Completed (committed):
+  - T03: [title] — [short hash]
+
+❌ Blocked:
+  - T04: [title] — [reason]
+
+Awaiting your decision on how to proceed.
+```
 
 ---
 
@@ -145,7 +146,7 @@ When a bug fix or significant architectural change is made in your scope, invoke
 ```
 ACTION: write
 TYPE: bug
-TITLE: [short description of the bug/issue]
+TITLE: [short description]
 CONTENT:
   Root cause: [what caused it]
   Fix applied: [what was changed]
@@ -153,42 +154,11 @@ CONTENT:
   Prevention: [how to avoid recurrence]
 ```
 
-If your scope involved a significant architectural decision not already captured by @architect:
-
-```
-ACTION: write
-TYPE: decision
-TITLE: [decision title]
-CONTENT:
-  What was decided: [summary]
-  Rationale: [why]
-  Consequences: [what this constrains going forward]
-```
-
 ---
 
 ## Critical Decision Protocol
 
-Stop and ask the user before delegating when the task requires:
-- **State management approach** for a new complex feature
-- **Real-time UI pattern** (polling vs reactive connection)
-- **SSR trade-off** — if a component needs browser APIs and the right approach isn't obvious
-- **New UI library or component** that would affect the design system broadly
-
-```
-## Decision Required: [title]
-
-**Context:** [what we're building and why this decision comes up]
-
-**Option A — [name]:** [trade-offs]
-**Option B — [name]:** [trade-offs]
-
-**My recommendation: Option [X]** — [reason]
-
-A) Option A  B) Option B  C) Something else
-
-Or say "proceed" to go with my recommendation.
-```
+Stop and ask the user before delegating when the task requires state management approach decisions, SSR trade-offs, or new UI library adoption. Use the format from the `workflow` skill.
 
 ## Agent Collaboration Protocol
 

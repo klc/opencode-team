@@ -1,5 +1,5 @@
 ---
-description: Plan a sprint — take a list of user stories and produce a full sprint plan with task breakdown assigned to leads
+description: Plan a sprint — take a list of user stories and produce a full sprint plan with task breakdown assigned to leads. Surfaces open technical debt for inclusion.
 agent: project-manager
 subtask: false
 ---
@@ -8,14 +8,96 @@ Plan a sprint for the following user stories or requirements:
 
 "$ARGUMENTS"
 
-Steps:
-1. Break each story into concrete backend and frontend tasks
-2. Estimate story points for each task
-3. Produce a sprint plan table (ID, title, lead, points, dependencies)
-4. Call @backend-lead with all backend tasks via Task tool
-5. Call @frontend-lead with all frontend tasks via Task tool
-6. Include @tester in the plan for QA capacity
-7. Flag risks and dependencies
+Load the `project-stack` skill and `workflow` skill before starting.
 
-Load `project-stack` skill for technology context.
-Do not stop after producing the plan — call the leads.
+## Step 0 — Debt backlog review
+
+Before breaking down any stories, invoke @librarian to surface open technical debt:
+
+```
+ACTION: recall
+QUERY: open debt
+```
+
+From the returned debt backlog:
+- List all **high priority** open debt items to the user
+- Ask whether any should be included in this sprint alongside the new stories
+- If the user confirms debt items to include, add them as explicit tasks in the sprint plan
+
+Present the debt summary before showing the sprint plan:
+
+```
+📋 Open technical debt:
+
+🔴 High priority ([N] items):
+- [debt title] | owner: @[lead] | effort: [S/M/L]
+  Risk: [one sentence]
+
+🟡 Medium priority ([N] items): [list or "none"]
+
+Would you like to include any of these in the sprint? (Enter item numbers or "none")
+```
+
+Wait for the user's response before proceeding to Step 1.
+
+## Step 1 — Story breakdown
+
+For each user story or requirement:
+1. Break it into concrete backend and frontend tasks
+2. Estimate story points for each task (1, 2, 3, 5, 8)
+3. Identify dependencies between tasks
+
+## Step 2 — Sprint plan
+
+Produce a sprint plan table:
+
+```markdown
+## Sprint [N] Plan
+
+**Goal:** [One clear sentence covering all stories]
+
+### New feature tasks
+| ID  | Title                   | Lead              | Points | Depends on |
+|-----|-------------------------|-------------------|--------|------------|
+| T01 | [description]           | @backend-lead     | 3      | —          |
+| T02 | [description]           | @frontend-lead    | 2      | T01        |
+
+### Debt tasks (if any confirmed by user)
+| ID  | Title                   | Lead              | Points | Effort |
+|-----|-------------------------|-------------------|--------|--------|
+| D01 | [debt title]            | @backend-lead     | 2      | M      |
+
+### QA & review capacity
+| ID  | Title                   | Agent             | Points |
+|-----|-------------------------|-------------------|--------|
+| R01 | Review [feature]        | @code-reviewer    | 1      |
+| Q01 | QA [feature]            | @tester           | 2      |
+
+**Total points:** [N]
+
+### Risks
+| Risk          | Likelihood | Impact | Mitigation |
+|---------------|------------|--------|------------|
+| [description] | Medium     | High   | [action]   |
+```
+
+## Step 3 — Execute
+
+Do not stop after producing the plan — call the leads:
+1. Call @backend-lead with all backend tasks (new + debt) via Task tool
+2. Call @frontend-lead with all frontend tasks (new + debt) via Task tool
+3. Include @tester in the plan for QA capacity
+
+## Step 4 — Update debt status
+
+After delegating any debt tasks to leads, invoke @librarian to mark those debt items as in-progress:
+
+```
+ACTION: write
+TYPE: debt
+TITLE: [same title as the debt record]
+CONTENT:
+  Status: in-progress
+  Picked up in sprint: [sprint number]
+  Assigned to: @[lead]
+```

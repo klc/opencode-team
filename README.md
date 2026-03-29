@@ -17,8 +17,9 @@ flowchart TD
     User -->|"/team:designer"| DS
     User -->|"/team:research /team:tech-decision"| RES
     User -->|"/team:standup /team:sprint"| PM
+    User -->|"/team:brainstorm"| PO
 
-    PO["🧭 Product Owner\nClarifies scope\nWrites user stories"]
+    PO["🧭 Product Owner\nClarifies scope\nWrites user stories\nFacilitates brainstorm"]
     AR["🏛️ Architect\nTechnical decisions\nADR writing"]
     PM["📋 Project Manager\nCreates branch\nBreaks story into tasks\nUpdates todo list"]
     DS["🎨 Designer\nVisual design system\nproject-design skill"]
@@ -84,7 +85,7 @@ Agents marked with 🔒 are **hidden** — they don't appear in `@` autocomplete
 
 | Agent | Role | Mode |
 |---|---|---|
-| `product-owner` | Clarifies scope, writes user stories, owns the backlog | primary |
+| `product-owner` | Clarifies scope, writes user stories, owns the backlog, facilitates brainstorm sessions | primary |
 | `project-manager` | Creates branches, breaks stories into tasks, coordinates leads | primary |
 | `architect` | Technical decisions, ADR writing, infrastructure design | primary |
 | `backend-lead` | Delegates backend tasks, owns review → QA for backend | primary |
@@ -143,6 +144,7 @@ Commands are the entry points. Pick the one that matches the scope of your work.
 
 | Command | Use when |
 |---|---|
+| `/team:brainstorm <idea>` | **Explore an idea first.** product-owner and architect discuss the idea with you in conversation mode. When ready, say "develop" or "let's build this" to kick off the full pipeline using the conversation as context — no re-explaining needed. |
 | `/team:new-feature <description>` | Full pipeline — scope → architect → implementation → review → QA |
 | `/team:task <description>` | Single well-defined task — skips planning, goes directly to the right developer |
 | `/team:quick-fix <description>` | 1–3 file correction, no new logic — no todo list, just fix + review |
@@ -190,6 +192,34 @@ Commands are the entry points. Pick the one that matches the scope of your work.
 | Command | Use when |
 |---|---|
 | `/team:update-docs <description>` | Update README, API docs, architecture docs, or inline comments |
+
+---
+
+## Brainstorm Flow
+
+`/team:brainstorm` is the recommended starting point when an idea is not yet fully formed.
+
+```
+/team:brainstorm <rough idea>
+        ↓
+product-owner + architect discuss with you
+  — ask clarifying questions
+  — present options and trade-offs
+  — explore technical feasibility
+        ↓
+You say "develop" / "let's build this"
+        ↓
+product-owner summarizes decisions → you confirm
+        ↓
+project-manager picks up the summary
+  — creates branch
+  — breaks into tasks (no re-explaining needed)
+  — assigns to leads
+        ↓
+Normal pipeline: implementation → review → QA
+```
+
+Use `/team:new-feature` instead when the idea is already well-defined and you know exactly what you want.
 
 ---
 
@@ -327,9 +357,10 @@ The update script reads your current model assignments before overwriting anythi
 │   ├── security-auditor.md    ← hidden
 │   ├── performance-analyst.md ← hidden
 │   └── librarian.md           ← hidden
-├── commands/                  ← 19 command files
+├── commands/                  ← 20 command files
 │   ├── team:init.md
 │   ├── team:designer.md
+│   ├── team:brainstorm.md
 │   ├── team:new-feature.md
 │   ├── team:task.md
 │   ├── team:quick-fix.md

@@ -142,9 +142,16 @@ Once you have all the information, create the file:
 .opencode/skills/project-stack/SKILL.md
 ```
 
-Use this structure — fill every section with real values, no placeholders:
+**CRITICAL: The file MUST start with YAML frontmatter. Without it, OpenCode cannot discover the skill and all agents will fail to load it.**
+
+Use this exact structure — the frontmatter block comes first, before any other content:
 
 ```markdown
+---
+name: project-stack
+description: Project stack reference — framework, test commands, folder structure, runtime constraints, naming conventions. Load before writing any code.
+---
+
 # Project Stack — [Project Name]
 
 ## Stack Overview
@@ -227,7 +234,15 @@ Use this structure — fill every section with real values, no placeholders:
 
 **Immediately after writing the skill file**, before moving to Phase 5:
 
-Check if Vibe Kanban MCP is configured:
+Verify the frontmatter was written correctly:
+
+```bash
+head -5 .opencode/skills/project-stack/SKILL.md
+```
+
+The output must start with `---`. If it does not, rewrite the file with the correct frontmatter.
+
+Then check if Vibe Kanban MCP is configured:
 
 ```bash
 grep -q "vibe_kanban" .opencode/opencode.json 2>/dev/null && echo "configured" || echo "not_configured"
@@ -455,7 +470,7 @@ After all files are written, output a summary:
 ✅ Initialization complete
 
 Created:
-  .opencode/skills/project-stack/SKILL.md
+  .opencode/skills/project-stack/SKILL.md  ← includes required frontmatter (name + description)
   AGENTS.md (open this file and add your project rules)
 
 Updated:

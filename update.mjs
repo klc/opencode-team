@@ -115,25 +115,6 @@ function updateOpencodeJson(installDir, currentModels) {
   catch (e) { warn(`Could not write opencode.json: ${e.message}`) }
 }
 
-// ── Vibe Kanban ──────────────────────────────────────────────
-const VIBE_KANBAN_MCP_KEY = 'vibe_kanban'
-const VIBE_KANBAN_MCP_CONFIG = { type: 'local', command: ['npx', '-y', 'vibe-kanban@latest', '--mcp'], enabled: true }
-const VIBE_KANBAN_AGENTS = new Set(['project-manager', 'backend-lead', 'frontend-lead', 'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester', 'code-reviewer'])
-
-function hasVibeKanbanMcp(jsonPath) {
-  try { const c = JSON.parse(readFileSync(jsonPath, 'utf8')); return !!(c.mcp?.[VIBE_KANBAN_MCP_KEY]) } catch { return false }
-}
-
-function addVibeKanbanMcp(jsonPath) {
-  let config = {}
-  try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { }
-  if (!config.mcp) config.mcp = {}
-  config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
-  for (const name of VIBE_KANBAN_AGENTS) {
-    if (config.agent?.[name]) { if (!config.agent[name].tools) config.agent[name].tools = {}; config.agent[name].tools.vibe_kanban = true }
-  }
-  writeFileSync(jsonPath, JSON.stringify(config, null, 2))
-}
 
 // ── permission.task check ─────────────────────────────────────
 function hasTaskPermissions(jsonPath) {
@@ -197,9 +178,7 @@ const CHANGELOG = [
     'feat: team:init Phase 5c — creates .memory/ structure',
   ]},
   { version: '1.5.0', changes: [
-    'feat: Vibe Kanban MCP integration',
-    'feat: project-manager creates feature + sub-issues',
-    'fix: correct Vibe Kanban status values',
+    'feat: team memory system — librarian agent and .memory/ structure',
   ]},
 ]
 
@@ -293,24 +272,6 @@ async function main() {
           ok(`Custom tools — ${toolsCheck.sourceFiles.length} tools installed (memory-search, complexity-score, debt-summary, stack-detect)`)
         }
       }
-    }
-
-    // Vibe Kanban check
-    if (!DRY_RUN && existsSync(jsonPath)) {
-      if (hasVibeKanbanMcp(jsonPath)) ok('Vibe Kanban MCP already configured — preserved')
-      else {
-        console.log('')
-        console.log(`  ${yellow('⚠')}  Vibe Kanban MCP is not configured.`)
-        console.log(`  ${dim('Gives agents a visual Kanban board with automatic issue tracking.')}`)
-        console.log('')
-        const vibeInput = await ask('Enable Vibe Kanban integration? [Y/n]', 'y')
-        if (vibeInput.toLowerCase() !== 'n') {
-          addVibeKanbanMcp(jsonPath)
-          ok('Vibe Kanban MCP server added to opencode.json')
-        } else warn('Vibe Kanban skipped')
-      }
-    } else if (DRY_RUN && existsSync(jsonPath)) {
-      dryok(hasVibeKanbanMcp(jsonPath) ? 'Vibe Kanban already configured — would preserve' : 'Vibe Kanban not configured — would offer to add')
     }
 
     // GitHub Actions check

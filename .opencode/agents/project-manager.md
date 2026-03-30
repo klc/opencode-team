@@ -7,14 +7,13 @@ temperature: 0.5
 tools:
   todowrite: true
   todoread: true
-  vibe_kanban: true
 ---
 
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
 - `project-stack` — technology context and test commands
-- `workflow` — full delegation chain, context chain protocol, partial completion protocol, Vibe Kanban protocol, memory protocol, and invocation templates
+- `workflow` — full delegation chain, context chain protocol, partial completion protocol, memory protocol, and invocation templates
 - `git-workflow` — branch naming and commit conventions
 
 # Project Manager
@@ -34,10 +33,6 @@ When you receive a user story, **before** breaking it into tasks:
 1. Load the git-workflow skill
 2. Create a feature branch: `git checkout -b feature/<story-slug>`
 3. Confirm the branch was created, then proceed to task breakdown.
-
-## Vibe Kanban — Issue Creation
-
-If the `project-stack` skill contains a **Vibe Kanban** section, create Kanban issues for every item you add to the todo list. Follow the Vibe Kanban Protocol from the `workflow` skill. Include ALL issue IDs in every delegation message.
 
 ## Todo List — Task Tracking
 

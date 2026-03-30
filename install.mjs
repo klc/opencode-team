@@ -86,32 +86,6 @@ function updateAgentModel(filePath, model) {
   writeFileSync(filePath, content)
 }
 
-// ── Vibe Kanban ──────────────────────────────────────────────
-const VIBE_KANBAN_MCP_KEY = 'vibe_kanban'
-const VIBE_KANBAN_MCP_CONFIG = {
-  type: 'local',
-  command: ['npx', '-y', 'vibe-kanban@latest', '--mcp'],
-  enabled: true,
-}
-const VIBE_KANBAN_AGENTS = new Set([
-  'project-manager', 'backend-lead', 'frontend-lead',
-  'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend',
-  'tester', 'code-reviewer',
-])
-
-function addVibeKanbanMcp(jsonPath) {
-  let config = {}
-  try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { config = {} }
-  if (!config.mcp) config.mcp = {}
-  config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
-  for (const name of VIBE_KANBAN_AGENTS) {
-    if (config.agent?.[name]) {
-      if (!config.agent[name].tools) config.agent[name].tools = {}
-      config.agent[name].tools.vibe_kanban = true
-    }
-  }
-  writeFileSync(jsonPath, JSON.stringify(config, null, 2))
-}
 
 // ── GitHub Actions ────────────────────────────────────────────
 function setupGithubActions(projectRoot) {
@@ -130,7 +104,7 @@ function setupGithubActions(projectRoot) {
 }
 
 // ── Build agent config block ──────────────────────────────────
-function buildAgentBlock(agentModels, includeVibeKanban = false) {
+function buildAgentBlock(agentModels) {
   const descriptions = {
     'product-owner':       'Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.',
     'project-manager':     'Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.',
@@ -222,7 +196,6 @@ function buildAgentBlock(agentModels, includeVibeKanban = false) {
 
     const tools = {}
     if (todoAgents.has(name)) { tools.todowrite = true; tools.todoread = true }
-    if (includeVibeKanban && VIBE_KANBAN_AGENTS.has(name)) tools.vibe_kanban = true
     if (Object.keys(tools).length > 0) agent.tools = tools
 
     const permission = {}
@@ -321,18 +294,7 @@ async function main() {
     }
   }
 
-  // ── Step 4: Vibe Kanban ───────────────────────────────────
-  step('Vibe Kanban integration (recommended)')
-  console.log('')
-  console.log(`  Vibe Kanban gives the agent team a visual Kanban board.`)
-  console.log(`  Agents create and update issues automatically as they work.`)
-  console.log(`  ${dim('Learn more: https://vibekanban.com')}`)
-  console.log('')
-  const vibeInput = await ask('Enable Vibe Kanban integration? [Y/n]', 'y')
-  const useVibeKanban = vibeInput.toLowerCase() !== 'n'
-  if (!useVibeKanban) warn('Vibe Kanban skipped — re-run install to add later')
-
-  // ── Step 5: GitHub Actions ────────────────────────────────
+  // ── Step 4: GitHub Actions ────────────────────────────────
   let useGithubActions = false
   if (!isGlobal) {
     step('GitHub Actions integration (optional)')
@@ -371,14 +333,9 @@ async function main() {
 
   // Write opencode.json
   step('Generating opencode.json...')
-  const agentBlock = buildAgentBlock(agentModels, useVibeKanban)
+  const agentBlock = buildAgentBlock(agentModels)
   const jsonPath = join(installDir, 'opencode.json')
   writeOpencodeJson(jsonPath, agentBlock, !isGlobal)
-
-  if (useVibeKanban) {
-    addVibeKanbanMcp(jsonPath)
-    ok('Vibe Kanban MCP server and agent tool permissions configured')
-  }
 
   ok('permission.task delegation chain enforced in opencode.json')
   ok('Granular bash permissions applied per agent tier')
@@ -440,10 +397,7 @@ async function main() {
   }
   console.log('')
 
-  if (useVibeKanban) {
-    console.log(`  ${bold('Vibe Kanban:')} ${green('✓')} MCP server + agent tool permissions configured`)
-    console.log(`  ${dim('Open Vibe Kanban, create a project, then run /team:init')}`)
-  }
+
   if (useGithubActions) {
     console.log(`  ${bold('GitHub Actions:')} ${green('✓')} 4 workflows installed`)
     console.log(`  ${dim('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')}`)

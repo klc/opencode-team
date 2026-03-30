@@ -8,7 +8,6 @@ temperature: 0.2
 tools:
   todowrite: true
   todoread: true
-  vibe_kanban: true
 ---
 
 ## Skills to Load
@@ -80,8 +79,7 @@ When implementation is complete and tests pass, do these steps **in order**:
    ```
 5. Call `todoread` to find your task's ID
 6. Call `todowrite` to mark it `completed`
-7. If the `project-stack` skill has a **Vibe Kanban** section: call `update_issue(issue_id: <Kanban task issue ID>, status: "done")` via the `vibe_kanban` MCP
-8. Report to @backend-lead
+7. Report to @backend-lead
 
 ---
 

@@ -39,7 +39,6 @@
         "websearch": false,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -95,7 +94,6 @@
         "websearch": true,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -133,7 +131,6 @@
         "websearch": true,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -173,7 +170,6 @@
         "websearch": true,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -209,7 +205,6 @@
         "websearch": true,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -245,7 +240,6 @@
         "websearch": false,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -289,7 +283,6 @@
         "websearch": false,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -334,7 +327,6 @@
         "websearch": false,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {
@@ -366,7 +358,6 @@
         "websearch": false,
         "todowrite": true,
         "todoread": true,
-        "vibe_kanban": true
       },
       "permission": {
         "bash": {

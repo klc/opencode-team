@@ -190,14 +190,6 @@ head -5 .opencode/skills/project-stack/SKILL.md
 
 The output must start with `---`. If it does not, rewrite the file with the correct frontmatter.
 
-Then check if Vibe Kanban MCP is configured:
-
-```bash
-grep -q "vibe_kanban" .opencode/opencode.json 2>/dev/null && echo "configured" || echo "not_configured"
-```
-
-**If configured**, ask the user for their Vibe Kanban project ID and append the Vibe Kanban section to the skill file (see original team:init for full Vibe Kanban section template).
-
 ---
 
 ## Phase 5 — opencode.json Check
@@ -281,7 +273,6 @@ Stack detection:
   Test:     [command]
   Build:    [command]
 
-Vibe Kanban: [configured | not configured]
 
 Assumed (please verify):
   - [anything inferred but not confirmed]

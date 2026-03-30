@@ -8,7 +8,6 @@ temperature: 0.2
 tools:
   todowrite: true
   todoread: true
-  vibe_kanban: true
 ---
 
 ## Skills to Load
@@ -109,11 +108,11 @@ CONTENT:
   Related feature: [feature name]
 ```
 
-## Todo List + Vibe Kanban — Status Updates
+## Todo List — Status Updates
 
-- **When you start reviewing** → mark `[review]` task `in-progress` + `update_issue(review_issue_id, status: "in_progress")`
-- **If Approved** → mark `[review]` task `completed` + `update_issue(review_issue_id, status: "done")`
-- **If Blocked / Changes Required** → keep `[review]` task `in-progress` + `update_issue(review_issue_id, status: "in_review")`
+- **When you start reviewing** → mark `[review]` task `in-progress`
+- **If Approved** → mark `[review]` task `completed`
+- **If Blocked / Changes Required** → keep `[review]` task `in-progress`
 
 ---
 

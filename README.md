@@ -1,6 +1,6 @@
 # OpenCode Agent Team
 
-A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, designer, security auditor, performance analyst, and librarian — all coordinated through a strict delegation chain with parallel execution, git integration, Vibe Kanban, GitHub Actions, and a live todo board.
+A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, designer, security auditor, performance analyst, and librarian — all coordinated through a strict delegation chain with parallel execution, git integration, GitHub Actions, and a live todo board.
 
 ---
 
@@ -197,11 +197,10 @@ The script will:
 2. Fetch available models via `opencode models`
 3. Assign a **strong model** and a **fast model** across the team
 4. Optionally customize models per individual agent
-5. Ask whether to enable Vibe Kanban integration
-6. Ask whether to set up GitHub Actions workflows
-7. Copy all agent, command, skill, and tool files
-8. Generate or merge `opencode.json` with permission.task + bash permissions
-9. Create `AGENTS.md` for project installs
+5. Ask whether to set up GitHub Actions workflows
+6. Copy all agent, command, skill, and tool files
+7. Generate or merge `opencode.json` with permission.task + bash permissions
+8. Create `AGENTS.md` for project installs
 
 ## Updating
 

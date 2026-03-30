@@ -1,6 +1,6 @@
 ---
 name: workflow
-description: Full team delegation chain, execution phases, parallelization rules, shared file protocol, error recovery, partial completion, context chain, todo board, Vibe Kanban, memory protocol, and agent invocation templates.
+description: Full team delegation chain, execution phases, parallelization rules, shared file protocol, error recovery, partial completion, context chain, todo board, memory protocol, and agent invocation templates.
 ---
 
 # Workflow Skill
@@ -217,32 +217,6 @@ Spawn @security-auditor in parallel with @code-reviewer when scope involves:
 
 ---
 
-## Vibe Kanban Protocol
-
-**Only active when the `project-stack` skill contains a `## Vibe Kanban` section.**
-
-project-manager includes ALL IDs in every lead delegation message:
-
-```
-Kanban feature issue ID: <uuid>
-Kanban task issue IDs:   T01=<uuid>, T02=<uuid>
-Kanban review issue ID:  <uuid>
-Kanban qa issue ID:      <uuid>
-```
-
-| Agent | When | Call |
-|---|---|---|
-| lead | assigns task | `update_issue(task_issue_id, status: "in_progress")` |
-| developer | done | `update_issue(task_issue_id, status: "done")` |
-| code-reviewer | approved | `update_issue(review_issue_id, status: "done")` |
-| code-reviewer | blocked | `update_issue(review_issue_id, status: "in_review")` |
-| tester | PASS | `update_issue(qa_issue_id, status: "done")` |
-| tester | FAIL | `update_issue(qa_issue_id, status: "in_review")` |
-| lead | all done | `update_issue(feature_issue_id, status: "done")` |
-
-Valid status strings: `"todo"` · `"in_progress"` · `"in_review"` · `"done"`
-
----
 
 ## Memory Protocol
 
@@ -293,13 +267,6 @@ Tasks assigned to backend:
   T01: [title] — [description] — Acceptance: [criteria]
   T02: [title] — [description] — Acceptance: [criteria]
 
-Shared files: [list files touched by more than one task, or "none"]
-Task sequencing: [T02 depends on T01 / all parallel]
-
-Kanban feature issue ID: <uuid>
-Kanban task issue IDs:   T01=<uuid>, T02=<uuid>
-Kanban review issue ID:  <uuid>
-Kanban qa issue ID:      <uuid>
 ```
 
 ### project-manager → frontend-lead
@@ -316,13 +283,6 @@ Architectural constraints: [decisions that limit options, or "none"]
 Tasks assigned to frontend:
   T03: [title] — [description] — Acceptance: [criteria]
 
-Shared files: [list or "none"]
-API contract expected from backend: [endpoints / data shape if relevant]
-
-Kanban feature issue ID: <uuid>
-Kanban task issue IDs:   T03=<uuid>
-Kanban review issue ID:  <uuid>
-Kanban qa issue ID:      <uuid>
 ```
 
 ### lead → developer
@@ -340,13 +300,6 @@ Acceptance criteria:
   - [ ] [criterion]
 Constraints: [files NOT to touch, decisions already made]
 Files likely involved: [list if known]
-Shared files in this task: [list with sequencing note, or "none"]
-Depends on: [task title or "none"]
-
-Kanban task issue ID:    <uuid>
-Kanban review issue ID:  <uuid>
-Kanban qa issue ID:      <uuid>
-Kanban feature issue ID: <uuid>
 ```
 
 ### lead → code-reviewer
@@ -358,11 +311,6 @@ Scope: [Backend / Frontend] — [area name]
 Feature: [feature name]
 Story context: [one sentence]
 Security-sensitive: [yes / no]
-Files to review: [list]
-Special attention: [notes]
-
-Kanban review issue ID:  <uuid>
-Kanban feature issue ID: <uuid>
 ```
 
 ### lead → tester
@@ -377,11 +325,6 @@ Branch: feature/[slug]
 What was built: [summary]
 Files to test: [list]
 Test command: [project-specific test command]
-Acceptance criteria:
-  - [ ] [criterion]
-
-Kanban qa issue ID:      <uuid>
-Kanban feature issue ID: <uuid>
 ```
 
 ### project-manager → librarian (after feature complete)

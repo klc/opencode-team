@@ -7,7 +7,6 @@ temperature: 0.3
 tools:
   todowrite: true
   todoread: true
-  vibe_kanban: true
 ---
 
 ## Skills to Load
@@ -15,7 +14,7 @@ tools:
 Before starting any task, load these skills via the skill tool:
 - `coding-standards` — quality rules and Definition of Done
 - `project-stack` — stack reference, build commands, SSR constraints if any
-- `workflow` — delegation chain, context chain protocol, partial completion protocol, shared file protocol, error recovery, security automation, Vibe Kanban and memory protocols
+- `workflow` — delegation chain, context chain protocol, partial completion protocol, shared file protocol, error recovery, security automation, and memory protocols
 - `project-design` — visual design system, component patterns (load if exists)
 
 # Frontend Team Lead
@@ -49,15 +48,14 @@ Every task must pass before moving to review:
 - [ ] Accessibility requirements met
 - [ ] Security baseline from coding-standards skill met
 
-## Todo List + Vibe Kanban — Status Updates
+## Todo List — Status Updates
 
-Use `todoread` then `todowrite` to update statuses. If the `project-stack` skill contains a **Vibe Kanban** section, also call `update_issue` via the `vibe_kanban` MCP in parallel.
+Use `todoread` then `todowrite` to update statuses.
 
-- **When you assign a task to a developer** → `todowrite` → `in-progress` + `update_issue(task_issue_id, status: "in_progress")`
+- **When you assign a task to a developer** → `todowrite` → `in-progress`
 - **When a developer reports complete** → keep `in-progress` until reviewer confirms
 - **When reviewer approves** → keep `in-progress` until tester confirms
-- **When tester passes** → `todowrite` → `completed` + `update_issue(task_issue_id, status: "done")`
-- **When ALL scopes complete** → `update_issue(feature_issue_id, status: "done")`
+- **When tester passes** → `todowrite` → `completed`
 
 ---
 

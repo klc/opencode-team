@@ -10,10 +10,9 @@ A production hotfix is required:
 "$ARGUMENTS"
 
 **Step 0 — Memory check**
-Invoke @librarian immediately — do not skip even in urgent situations:
+Use the `memory_search` tool immediately — do not skip even in urgent situations:
 ```
-ACTION: recall
-QUERY: [extract component or symptom keywords]
+memory_search({ query: "[extract component or symptom keywords]" })
 ```
 A prior bug record may point directly to the root cause and save significant time.
 

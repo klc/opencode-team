@@ -13,7 +13,7 @@ Tests need to be added for:
 
 - Write tests only — do NOT modify production code
 - If you discover a bug while writing tests, report it to the user and stop — do not fix it yourself
-- If the code is untestable as-is (too tightly coupled, no dependency injection), report the issue and suggest a refactor via `/refactor` before adding tests
+- If the code is untestable as-is (too tightly coupled, no dependency injection), report the issue and suggest a refactor via `/team:refactor` before adding tests
 
 ## Execution
 
@@ -34,9 +34,3 @@ Tests need to be added for:
 🧪 Coverage improvement: [before → after if measurable]
 ⚠️ Gaps noted: [anything that couldn't be tested and why]
 ```
-
-## Coverage Targets (from coding-standards skill)
-
-- Unit tests: ≥ 80% on the targeted code
-- All edge cases and error paths covered
-- No tests that only verify the happy path

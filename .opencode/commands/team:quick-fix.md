@@ -36,6 +36,5 @@ If the fix does not meet ALL criteria above, stop and tell the user to use `/tea
 4. If approved: report done to user
 5. If changes required: send back to developer, re-review
 
-Do NOT read agent files from disk. Do NOT use bash to find agent files.
 Do NOT create a todo list for quick fixes.
 Do NOT invoke @tester unless the reviewer specifically flags a test gap.

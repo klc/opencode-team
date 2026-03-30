@@ -10,10 +10,9 @@ A direct task has been assigned:
 "$ARGUMENTS"
 
 **Step 0 — Memory check**
-Invoke @librarian before starting:
+Use the `memory_search` tool before starting:
 ```
-ACTION: recall
-QUERY: [extract 2–3 keywords from the task description]
+memory_search({ query: "[extract 2–3 keywords from the task description]" })
 ```
 If relevant prior decisions, bugs, or research records exist, pass them to the developer as context.
 

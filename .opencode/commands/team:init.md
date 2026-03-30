@@ -35,51 +35,18 @@ Wait for the user's response before continuing.
 
 ## Phase 1 — Automated Discovery
 
-Run these commands to gather raw data. Do not skip any — even empty results are useful.
+**First, use the `stack_detect` tool** for a fast structured scan:
+
+```
+stack_detect({ verbose: true })
+```
+
+This returns detected backend/frontend frameworks, databases, test commands, build commands, and runtime constraints in one call.
+
+Then run these targeted bash commands for additional details the tool cannot detect:
 
 ```bash
-# Project root overview
-ls -la
-
-# Dependency files — detect language, framework, packages
-cat package.json 2>/dev/null || true
-cat composer.json 2>/dev/null || true
-cat pyproject.toml 2>/dev/null || true
-cat Gemfile 2>/dev/null || true
-cat go.mod 2>/dev/null || true
-cat Cargo.toml 2>/dev/null || true
-cat pom.xml 2>/dev/null || true
-
-# Lock files — get exact versions
-cat package-lock.json 2>/dev/null | head -30 || true
-cat yarn.lock 2>/dev/null | head -10 || true
-cat composer.lock 2>/dev/null | head -30 || true
-
-# Config files — detect build tools, test runners, linters
-ls *.config.* *.json *.yaml *.yml *.toml 2>/dev/null || true
-cat vite.config.* 2>/dev/null || true
-cat webpack.config.* 2>/dev/null || true
-cat jest.config.* 2>/dev/null || true
-cat vitest.config.* 2>/dev/null || true
-cat phpunit.xml 2>/dev/null || true
-cat pytest.ini 2>/dev/null || true
-cat .eslintrc* 2>/dev/null || true
-cat tsconfig.json 2>/dev/null || true
-
-# Docker / infra
-cat docker-compose.yml 2>/dev/null || true
-cat docker-compose.yaml 2>/dev/null || true
-cat Dockerfile 2>/dev/null || true
-
-# CI/CD
-ls .github/workflows/ 2>/dev/null || true
-cat .github/workflows/*.yml 2>/dev/null | head -60 || true
-ls .gitlab-ci.yml 2>/dev/null || true
-
-# Environment variables — names only, no values
-cat .env.example 2>/dev/null || cat .env.sample 2>/dev/null || true
-
-# Folder structure — 3 levels deep, exclude noise
+# Folder structure — 3 levels deep
 find . -type d \
   -not -path '*/node_modules/*' \
   -not -path '*/.git/*' \
@@ -87,64 +54,48 @@ find . -type d \
   -not -path '*/__pycache__/*' \
   -not -path '*/dist/*' \
   -not -path '*/build/*' \
-  -not -path '*/.next/*' \
-  -not -path '*/coverage/*' \
   | sort | head -80
 
 # Existing tests — understand what's already there
 find . -type f -name '*.test.*' -o -name '*.spec.*' -o -name '*Test.php' -o -name 'test_*.py' \
   | grep -v node_modules | grep -v vendor | head -20
 
-# Scripts defined in package.json
-cat package.json 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); [print(k,':',v) for k,v in d.get('scripts',{}).items()]" 2>/dev/null || true
+# Environment variables — names only, no values
+cat .env.example 2>/dev/null || cat .env.sample 2>/dev/null || true
 
-# Git history — understand the project's pace and contributors
+# CI/CD workflows
+ls .github/workflows/ 2>/dev/null || true
+
+# Git history
 git log --oneline -10 2>/dev/null || true
-git branch -a 2>/dev/null | head -10 || true
 ```
 
 ## Phase 2 — Gap Analysis
 
-After reviewing the scan results, identify what you could NOT determine automatically. Common gaps:
-
-- **Runtime constraints** — e.g. is this a long-lived process (Octane, Node cluster)? Are workers shared?
-- **Architecture pattern** — which layer handles business logic? Actions, Services, Use Cases, or fat controllers?
-- **External services** — payment providers, email, storage, push notifications
-- **SSR** — is it enabled? Which pages? Any known SSR-unsafe patterns already discovered?
-- **Database relationships** — multi-tenant? soft deletes? UUID vs integer PKs?
-- **Deployment target** — serverless, containers, bare metal — affects what "production build" means
+Review the `stack_detect` output. The tool lists gaps it could not detect. Focus manual questions only on those gaps.
 
 ## Phase 3 — Ask the User
 
-Ask only about things you genuinely could not determine from the files. Be specific. Maximum 5 questions. Format:
+Ask only about things not covered by the tool. Maximum 5 questions. Format:
 
 ```
-I've scanned the project and can detect most of the stack automatically.
-I need a few clarifications before I can write the skill accurately.
+I've scanned the project using automated detection.
+I need a few clarifications for the gaps it identified:
 
 **Q1: [specific question]**
-What I found: [what the scan showed]
+What was detected: [what the tool found]
 What I need to know: [the gap]
-
-**Q2: [specific question]**
-...
-
-If any of these don't apply to your project, just say "skip" for that one.
 ```
-
-Do not ask about things the scan already answered clearly.
 
 ## Phase 4 — Write the Skill
 
-Once you have all the information, create the file:
+Create the file:
 
 ```
 .opencode/skills/project-stack/SKILL.md
 ```
 
-**CRITICAL: The file MUST start with YAML frontmatter. Without it, OpenCode cannot discover the skill and all agents will fail to load it.**
-
-Use this exact structure — the frontmatter block comes first, before any other content:
+**CRITICAL: The file MUST start with YAML frontmatter.**
 
 ```markdown
 ---
@@ -173,7 +124,6 @@ description: Project stack reference — framework, test commands, folder struct
 **Databases:**
 - Primary: [detected]
 - Cache/Queue: [detected or "none"]
-- Analytics: [detected or "none"]
 - ORM: [detected]
 
 **Testing:**
@@ -187,13 +137,13 @@ description: Project stack reference — framework, test commands, folder struct
 
 ## Test Commands
 
-[exact commands from scripts or config files]
+[exact commands]
 
 ---
 
 ## Build & Dev Commands
 
-[exact commands from scripts]
+[exact commands]
 
 ---
 
@@ -205,7 +155,7 @@ description: Project stack reference — framework, test commands, folder struct
 
 ## Critical Runtime Constraints
 
-[only real constraints — leave blank if none apply]
+[from stack_detect output + manual Q&A]
 
 ---
 
@@ -217,7 +167,7 @@ description: Project stack reference — framework, test commands, folder struct
 
 ## Naming Conventions
 
-[inferred from actual files — check 5+ real examples before writing a rule]
+[inferred from actual files]
 
 ---
 
@@ -232,9 +182,7 @@ description: Project stack reference — framework, test commands, folder struct
 [from dependency files + Q&A]
 ```
 
-**Immediately after writing the skill file**, before moving to Phase 5:
-
-Verify the frontmatter was written correctly:
+**Immediately after writing the skill file**, verify the frontmatter:
 
 ```bash
 head -5 .opencode/skills/project-stack/SKILL.md
@@ -248,122 +196,21 @@ Then check if Vibe Kanban MCP is configured:
 grep -q "vibe_kanban" .opencode/opencode.json 2>/dev/null && echo "configured" || echo "not_configured"
 ```
 
-**If configured**, ask the user:
-
-```
-Vibe Kanban MCP is active. I can configure agents to create and update Kanban issues automatically.
-
-You can find your Project ID in Vibe Kanban → Project Settings → Project ID (a UUID).
-
-Enter your Vibe Kanban project ID, or press Enter to skip:
-```
-
-If the user provides a project ID, append the following to the **bottom** of `.opencode/skills/project-stack/SKILL.md` (after all other content):
-
-```markdown
-
----
-
-## Vibe Kanban
-
-**Project ID:** [user-provided UUID]
-**MCP server:** vibe_kanban (configured in opencode.json)
-
-### Status values
-
-Use these exact strings when calling `update_issue(status: ...)`:
-- `"todo"` — not started yet (default when created)
-- `"in_progress"` — actively being worked on
-- `"in_review"` — waiting for code review or blocked
-- `"done"` — completed
-
-### Issue structure per feature
-
-project-manager creates one parent issue for the feature and sub-issues for each task (including [review] and [qa] tasks).
-
-Sub-issues: `create_issue(parent_issue_id: <feature_issue_id>, ...)`
-
-#### Feature (parent issue) — created by project-manager
-```
-create_issue(
-  title: "Feature: [story title]",
-  description: "[user story + acceptance criteria]",
-  priority: "high",
-  project_id: "[project-id from this skill]"
-)
-```
-→ store as `feature_issue_id`
-
-#### Task sub-issues — created by project-manager (one per task including [review] and [qa])
-```
-create_issue(
-  title: "[T01] [backend] task description",
-  priority: "medium",
-  parent_issue_id: "<feature_issue_id>",
-  project_id: "[project-id from this skill]"
-)
-```
-
-### Status update protocol
-
-| Agent | Action | MCP call |
-|---|---|---|
-| project-manager | Creates all issues | `create_issue(...)` → status: `"todo"` |
-| lead | Assigns to developer | `update_issue(task_issue_id, status: "in_progress")` |
-| developer | Done | `update_issue(task_issue_id, status: "done")` |
-| lead | Triggers review | `update_issue(review_issue_id, status: "in_progress")` |
-| code-reviewer | Approved | `update_issue(review_issue_id, status: "done")` |
-| code-reviewer | Blocked | `update_issue(review_issue_id, status: "in_review")` |
-| lead | Triggers QA | `update_issue(qa_issue_id, status: "in_progress")` |
-| tester | PASS | `update_issue(qa_issue_id, status: "done")` |
-| tester | FAIL | `update_issue(qa_issue_id, status: "in_review")` |
-
-### Issue ID passing protocol
-
-project-manager includes all issue IDs in lead delegation messages:
-```
-Kanban task issue ID:    <uuid>
-Kanban review issue ID:  <uuid>
-Kanban qa issue ID:      <uuid>
-Kanban feature issue ID: <uuid>
-```
-Leads forward these to developers, reviewer, and tester.
-```
-
-If the user skips (presses Enter), do NOT add the Vibe Kanban section — agents will use todowrite/todoread only.
+**If configured**, ask the user for their Vibe Kanban project ID and append the Vibe Kanban section to the skill file (see original team:init for full Vibe Kanban section template).
 
 ---
 
 ## Phase 5 — opencode.json Check
 
-Before writing the skill, check if `opencode.json` has been configured:
-
 ```bash
 grep -c "my-provider" .opencode/opencode.json 2>/dev/null || echo "0"
 ```
 
-If the result is greater than 0, the file still has placeholder values. Warn the user:
-
-```
-⚠️  opencode.json still contains placeholder values ("my-provider", "my-strong-model").
-The team won't work until you replace these with your actual provider and model names.
-
-Edit .opencode/opencode.json and:
-  1. Replace "my-provider" with your provider's key (e.g. "openai", "anthropic")
-  2. Replace "my-strong-model" with a capable model (used by leads, architect, senior devs)
-  3. Replace "my-fast-model" with a faster/cheaper model (used by juniors, reviewer, tester)
-  4. Set the correct API endpoint and env var name under "provider"
-
-See: https://opencode.ai/docs/providers
-```
-
-Then continue writing the project-stack skill regardless — the warning is informational only.
+If the result is greater than 0, warn the user that placeholder values still exist.
 
 ---
 
 ## Phase 5c — Initialize Memory
-
-Create the team memory structure if it doesn't already exist:
 
 ```bash
 mkdir -p .memory/decisions .memory/features .memory/bugs .memory/research .memory/debt
@@ -375,7 +222,7 @@ Check if `index.md` exists:
 test -f .memory/index.md && echo "exists" || echo "missing"
 ```
 
-If missing, create it:
+If missing, create `.memory/index.md`:
 
 ```markdown
 # Memory Index
@@ -398,104 +245,48 @@ _No records yet._
 _No records yet._
 ```
 
-If the `.memory/` directory already existed, leave all existing files untouched.
-
-Add `.memory/` to `.gitignore` check — it should NOT be ignored (memory should be committed):
+Check `.gitignore` — `.memory/` should NOT be ignored:
 
 ```bash
 grep -q "\.memory" .gitignore 2>/dev/null && echo "ignored" || echo "ok"
 ```
 
-If `.memory` is in `.gitignore`, warn the user:
-
-```
-⚠️  .memory/ is in your .gitignore. Team memory won't be committed to git.
-Remove it from .gitignore to preserve memory across sessions and team members.
-```
-
 ---
 
 ## Phase 6 — Create AGENTS.md
-Check if an `AGENTS.md` already exists in the project root:
 
 ```bash
 test -f AGENTS.md && echo "exists" || echo "missing"
 ```
 
-**If it does not exist**, create it:
+If missing, create `AGENTS.md` with the standard template. If it already exists, leave it untouched.
 
-```bash
-cat > AGENTS.md << 'EOF'
-# Project Rules
-
-## Language
-<!-- Set your preferred language for agent responses here -->
-<!-- Example: Always respond to me in Turkish. Keep code, comments, and docs in English. -->
-
-## Commands
-<!-- Specify how to run commands in this project -->
-<!-- Example: Always run php and npm commands inside Docker:
-  - php → docker compose exec app php ...
-  - npm → docker compose exec node npm ... -->
-
-## Code Style
-<!-- Any project-specific code style rules beyond what's in the stack skill -->
-
-## Workflow
-<!-- Any custom workflow preferences -->
-<!-- Example: Always ask before creating new database migrations -->
-
-## Other Rules
-<!-- Add any other project-specific rules here -->
-EOF
-```
-
-**If it already exists**, leave it untouched.
-
-Then check if `opencode.json` already has an `instructions` field. If it does not, add it:
-
-```bash
-grep -q '"instructions"' .opencode/opencode.json && echo "exists" || echo "missing"
-```
-
-If missing, use the edit tool to add `"instructions": ["AGENTS.md"]` to `.opencode/opencode.json` — place it after the `"$schema"` line.
+Check if `opencode.json` already has an `instructions` field. If not, add `"instructions": ["AGENTS.md"]`.
 
 ---
 
 ## Phase 7 — Confirm
 
-After all files are written, output a summary:
-
 ```
 ✅ Initialization complete
 
 Created:
-  .opencode/skills/project-stack/SKILL.md  ← includes required frontmatter (name + description)
+  .opencode/skills/project-stack/SKILL.md
   AGENTS.md (open this file and add your project rules)
 
-Updated:
-  .opencode/opencode.json → added "instructions": ["AGENTS.md"]
-
-Detected stack:
-  Backend:  [summary]
+Stack detection:
+  Backend:  [summary from stack_detect]
   Frontend: [summary]
   Database: [summary]
   Test:     [command]
   Build:    [command]
 
-Vibe Kanban: [configured with project ID: <uuid> | not configured — todowrite/todoread only]
+Vibe Kanban: [configured | not configured]
 
 Assumed (please verify):
   - [anything inferred but not confirmed]
 
-Skipped (could not determine):
-  - [anything left blank and why]
-
-⚠️  [only if opencode.json still has placeholder values]
-opencode.json still has placeholder provider values — edit it before running the team.
-
 Next:
-  1. Open AGENTS.md and fill in your project rules (language, docker commands, etc.)
-  2. [if Vibe Kanban project ID was set] Open Vibe Kanban — issues will appear automatically as agents work
-  3. Start with /team:new-feature or /team:task
+  1. Open AGENTS.md and fill in your project rules
+  2. Start with /team:new-feature or /team:task
 ```

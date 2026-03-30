@@ -8,6 +8,7 @@ temperature: 0.2
 tools:
   todowrite: true
   todoread: true
+  vibe_kanban: true
 ---
 
 ## Skills to Load

@@ -29,6 +29,7 @@ Return your findings report to me when complete.
 ```
 Analyze the codebase for performance bottlenecks.
 Focus on: N+1 queries, missing indexes, bundle size, slow endpoints, cache opportunities.
+Use the complexity_score tool to identify hotspot files first.
 Scope: [arguments or "full codebase"]
 Return your findings report to me when complete.
 ```
@@ -37,6 +38,8 @@ Return your findings report to me when complete.
 ```
 Review the codebase for code quality and technical debt.
 Focus on: coding standards violations, missing tests, complexity hotspots, dead code, duplication.
+Use the complexity_score tool to find high-complexity functions.
+Use the debt_summary tool to surface existing known debt.
 Scope: [arguments or "full codebase"]
 Do NOT review for security or performance — those are covered separately.
 Return your findings report to me when complete.
@@ -56,7 +59,7 @@ Wait for all three to complete, then produce a unified audit report:
 ---
 
 ## 🔴 Critical — Fix Immediately
-[Findings from any category that are Critical severity — list with source agent]
+[Findings from any category that are Critical severity]
 
 ## 🟠 High Priority
 [High severity findings from all three audits]
@@ -71,22 +74,18 @@ Wait for all three to complete, then produce a unified audit report:
 
 ## Security Summary
 [2–3 sentences from security-auditor report]
-Full report: [paste security-auditor report here]
 
 ## Performance Summary
 [2–3 sentences from performance-analyst report]
-Full report: [paste performance-analyst report here]
 
 ## Code Quality Summary
 [2–3 sentences from code-reviewer report]
-Full report: [paste code-reviewer report here]
 
 ---
 
 ## Recommended Fix Order
 1. [Most critical finding] — estimated effort: [S/M/L]
 2. [Second most critical] — estimated effort: [S/M/L]
-3. ...
 ```
 
 Present the unified report to the user and ask if they want to proceed with fixes for any of the findings.

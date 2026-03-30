@@ -26,10 +26,3 @@ Documentation needs to be updated for:
    - Report back with a summary of what was added or changed
 
 3. No code review required for documentation-only changes unless the request involves updating API contracts.
-
-## Documentation Standards
-
-- Be accurate — wrong docs are worse than no docs
-- Be concise — explain the non-obvious, not the obvious
-- Include examples where helpful
-- Keep language consistent with the rest of the project

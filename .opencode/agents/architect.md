@@ -79,16 +79,6 @@ Every significant architectural decision must be recorded:
 [When should this decision be re-evaluated?]
 ```
 
-## C4 Model for Diagrams
-
-Structure architecture explanations using C4:
-1. **Context** — The system and all external actors
-2. **Container** — Services, databases, and the technologies they use
-3. **Component** — Internal structure of a single container
-4. **Code** — Class/module level (use only for the most critical paths)
-
-Use ASCII or Mermaid diagrams where possible.
-
 ## Critical Decision Protocol
 
 Stop and ask the user before proceeding when the decision involves:

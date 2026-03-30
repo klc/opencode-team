@@ -19,25 +19,26 @@ A refactor changes **how** code works internally without changing **what** it do
 - Split a large class or function into focused units
 - Improve test coverage of existing behavior
 
-If the request also adds new behavior, stop and tell the user to use `/new-feature` instead.
+If the request also adds new behavior, stop and tell the user to use `/team:new-feature` instead.
 
 ## Execution
 
-1. Determine scope — backend or frontend:
+1. Use the `complexity_score` tool on the target file/directory first to get a baseline
+2. Determine scope — backend or frontend:
    - Backend → delegate to @senior-backend
    - Frontend → invoke @frontend-lead with this request
    - Both → split and delegate in parallel
 
-2. Before touching anything, the developer must:
+3. Before touching anything, the developer must:
    - Run the full test suite and record the baseline result
    - List the files that will be changed and why
 
-3. The developer implements the refactor then:
+4. The developer implements the refactor then:
    - Runs the full test suite again — results must be identical to baseline
    - Commits: `git commit -m "refactor(<scope>): <what was improved>"`
    - Reports back with before/after file list and test results
 
-4. Invoke @code-reviewer with:
+5. Invoke @code-reviewer with:
    - The changed files
    - The stated refactor goal
    - Confirmation that tests pass before and after

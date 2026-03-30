@@ -37,8 +37,6 @@ You manage the team's project memory. You write structured records and retrieve 
 
 ### WRITE — Recording new memory
 
-Called by: architect, project-manager, backend-lead, frontend-lead, debugger, researcher, code-reviewer, designer
-
 **Step 1 — Ensure structure exists**
 
 ```bash
@@ -87,14 +85,12 @@ ls .memory/<category>/
 
 **Step 3b — New debt record format**
 
-Debt records have additional required fields for actionability. Every debt record MUST include priority, owner, effort, and status — without these, the debt cannot be actioned during sprint planning.
-
 ```markdown
 # [Descriptive title]
 
 **Type:** debt
 **Date:** YYYY-MM-DD
-**Author:** [agent name — typically code-reviewer]
+**Author:** [agent name]
 **Tags:** [comma-separated keywords]
 **Priority:** high | medium | low
 **Owner:** @backend-lead | @frontend-lead | @architect
@@ -118,58 +114,14 @@ Debt records have additional required fields for actionability. Every debt recor
 
 ### Risk
 
-[What happens if this is not addressed: stability risk, security risk, maintenance burden.]
+[What happens if this is not addressed.]
 
 ### Acceptance criteria for resolution
 
-- [ ] [Concrete criterion — what "done" looks like for this debt item]
-- [ ] [If multiple steps needed, list them]
+- [ ] [Concrete criterion]
 ```
-
-**Step 3c — Updating debt status**
-
-When a debt item is being worked on or resolved, append a version block and update the Status field at the top:
-
-```markdown
-**Status:** in-progress  ← update this line
-```
-
-```markdown
-## v2 — YYYY-MM-DD
-
-### Status change: open → in-progress | resolved
-
-[What changed: who picked it up, what was done, or why it was resolved.]
-```
-
-**Step 3d — Updating existing non-debt records (new version)**
-
-Append to the existing file:
-
-```markdown
-
----
-
-## v[N] — YYYY-MM-DD
-
-### What changed
-
-[Why is this version different?]
-
-### Detail
-
-[Updated content]
-
-### Impact
-
-[Any new impact or changed constraints]
-```
-
-Also update the `## Summary` section at the top.
 
 **Step 4 — Update index.md**
-
-After writing the file, update `.memory/index.md`. For debt records, the index line must include priority, status, and owner so sprint planning can scan it without opening each file.
 
 ```markdown
 # Memory Index
@@ -190,14 +142,9 @@ _Last updated: YYYY-MM-DD_
 
 ## debt
 - `filename.md` — [one-line summary] | priority: high | status: open | owner: @backend-lead | effort: M
-- `filename.md` — [one-line summary] | priority: medium | status: resolved | owner: @frontend-lead | effort: S
 ```
 
-New entries at the top of each section. For updates, edit the existing line (update version marker and status).
-
 **Step 5 — Confirm**
-
-Report back to the calling agent:
 
 ```
 📚 Memory updated
@@ -210,25 +157,17 @@ Index: updated
 
 ### RECALL — Retrieving relevant memory
 
-Called by: researcher, architect, product-owner, project-manager, leads (at start of new work)
-
 **Step 1 — Read the index**
-
 ```bash
 cat .memory/index.md
 ```
 
-**Step 2 — Find relevant entries**
-
-Scan for entries matching the query topic. For general queries, look across all categories. For debt-specific queries (e.g. "open debt", "sprint debt"), filter the debt section by status and priority.
-
-**Step 3 — Read relevant files**
-
+**Step 2 — Find relevant entries and read them**
 ```bash
 cat .memory/<category>/<filename>.md
 ```
 
-**Step 4 — Report back**
+**Step 3 — Report back**
 
 For general recall:
 ```
@@ -240,13 +179,9 @@ Found [N] relevant record(s):
 [Full summary section]
 Latest version: vN (YYYY-MM-DD)
 [Key points from the detail section]
-
----
-[If nothing found:]
-No relevant records found for "[query]". Proceeding without prior context.
 ```
 
-For debt recall (used by sprint planning):
+For debt recall:
 ```
 📚 Debt backlog recall
 
@@ -254,28 +189,19 @@ Open debt items:
 
 🔴 High priority
 - [filename] — [summary] | owner: @[lead] | effort: [S/M/L]
-  Risk: [one sentence from the Risk field]
-  Acceptance criteria: [first criterion]
+  Risk: [one sentence]
 
 🟡 Medium priority
-- [filename] — [summary] | owner: @[lead] | effort: [S/M/L]
+- ...
 
-🟢 Low priority
-- [filename] — [summary] | owner: @[lead] | effort: [S/M/L]
-
-In-progress debt:
-- [filename] — [summary] | owner: @[lead] | status: in-progress
-
-Total open: [N] items ([X] high, [Y] medium, [Z] low)
+Total open: [N] items
 ```
 
 ---
 
 ## Rules
 
-- Never modify records from a different category than the content warrants
 - Never delete records — only add versions or update status
-- Debt records without priority, owner, effort, and status are incomplete — ask the calling agent for the missing fields before writing
+- Debt records without priority, owner, effort, and status are incomplete — ask the calling agent for missing fields
 - Keep summaries short (2–3 sentences max)
 - Always update the index after every write
-- For debt records, always include the full formatted index line with priority/status/owner/effort

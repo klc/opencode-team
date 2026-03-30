@@ -17,10 +17,9 @@ Generate a standup report for the current state of the project.
    git log --oneline --since="24 hours ago"
    ```
 
-3. Invoke @librarian to surface high-priority open debt:
+3. Use the `debt_summary` tool to surface high-priority open debt:
    ```
-   ACTION: recall
-   QUERY: open debt
+   debt_summary({ status: "open", priority: "high" })
    ```
    Include only **high priority** items with status `open` or `in-progress` in the standup report.
 

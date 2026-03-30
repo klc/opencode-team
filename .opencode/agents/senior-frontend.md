@@ -8,6 +8,7 @@ temperature: 0.3
 tools:
   todowrite: true
   todoread: true
+  vibe_kanban: true
 ---
 
 ## Skills to Load
@@ -48,13 +49,6 @@ Before submitting any work:
 - [ ] No console errors in development or production build
 - [ ] Accessibility requirements met (keyboard nav, ARIA)
 - [ ] Responsive across required breakpoints
-
-## Boundaries
-
-- Do not add new packages without @frontend-lead approval
-- Do not change shared design tokens or global styles without review
-- Do not modify routing or app-level configuration alone
-- Escalate any API contract disagreements to @frontend-lead and @backend-lead
 
 ## Todo List + Git — Task Completion Steps
 

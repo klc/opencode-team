@@ -98,44 +98,9 @@ When a developer reports implementation complete:
 3. If after two retries the task still fails → follow the Partial Completion Protocol: assess what was committed, then escalate to @project-manager with the partial state report
 4. Verify no build errors across all completed work
 
-Once all frontend tasks are done, spawn reviewers:
-
-**If scope is NOT security-sensitive:**
-```
-Task → @code-reviewer (one per independent scope, in parallel)
-Include: story context, files, special attention
-```
-
-**If scope IS security-sensitive:**
-```
-Parallel:
-  Task A → @code-reviewer  (story context, scope, files, special attention)
-  Task B → @security-auditor  (story context, scope, files, focus areas)
-```
-
-Wait for BOTH. The scope is approved only when both approve.
-
-When ALL reviewers approve → spawn parallel testers. Use the tester template from the `workflow` skill (includes story context).
+Once all frontend tasks are done, spawn reviewers in the same pattern as backend-lead.
 
 When ALL testers PASS → frontend is done. Report to @project-manager.
-
----
-
-## Partial Completion Escalation
-
-If some tasks completed and others are permanently blocked, follow the Partial Completion Protocol from the `workflow` skill and report to @project-manager:
-
-```
-⚠️ Partial completion — frontend scope
-
-✅ Completed (committed):
-  - T03: [title] — [short hash]
-
-❌ Blocked:
-  - T04: [title] — [reason]
-
-Awaiting your decision on how to proceed.
-```
 
 ---
 
@@ -153,12 +118,6 @@ CONTENT:
   Files affected: [list]
   Prevention: [how to avoid recurrence]
 ```
-
----
-
-## Critical Decision Protocol
-
-Stop and ask the user before delegating when the task requires state management approach decisions, SSR trade-offs, or new UI library adoption. Use the format from the `workflow` skill.
 
 ## Agent Collaboration Protocol
 

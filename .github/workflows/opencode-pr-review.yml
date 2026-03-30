@@ -1,0 +1,60 @@
+name: opencode-pr-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      issues: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Run OpenCode PR review
+        uses: anomalyco/opencode/github@latest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514
+          agent: build
+          prompt: |
+            Review this pull request using the team's coding standards.
+            Load the coding-standards skill and project-stack skill before starting.
+
+            Check for:
+            - Code quality and standards violations
+            - Runtime constraint violations (see project-stack skill Critical Runtime Constraints)
+            - Security issues (OWASP Top 10 basics)
+            - Missing tests for new logic
+            - Breaking changes without proper commit markers
+            - No secrets or hardcoded credentials
+
+            Format your review as:
+            ## PR Review
+
+            **Overall:** ✅ Looks good | 🔄 Changes needed | 🔴 Blocked
+
+            ### 🔴 Blockers
+            [Must fix before merge]
+
+            ### 🟡 Required changes
+            [Should fix]
+
+            ### 🟢 Suggestions
+            [Optional improvements]
+
+            ### Positive observations
+            [What was done well]
+
+            Keep it concise. Focus on real issues, not style preferences.

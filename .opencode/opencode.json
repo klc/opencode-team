@@ -14,6 +14,14 @@
         "webfetch": false,
         "websearch": false
       },
+      "permission": {
+        "task": {
+          "*": "deny",
+          "project-manager": "allow",
+          "architect": "allow",
+          "librarian": "allow"
+        }
+      },
       "mode": "all",
       "color": "#a78bfa"
     },
@@ -33,6 +41,20 @@
         "todoread": true,
         "vibe_kanban": true
       },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask"
+        },
+        "task": {
+          "*": "deny",
+          "backend-lead": "allow",
+          "frontend-lead": "allow",
+          "architect": "allow",
+          "librarian": "allow"
+        }
+      },
       "mode": "all",
       "color": "#60a5fa"
     },
@@ -48,6 +70,13 @@
         "read": true,
         "webfetch": true,
         "websearch": true
+      },
+      "permission": {
+        "task": {
+          "*": "deny",
+          "researcher": "allow",
+          "librarian": "allow"
+        }
       },
       "mode": "all",
       "color": "#f472b6"
@@ -68,6 +97,25 @@
         "todoread": true,
         "vibe_kanban": true
       },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask"
+        },
+        "task": {
+          "*": "deny",
+          "senior-backend": "allow",
+          "junior-backend": "allow",
+          "code-reviewer": "allow",
+          "tester": "allow",
+          "security-auditor": "allow",
+          "performance-analyst": "allow",
+          "debugger": "allow",
+          "researcher": "allow",
+          "librarian": "allow"
+        }
+      },
       "mode": "all",
       "color": "#34d399"
     },
@@ -86,6 +134,26 @@
         "todowrite": true,
         "todoread": true,
         "vibe_kanban": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask"
+        },
+        "task": {
+          "*": "deny",
+          "senior-frontend": "allow",
+          "junior-frontend": "allow",
+          "code-reviewer": "allow",
+          "tester": "allow",
+          "security-auditor": "allow",
+          "performance-analyst": "allow",
+          "debugger": "allow",
+          "researcher": "allow",
+          "librarian": "allow",
+          "designer": "allow"
+        }
       },
       "mode": "all",
       "color": "#fb923c"
@@ -108,8 +176,20 @@
         "vibe_kanban": true
       },
       "permission": {
-        "bash": "allow",
-        "edit": "allow"
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask",
+          "git rebase *": "ask",
+          "git reset --hard *": "ask",
+          "rm -rf *": "ask",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
       },
       "color": "#6ee7b7",
       "hidden": true
@@ -132,8 +212,20 @@
         "vibe_kanban": true
       },
       "permission": {
-        "bash": "allow",
-        "edit": "allow"
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask",
+          "git rebase *": "ask",
+          "git reset --hard *": "ask",
+          "rm -rf *": "ask",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
       },
       "color": "#fdba74",
       "hidden": true
@@ -156,8 +248,28 @@
         "vibe_kanban": true
       },
       "permission": {
-        "bash": "ask",
-        "edit": "allow"
+        "bash": {
+          "*": "ask",
+          "git status": "allow",
+          "git diff *": "allow",
+          "git log *": "allow",
+          "git add *": "allow",
+          "git commit *": "allow",
+          "grep *": "allow",
+          "find *": "allow",
+          "cat *": "allow",
+          "ls *": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "git rebase *": "deny",
+          "git reset *": "deny",
+          "rm -rf *": "deny",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny"
+        }
       },
       "color": "#a7f3d0",
       "hidden": true
@@ -180,8 +292,29 @@
         "vibe_kanban": true
       },
       "permission": {
-        "bash": "ask",
-        "edit": "allow"
+        "bash": {
+          "*": "ask",
+          "git status": "allow",
+          "git diff *": "allow",
+          "git log *": "allow",
+          "git add *": "allow",
+          "git commit *": "allow",
+          "grep *": "allow",
+          "find *": "allow",
+          "cat *": "allow",
+          "ls *": "allow",
+          "npm run *": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "git rebase *": "deny",
+          "git reset *": "deny",
+          "rm -rf *": "deny",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny"
+        }
       },
       "color": "#fed7aa",
       "hidden": true
@@ -204,8 +337,16 @@
         "vibe_kanban": true
       },
       "permission": {
-        "bash": "allow",
-        "edit": "allow"
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny"
+        }
       },
       "color": "#fbbf24",
       "hidden": true
@@ -227,6 +368,18 @@
         "todoread": true,
         "vibe_kanban": true
       },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      },
       "color": "#f59e0b",
       "hidden": true
     },
@@ -243,6 +396,18 @@
         "read": true,
         "webfetch": false,
         "websearch": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
       },
       "color": "#f87171",
       "hidden": true
@@ -261,6 +426,12 @@
         "webfetch": true,
         "websearch": true
       },
+      "permission": {
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      },
       "color": "#818cf8"
     },
     "security-auditor": {
@@ -278,6 +449,16 @@
         "read": true,
         "webfetch": false,
         "websearch": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
       }
     },
     "performance-analyst": {
@@ -295,6 +476,16 @@
         "read": true,
         "webfetch": false,
         "websearch": false
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
       }
     },
     "designer": {
@@ -312,6 +503,17 @@
         "read": true,
         "webfetch": true,
         "websearch": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
       }
     },
     "librarian": {
@@ -329,6 +531,16 @@
         "read": true,
         "webfetch": false,
         "websearch": false
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
       }
     }
   }

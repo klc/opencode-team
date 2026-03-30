@@ -23,6 +23,7 @@ This project uses Conventional Commits. Every task completion and every fix requ
 - `refactor` — code change with no behavior change
 - `test` — adding or updating tests
 - `chore` — build, config, dependency changes
+- `docs` — documentation only
 
 **Scope:** area of the codebase (e.g. `auth`, `chat`, `payments`, `dashboard`)
 
@@ -32,10 +33,25 @@ This project uses Conventional Commits. Every task completion and every fix requ
 
 ```
 feat(auth): add JWT refresh token endpoint [T01]
-feat(chat): implement SendMessage action [T02]
 fix(chat): prevent duplicate message delivery on reconnect [T02]
 test(auth): add unit tests for token refresh logic [T04]
 ```
+
+### Breaking Changes
+
+If your change breaks backwards compatibility:
+- Add `!` after the commit type: `feat(api)!: rename user endpoint`
+- Add a `BREAKING CHANGE:` footer:
+
+```
+feat(api)!: rename /users to /accounts [T05]
+
+BREAKING CHANGE: The /users endpoint has been renamed to /accounts.
+Update all API clients to use the new path.
+Migration: search-replace /api/users → /api/accounts
+```
+
+Report the breaking change explicitly to your lead in the completion report.
 
 ---
 
@@ -59,15 +75,6 @@ git add <fixed files>
 git commit -m "fix(<scope>): <what you fixed> [<task-id>]"
 ```
 
-The fix commit always references the same task ID as the original implementation commit.
-
-### After fixing a code review finding
-
-```bash
-git add <fixed files>
-git commit -m "fix(<scope>): <what you fixed per review> [<task-id>]"
-```
-
 ---
 
 ## Commit Checklist (run before every commit)
@@ -76,8 +83,8 @@ git commit -m "fix(<scope>): <what you fixed per review> [<task-id>]"
 # 1. Run the project's test command for affected areas
 #    (see project-stack skill for the exact command)
 
-# 2. Stage only task-relevant files
-git diff --staged --name-only   # verify staged files look correct
+# 2. Verify staged files look correct
+git diff --staged --name-only
 
 # 3. Commit
 git commit -m "<type>(<scope>): <description> [<task-id>]"

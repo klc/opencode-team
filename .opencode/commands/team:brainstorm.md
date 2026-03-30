@@ -63,7 +63,7 @@ When the user says any of the following, switch to action mode:
 
 ### Action steps (when triggered):
 
-1. **Summarize the conversation** — what was discussed, which decisions were reached, which trade-offs were accepted, what was explicitly left out of scope. Write 5–7 bullet points.
+1. **Summarize the conversation** — 5–7 bullet points covering decisions, trade-offs, and out-of-scope items.
 
 2. **Confirm with the user:**
 ```
@@ -76,35 +76,10 @@ Here's a summary of what we discussed:
 Does this look right? I'll hand off to @project-manager once you confirm.
 ```
 
-3. **On confirmation → invoke @project-manager:**
+3. **On confirmation → invoke @project-manager** with the summary and extracted stories.
 
-```
-@project-manager
-
-Feature request coming from a brainstorm session.
-
-## Summary
-[paste brainstorm summary here]
-
-## Decisions Made
-[list of decisions]
-
-## Out of Scope
-[what was explicitly excluded]
-
-## User Stories
-[extract user stories from the conversation — do not write from scratch]
-
-Use this as your reference. Create the branch, break down tasks, and assign to leads.
-Follow the normal /team:new-feature pipeline — do not come back to me for the user story, the information above is sufficient.
-```
-
-4. @project-manager takes over and the normal pipeline runs (branch → tasks → leads → review → QA).
+4. @project-manager takes over and the normal pipeline runs.
 
 ---
 
-## Important
-
-- If the user says "stop", "never mind", or "cancel" — close the session, produce nothing
-- The session does not end until the user says a trigger phrase — keep the conversation going
-- Wait for architect's response, then present both perspectives to the user together
+If the user says "stop", "never mind", or "cancel" — close the session, produce nothing.

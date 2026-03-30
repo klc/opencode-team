@@ -11,10 +11,9 @@ A technical debt item needs to be resolved:
 
 ## Step 1 — Retrieve the debt record
 
-Invoke @librarian:
+Use the `memory_search` tool:
 ```
-ACTION: recall
-QUERY: [debt title or keywords from the argument]
+memory_search({ query: "[debt title or keywords from the argument]", category: "debt" })
 ```
 
 Read the full debt record — pay attention to: location, issue description, acceptance criteria, owner, and effort.
@@ -39,16 +38,7 @@ Based on the `Owner` field in the debt record:
 - `@frontend-lead` → delegate as a frontend task with the debt's acceptance criteria
 - `@architect` → invoke @architect directly with the debt context
 
-Pass the full debt record context in the delegation:
-```
-This is a technical debt resolution task.
-Debt title: [title]
-Location: [file:line]
-Issue: [what the problem is]
-Acceptance criteria:
-  - [ ] [criterion from debt record]
-Effort estimate: [S/M/L]
-```
+Pass the full debt record context in the delegation.
 
 Wait for implementation + review + QA to complete (follow the normal team:task flow).
 

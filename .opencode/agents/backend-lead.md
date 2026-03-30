@@ -120,28 +120,6 @@ When ALL testers PASS → backend is done. Report to @project-manager.
 
 ---
 
-## Partial Completion Escalation
-
-If some tasks completed and others are permanently blocked, do NOT silently skip the blocked tasks. Follow the Partial Completion Protocol from the `workflow` skill:
-
-1. Run `git log --oneline feature/<slug>` to identify committed work
-2. Prepare the partial state report (completed tasks with hashes, blocked tasks with reasons)
-3. Report to @project-manager — not to the user directly
-
-```
-⚠️ Partial completion — backend scope
-
-✅ Completed (committed):
-  - T01: [title] — [short hash]
-
-❌ Blocked:
-  - T02: [title] — [reason]
-
-Awaiting your decision on how to proceed.
-```
-
----
-
 ## Memory — What to Record
 
 When a bug fix or significant architectural change is made in your scope, invoke @librarian:

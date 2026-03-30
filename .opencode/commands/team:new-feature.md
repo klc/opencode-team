@@ -13,7 +13,7 @@ A new feature has been requested:
 Execute the full pipeline in sequence. Do not stop between steps unless user input is required.
 
 **Step 0 — Memory check**
-Before anything else, invoke @librarian:
+Before anything else, invoke @librarian or use the `memory_search` tool:
 ```
 ACTION: recall
 QUERY: [extract 2–3 keywords from the feature description]

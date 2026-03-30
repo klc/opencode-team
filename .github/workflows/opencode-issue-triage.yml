@@ -1,0 +1,62 @@
+name: opencode-issue-triage
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  check-account:
+    runs-on: ubuntu-latest
+    outputs:
+      should_triage: ${{ steps.check.outputs.result }}
+    steps:
+      - name: Check account age
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            if (context.payload.issue.user.type === 'Bot') return 'false';
+            const user = await github.rest.users.getByUsername({
+              username: context.payload.issue.user.login
+            });
+            const created = new Date(user.data.created_at);
+            const days = (Date.now() - created) / (1000 * 60 * 60 * 24);
+            return days >= 7 ? 'true' : 'false';
+          result-encoding: string
+
+  triage:
+    needs: check-account
+    if: needs.check-account.outputs.should_triage == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Triage issue
+        uses: anomalyco/opencode/github@latest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514
+          prompt: |
+            Triage this GitHub issue for the opencode-agent-team project.
+
+            1. Classify as: bug / feature / docs / question / duplicate / invalid
+            2. For bugs and features, assess priority: critical / high / medium / low
+            3. Add appropriate labels
+            4. Post a friendly comment under 150 words:
+               - bugs: acknowledge, ask for reproduction steps if missing
+               - features: explain if it fits the roadmap or suggest alternatives
+               - questions: answer directly or point to README/docs
+               - duplicates: link to the original issue
+               - invalid: politely explain why
+
+            Do NOT close the issue. Do NOT make code changes.

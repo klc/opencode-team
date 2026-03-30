@@ -9,10 +9,9 @@ A bug has been reported:
 "$ARGUMENTS"
 
 **Step 0 — Memory check**
-Before investigating, invoke @librarian:
+Before investigating, use the `memory_search` tool:
 ```
-ACTION: recall
-QUERY: [extract component name or symptom keywords from the bug description]
+memory_search({ query: "[extract component name or symptom keywords from the bug description]" })
 ```
 If a similar bug was fixed before, pass that record to the debugger — the root cause may be the same or related.
 

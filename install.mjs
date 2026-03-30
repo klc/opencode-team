@@ -1,25 +1,19 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Setup Script
+// OpenCode Agent Team — Setup Script v1.7.0
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
-import { execSync, spawnSync } from 'child_process'
+import { spawnSync } from 'child_process'
 import { existsSync, mkdirSync, readdirSync, copyFileSync, readFileSync, writeFileSync } from 'fs'
 import { join, dirname } from 'path'
-import { homedir, platform } from 'os'
+import { homedir } from 'os'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// ── ANSI colors ─────────────────────────────────────────────
 const c = {
-  bold:   '\x1b[1m',
-  dim:    '\x1b[2m',
-  cyan:   '\x1b[0;36m',
-  green:  '\x1b[0;32m',
-  yellow: '\x1b[1;33m',
-  red:    '\x1b[0;31m',
-  reset:  '\x1b[0m',
+  bold: '\x1b[1m', dim: '\x1b[2m', cyan: '\x1b[0;36m',
+  green: '\x1b[0;32m', yellow: '\x1b[1;33m', red: '\x1b[0;31m', reset: '\x1b[0m',
 }
 const bold   = s => `${c.bold}${s}${c.reset}`
 const dim    = s => `${c.dim}${s}${c.reset}`
@@ -33,17 +27,13 @@ const warn = msg => console.log(`  ${yellow('⚠')}  ${msg}`)
 const err  = msg => console.log(`  ${red('✗')} ${msg}`)
 const step = msg => console.log(`\n${bold(cyan('▶ ' + msg))}`)
 
-// ── Readline helper ─────────────────────────────────────────
 const rl = createInterface({ input: process.stdin, output: process.stdout })
 const ask = (prompt, defaultVal = '') => new Promise(resolve => {
   const hint = defaultVal ? ` ${dim(`[${defaultVal}]`)}` : ''
-  rl.question(`  ${bold(prompt)}${hint}: `, answer => {
-    resolve(answer.trim() || defaultVal)
-  })
+  rl.question(`  ${bold(prompt)}${hint}: `, answer => resolve(answer.trim() || defaultVal))
 })
 const close = () => rl.close()
 
-// ── Check opencode ──────────────────────────────────────────
 function checkOpencode() {
   const result = spawnSync('opencode', ['--version'], { encoding: 'utf8' })
   if (result.error) {
@@ -54,37 +44,24 @@ function checkOpencode() {
   ok(`opencode found: ${(result.stdout || result.stderr || '').trim()}`)
 }
 
-// ── Fetch models ────────────────────────────────────────────
 function fetchModels() {
   step('Fetching available models from OpenCode...')
   const result = spawnSync('opencode', ['models'], { encoding: 'utf8' })
   if (result.error || !result.stdout?.trim()) {
-    warn('Could not fetch models (no providers configured yet, or opencode not reachable).')
-    warn('You can set models manually later in opencode.json.')
+    warn('Could not fetch models — you can set them manually later in opencode.json.')
     return []
   }
   const models = result.stdout.trim().split('\n').filter(Boolean)
-  ok(`Found ${models.length} models across your configured providers.`)
+  ok(`Found ${models.length} models.`)
   return models
 }
 
-// ── Model selection ─────────────────────────────────────────
 async function selectModel(role, recommendation, models) {
-  console.log('')
-  console.log(`  ${bold(role)}`)
-  console.log(`  ${dim('Recommended: ' + recommendation)}`)
-
-  if (models.length === 0) {
-    return await ask('Enter model (provider/model-name)', recommendation)
-  }
-
+  console.log(`\n  ${bold(role)}\n  ${dim('Recommended: ' + recommendation)}`)
+  if (models.length === 0) return await ask('Enter model (provider/model-name)', recommendation)
   console.log(`\n  ${dim('Available models:')}`)
-  models.forEach((m, i) => {
-    console.log(`    ${dim(`${String(i + 1).padStart(3)})`)} ${m}`)
-  })
-  console.log('')
-  console.log(`  ${dim('Enter a number, or type a model name directly (Enter = recommendation)')}`)
-
+  models.forEach((m, i) => console.log(`    ${dim(`${String(i+1).padStart(3)})`)} ${m}`))
+  console.log(`\n  ${dim('Enter a number, or type a model name directly (Enter = recommendation)')}`)
   const input = await ask('Choice', '')
   if (!input) return recommendation
   const num = parseInt(input, 10)
@@ -92,126 +69,86 @@ async function selectModel(role, recommendation, models) {
   return input
 }
 
-// ── Copy directory recursively (skip listed filenames) ──────
 function copyDir(src, dest, skipFiles = []) {
   if (!existsSync(dest)) mkdirSync(dest, { recursive: true })
   for (const entry of readdirSync(src, { withFileTypes: true })) {
     if (skipFiles.includes(entry.name)) continue
-    const srcPath  = join(src, entry.name)
+    const srcPath = join(src, entry.name)
     const destPath = join(dest, entry.name)
-    if (entry.isDirectory()) {
-      copyDir(srcPath, destPath, skipFiles)
-    } else {
-      copyFileSync(srcPath, destPath)
-    }
+    if (entry.isDirectory()) copyDir(srcPath, destPath, skipFiles)
+    else copyFileSync(srcPath, destPath)
   }
 }
 
-// ── Update model in agent markdown frontmatter ──────────────
 function updateAgentModel(filePath, model) {
   let content = readFileSync(filePath, 'utf8')
   content = content.replace(/^model:.*$/m, `model: ${model}`)
   writeFileSync(filePath, content)
 }
 
-// ── Merge agent block into existing opencode.json ───────────
-function writeOpencodeJson(destPath, agentBlock, isProject) {
-  let config = {}
-
-  if (existsSync(destPath)) {
-    try {
-      config = JSON.parse(readFileSync(destPath, 'utf8'))
-    } catch {
-      warn('Could not parse existing opencode.json — creating a new one.')
-      config = {}
-    }
-    config.agent = agentBlock
-    ok('Merged agent block into existing opencode.json (provider/MCP settings preserved)')
-  } else {
-    config = { '$schema': 'https://opencode.ai/config.json', agent: agentBlock }
-    if (isProject) config.instructions = ['AGENTS.md']
-    ok('Created opencode.json')
-  }
-
-  if (isProject && !config.instructions) {
-    config.instructions = ['AGENTS.md']
-  }
-
-  writeFileSync(destPath, JSON.stringify(config, null, 2))
-}
-
-// ── Vibe Kanban MCP helpers ──────────────────────────────────
+// ── Vibe Kanban ──────────────────────────────────────────────
 const VIBE_KANBAN_MCP_KEY = 'vibe_kanban'
 const VIBE_KANBAN_MCP_CONFIG = {
   type: 'local',
-  command: [
-      "npx",
-      "-y",
-      "vibe-kanban@latest",
-      "--mcp"
-  ],
-  enabled: true
+  command: ['npx', '-y', 'vibe-kanban@latest', '--mcp'],
+  enabled: true,
 }
-
-// Agents that need Vibe Kanban tool access
 const VIBE_KANBAN_AGENTS = new Set([
-  'project-manager',
-  'backend-lead', 'frontend-lead',
-  'senior-backend', 'senior-frontend',
-  'junior-backend', 'junior-frontend',
+  'project-manager', 'backend-lead', 'frontend-lead',
+  'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend',
   'tester', 'code-reviewer',
 ])
 
-function hasVibeKanbanMcp(jsonPath) {
-  if (!existsSync(jsonPath)) return false
-  try {
-    const config = JSON.parse(readFileSync(jsonPath, 'utf8'))
-    return !!(config.mcp && config.mcp[VIBE_KANBAN_MCP_KEY])
-  } catch {
-    return false
-  }
-}
-
 function addVibeKanbanMcp(jsonPath) {
   let config = {}
-  if (existsSync(jsonPath)) {
-    try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { config = {} }
-  }
-  // Add MCP server definition
+  try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) } catch { config = {} }
   if (!config.mcp) config.mcp = {}
   config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
-
-  // Add vibe_kanban: true to each relevant agent's tools block
-  for (const agentName of VIBE_KANBAN_AGENTS) {
-    if (config.agent?.[agentName]) {
-      if (!config.agent[agentName].tools) config.agent[agentName].tools = {}
-      config.agent[agentName].tools.vibe_kanban = true
+  for (const name of VIBE_KANBAN_AGENTS) {
+    if (config.agent?.[name]) {
+      if (!config.agent[name].tools) config.agent[name].tools = {}
+      config.agent[name].tools.vibe_kanban = true
     }
   }
-
   writeFileSync(jsonPath, JSON.stringify(config, null, 2))
 }
 
-// ── Build agent config block ─────────────────────────────────
+// ── GitHub Actions ────────────────────────────────────────────
+function setupGithubActions(projectRoot) {
+  const sourceDir = join(__dirname, '.github', 'workflows')
+  if (!existsSync(sourceDir)) { warn('GitHub workflow source files not found — skipping'); return 0 }
+  const destDir = join(projectRoot, '.github', 'workflows')
+  if (!existsSync(destDir)) mkdirSync(destDir, { recursive: true })
+  const files = readdirSync(sourceDir).filter(f => f.startsWith('opencode'))
+  let copied = 0
+  for (const file of files) {
+    const dest = join(destDir, file)
+    if (!existsSync(dest)) { copyFileSync(join(sourceDir, file), dest); copied++ }
+    else warn(`  ${file} already exists — skipping`)
+  }
+  return copied
+}
+
+// ── Build agent config block ──────────────────────────────────
 function buildAgentBlock(agentModels, includeVibeKanban = false) {
   const descriptions = {
-    'product-owner':   'Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.',
-    'project-manager': 'Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.',
-    'architect':       'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
-    'backend-lead':    'Invoke when backend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
-    'frontend-lead':   'Invoke when frontend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
-    'senior-backend':  'Invoke for complex backend tasks: new architecture, integrations, performance-critical code.',
-    'senior-frontend': 'Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code.',
-    'junior-backend':  'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes.',
-    'junior-frontend': 'Invoke for simple frontend tasks: styling, small presentational components, component tests.',
-    'tester':          'Invoke after review passes. Writes and runs tests, reports bugs. Spawned in parallel per scope by leads.',
-    'code-reviewer':   'Invoke before QA. Reviews code quality, security, and standards. Never modifies code.',
-    'debugger':        'Invoke when root cause of a bug is unclear. Reads logs and stack traces. Analysis only.',
-    'researcher':        'Invoke to evaluate a technology or pattern. Produces comparison report with recommendation.',
-    'designer':          'Invoke to establish or update the project visual design system. Creates the project-design skill that all frontend developers follow.',
-    'security-auditor':  'Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities. More thorough than code-reviewer.',
-    'performance-analyst': 'Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size, cache opportunities.',
-    'librarian':       'Team memory manager. Writes and retrieves structured records from .memory/ — decisions, features, bugs, research, debt.',
+    'product-owner':       'Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.',
+    'project-manager':     'Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.',
+    'architect':           'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
+    'backend-lead':        'Invoke when backend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
+    'frontend-lead':       'Invoke when frontend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
+    'senior-backend':      'Invoke for complex backend tasks: new architecture, integrations, performance-critical code.',
+    'senior-frontend':     'Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code.',
+    'junior-backend':      'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes.',
+    'junior-frontend':     'Invoke for simple frontend tasks: styling, small presentational components, component tests.',
+    'tester':              'Invoke after review passes. Writes and runs tests, reports bugs. Spawned in parallel per scope by leads.',
+    'code-reviewer':       'Invoke before QA. Reviews code quality, security, and standards. Never modifies code.',
+    'debugger':            'Invoke when root cause of a bug is unclear. Reads logs and stack traces. Analysis only.',
+    'researcher':          'Invoke to evaluate a technology or pattern. Produces comparison report with recommendation.',
+    'designer':            'Invoke to establish or update the project visual design system. Creates the project-design skill.',
+    'security-auditor':    'Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities.',
+    'performance-analyst': 'Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size.',
+    'librarian':           'Team memory manager. Writes and retrieves structured records from .memory/.',
   }
 
   const modeMap = {
@@ -229,30 +166,50 @@ function buildAgentBlock(agentModels, includeVibeKanban = false) {
     'backend-lead': 100, 'frontend-lead': 100,
     'senior-backend': 80, 'senior-frontend': 80,
     'junior-backend': 40, 'junior-frontend': 40,
-    'tester': 60, 'code-reviewer': 40,
-    'debugger': 60, 'researcher': 40,
+    'tester': 60, 'code-reviewer': 40, 'debugger': 60, 'researcher': 40,
     'designer': 60, 'security-auditor': 60, 'performance-analyst': 60, 'librarian': 40,
   }
 
-  const permissionMap = {
-    'senior-backend':  { bash: 'allow', edit: 'allow' },
-    'senior-frontend': { bash: 'allow', edit: 'allow' },
-    'junior-backend':  { bash: 'ask',   edit: 'allow' },
-    'junior-frontend': { bash: 'ask',   edit: 'allow' },
-    'tester':          { bash: 'allow', edit: 'allow' },
+  // permission.task — delegation chain enforcement
+  const taskPermMap = {
+    'product-owner':       { '*': 'deny', 'project-manager': 'allow', 'architect': 'allow', 'librarian': 'allow' },
+    'project-manager':     { '*': 'deny', 'backend-lead': 'allow', 'frontend-lead': 'allow', 'architect': 'allow', 'librarian': 'allow' },
+    'architect':           { '*': 'deny', 'researcher': 'allow', 'librarian': 'allow' },
+    'backend-lead':        { '*': 'deny', 'senior-backend': 'allow', 'junior-backend': 'allow', 'code-reviewer': 'allow', 'tester': 'allow', 'security-auditor': 'allow', 'performance-analyst': 'allow', 'debugger': 'allow', 'researcher': 'allow', 'librarian': 'allow' },
+    'frontend-lead':       { '*': 'deny', 'senior-frontend': 'allow', 'junior-frontend': 'allow', 'code-reviewer': 'allow', 'tester': 'allow', 'security-auditor': 'allow', 'performance-analyst': 'allow', 'debugger': 'allow', 'researcher': 'allow', 'librarian': 'allow', 'designer': 'allow' },
+    'senior-backend':      { '*': 'deny', 'librarian': 'allow' },
+    'senior-frontend':     { '*': 'deny', 'librarian': 'allow' },
+    'junior-backend':      { '*': 'deny' },
+    'junior-frontend':     { '*': 'deny' },
+    'tester':              { '*': 'deny' },
+    'code-reviewer':       { '*': 'deny', 'librarian': 'allow' },
+    'debugger':            { '*': 'deny', 'librarian': 'allow' },
+    'researcher':          { '*': 'deny', 'librarian': 'allow' },
+    'designer':            { '*': 'deny', 'librarian': 'allow' },
+    'security-auditor':    { '*': 'deny' },
+    'performance-analyst': { '*': 'deny' },
+    'librarian':           { '*': 'deny' },
   }
 
-  const todoAgents = new Set([
-    'project-manager', 'backend-lead', 'frontend-lead',
-    'senior-backend', 'senior-frontend',
-    'junior-backend', 'junior-frontend',
-    'tester', 'code-reviewer',
-  ])
+  // Granular bash permissions per tier
+  const bashPerms = {
+    lead:     { '*': 'allow', 'git push': 'ask', 'git push *': 'ask' },
+    senior:   { '*': 'allow', 'git push': 'ask', 'git push *': 'ask', 'git rebase *': 'ask', 'git reset --hard *': 'ask', 'rm -rf *': 'ask', 'sudo *': 'deny' },
+    junior:   { '*': 'ask', 'git status': 'allow', 'git diff *': 'allow', 'git log *': 'allow', 'git add *': 'allow', 'git commit *': 'allow', 'grep *': 'allow', 'find *': 'allow', 'cat *': 'allow', 'ls *': 'allow', 'npm run *': 'allow', 'git push': 'deny', 'git push *': 'deny', 'git rebase *': 'deny', 'git reset *': 'deny', 'rm -rf *': 'deny', 'sudo *': 'deny' },
+    readonly: { '*': 'allow', 'git push': 'deny', 'git push *': 'deny', 'sudo *': 'deny' },
+  }
 
-  const hiddenAgents = new Set([
-    'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend',
-    'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst', 'librarian',
-  ])
+  const bashTierMap = {
+    'project-manager': 'lead', 'backend-lead': 'lead', 'frontend-lead': 'lead', 'designer': 'lead',
+    'senior-backend': 'senior', 'senior-frontend': 'senior', 'tester': 'senior',
+    'junior-backend': 'junior', 'junior-frontend': 'junior',
+    'code-reviewer': 'readonly', 'debugger': 'readonly', 'security-auditor': 'readonly',
+    'performance-analyst': 'readonly', 'librarian': 'readonly',
+  }
+
+  const todoAgents = new Set(['project-manager', 'backend-lead', 'frontend-lead', 'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester', 'code-reviewer'])
+  const hiddenAgents = new Set(['senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst', 'librarian'])
+  const editAllowAgents = new Set(['senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester'])
 
   const block = {}
   for (const name of Object.keys(descriptions)) {
@@ -264,29 +221,43 @@ function buildAgentBlock(agentModels, includeVibeKanban = false) {
     }
 
     const tools = {}
-    if (todoAgents.has(name)) {
-      tools.todowrite = true
-      tools.todoread  = true
-    }
-    // Grant vibe_kanban tool access if Vibe Kanban is enabled
-    if (includeVibeKanban && VIBE_KANBAN_AGENTS.has(name)) {
-      tools.vibe_kanban = true
-    }
+    if (todoAgents.has(name)) { tools.todowrite = true; tools.todoread = true }
+    if (includeVibeKanban && VIBE_KANBAN_AGENTS.has(name)) tools.vibe_kanban = true
     if (Object.keys(tools).length > 0) agent.tools = tools
 
-    if (permissionMap[name]) agent.permission = permissionMap[name]
-    if (hiddenAgents.has(name)) agent.hidden = true
+    const permission = {}
+    const bashTier = bashTierMap[name]
+    if (bashTier) permission.bash = bashPerms[bashTier]
+    if (editAllowAgents.has(name)) permission.edit = 'allow'
+    if (taskPermMap[name]) permission.task = taskPermMap[name]
+    if (Object.keys(permission).length > 0) agent.permission = permission
 
+    if (hiddenAgents.has(name)) agent.hidden = true
     block[name] = agent
   }
   return block
+}
+
+function writeOpencodeJson(destPath, agentBlock, isProject) {
+  let config = {}
+  if (existsSync(destPath)) {
+    try { config = JSON.parse(readFileSync(destPath, 'utf8')) } catch { config = {} }
+    config.agent = agentBlock
+    ok('Merged agent block into existing opencode.json (provider/MCP settings preserved)')
+  } else {
+    config = { '$schema': 'https://opencode.ai/config.json', agent: agentBlock }
+    if (isProject) config.instructions = ['AGENTS.md']
+    ok('Created opencode.json')
+  }
+  if (isProject && !config.instructions) config.instructions = ['AGENTS.md']
+  writeFileSync(destPath, JSON.stringify(config, null, 2))
 }
 
 // ── Main ─────────────────────────────────────────────────────
 async function main() {
   console.log('')
   console.log(bold(cyan('╔══════════════════════════════════════════╗')))
-  console.log(bold(cyan('║     OpenCode Agent Team — Setup          ║')))
+  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.7.0  ║')))
   console.log(bold(cyan('╚══════════════════════════════════════════╝')))
   console.log('')
 
@@ -308,25 +279,14 @@ async function main() {
   let projectRoot = process.cwd()
   if (!isGlobal) {
     console.log('')
-    console.log(`  ${dim('Enter the full path to your project directory.')}`)
     console.log(`  ${dim('Press Enter to use the current directory:')} ${dim(process.cwd())}`)
     const inputPath = await ask('Project path', process.cwd())
-    projectRoot = inputPath.startsWith('~')
-      ? join(homedir(), inputPath.slice(1))
-      : inputPath
-    if (!existsSync(projectRoot)) {
-      err(`Directory not found: ${projectRoot}`)
-      close()
-      process.exit(1)
-    }
+    projectRoot = inputPath.startsWith('~') ? join(homedir(), inputPath.slice(1)) : inputPath
+    if (!existsSync(projectRoot)) { err(`Directory not found: ${projectRoot}`); close(); process.exit(1) }
   }
 
-  const installDir = isGlobal
-    ? join(homedir(), '.config', 'opencode')
-    : join(projectRoot, '.opencode')
-  const installType = isGlobal ? 'global' : 'project'
-
-  ok(`Installing as: ${bold(installType)} → ${installDir}`)
+  const installDir = isGlobal ? join(homedir(), '.config', 'opencode') : join(projectRoot, '.opencode')
+  ok(`Installing as: ${bold(isGlobal ? 'global' : 'project')} → ${installDir}`)
 
   // ── Step 2: Fetch models ──────────────────────────────────
   const models = fetchModels()
@@ -334,101 +294,106 @@ async function main() {
   // ── Step 3: Model assignments ─────────────────────────────
   step('Model assignments')
   console.log('')
-  console.log(`  The team uses two tiers of models:`)
   console.log(`  ${bold('Strong')} — leads, architect, senior devs, debugger ${dim('(high-stakes decisions)')}`)
   console.log(`  ${bold('Fast')}   — junior devs, tester, reviewer, researcher ${dim('(high-volume work)')}`)
   console.log('')
 
   const strongModel = await selectModel('Strong model', 'anthropic/claude-opus-4-5', models)
   console.log('')
-  const fastModel   = await selectModel('Fast model',   'anthropic/claude-sonnet-4-5', models)
+  const fastModel = await selectModel('Fast model', 'anthropic/claude-sonnet-4-5', models)
 
   const agentModels = {
-    'product-owner':   strongModel,
-    'project-manager': strongModel,
-    'architect':       strongModel,
-    'backend-lead':    strongModel,
-    'frontend-lead':   fastModel,
-    'senior-backend':  strongModel,
-    'senior-frontend': fastModel,
-    'junior-backend':  fastModel,
-    'junior-frontend': fastModel,
-    'tester':          fastModel,
-    'code-reviewer':   fastModel,
-    'debugger':          strongModel,
-    'researcher':        fastModel,
-    'designer':          strongModel,
-    'security-auditor':  strongModel,
-    'performance-analyst': strongModel,
-    'librarian':          fastModel,
+    'product-owner': strongModel, 'project-manager': strongModel, 'architect': strongModel,
+    'backend-lead': strongModel, 'frontend-lead': fastModel,
+    'senior-backend': strongModel, 'senior-frontend': fastModel,
+    'junior-backend': fastModel, 'junior-frontend': fastModel,
+    'tester': fastModel, 'code-reviewer': fastModel,
+    'debugger': strongModel, 'researcher': fastModel, 'designer': strongModel,
+    'security-auditor': strongModel, 'performance-analyst': strongModel, 'librarian': fastModel,
   }
 
-  // ── Step 4: Optional per-agent customization ──────────────
   console.log('')
   const customizeInput = await ask('Customize individual agent models? [y/N]', 'n')
   if (customizeInput.toLowerCase() === 'y') {
     step('Individual agent models')
-    console.log(`  ${dim('Press Enter to accept the default shown in brackets.')}`)
     for (const agent of Object.keys(agentModels)) {
       agentModels[agent] = await selectModel(agent, agentModels[agent], models)
     }
   }
 
-  // ── Step 5: Vibe Kanban integration ──────────────────────
+  // ── Step 4: Vibe Kanban ───────────────────────────────────
   step('Vibe Kanban integration (recommended)')
   console.log('')
   console.log(`  Vibe Kanban gives the agent team a visual Kanban board.`)
   console.log(`  Agents create and update issues automatically as they work.`)
-  console.log('')
   console.log(`  ${dim('Learn more: https://vibekanban.com')}`)
   console.log('')
-
   const vibeInput = await ask('Enable Vibe Kanban integration? [Y/n]', 'y')
   const useVibeKanban = vibeInput.toLowerCase() !== 'n'
+  if (!useVibeKanban) warn('Vibe Kanban skipped — re-run install to add later')
 
-  if (!useVibeKanban) {
-    warn('Vibe Kanban skipped — you can add it later by running the install script again')
+  // ── Step 5: GitHub Actions ────────────────────────────────
+  let useGithubActions = false
+  if (!isGlobal) {
+    step('GitHub Actions integration (optional)')
+    console.log('')
+    console.log(`  Adds 4 OpenCode workflows to .github/workflows/:`)
+    console.log(`  ${dim('• opencode.yml              — /oc comments trigger the team on issues & PRs')}`)
+    console.log(`  ${dim('• opencode-pr-review.yml    — auto code review when PRs are opened')}`)
+    console.log(`  ${dim('• opencode-security-audit.yml — weekly scheduled security audit (Mon 09:00 UTC)')}`)
+    console.log(`  ${dim('• opencode-issue-triage.yml — auto-triage new issues')}`)
+    console.log('')
+    console.log(`  ${dim('Requires: ANTHROPIC_API_KEY secret in GitHub repo Settings → Secrets → Actions')}`)
+    console.log('')
+    const ghInput = await ask('Set up GitHub Actions workflows? [Y/n]', 'y')
+    useGithubActions = ghInput.toLowerCase() !== 'n'
   }
 
   // ── Step 6: Install files ─────────────────────────────────
   step('Installing files...')
-
   const sourceDir = join(__dirname, '.opencode')
   if (!existsSync(sourceDir)) {
     err(`Source directory not found: ${sourceDir}`)
     console.log('  Make sure you run this script from the opencode-agent-team directory.')
-    close()
-    process.exit(1)
+    close(); process.exit(1)
   }
 
   copyDir(sourceDir, installDir, ['opencode.json'])
-  ok(`Copied agent, command, and skill files to ${installDir}`)
+  ok(`Copied agent, command, skill, and tool files to ${installDir}`)
 
-  // ── Step 7: Apply model assignments to agent files ────────
-  step('Applying model assignments...')
+  // Apply model assignments
   const agentsDir = join(installDir, 'agents')
-  for (const [agentName, model] of Object.entries(agentModels)) {
-    const filePath = join(agentsDir, `${agentName}.md`)
-    if (existsSync(filePath)) updateAgentModel(filePath, model)
+  for (const [name, model] of Object.entries(agentModels)) {
+    const fp = join(agentsDir, `${name}.md`)
+    if (existsSync(fp)) updateAgentModel(fp, model)
   }
   ok('Model assignments written to agent files')
 
-  // ── Step 8: Write opencode.json ───────────────────────────
+  // Write opencode.json
   step('Generating opencode.json...')
   const agentBlock = buildAgentBlock(agentModels, useVibeKanban)
-  const jsonPath   = join(installDir, 'opencode.json')
+  const jsonPath = join(installDir, 'opencode.json')
   writeOpencodeJson(jsonPath, agentBlock, !isGlobal)
 
-  // Add Vibe Kanban MCP server definition (tools already in agentBlock)
   if (useVibeKanban) {
-    let config = JSON.parse(readFileSync(jsonPath, 'utf8'))
-    if (!config.mcp) config.mcp = {}
-    config.mcp[VIBE_KANBAN_MCP_KEY] = VIBE_KANBAN_MCP_CONFIG
-    writeFileSync(jsonPath, JSON.stringify(config, null, 2))
+    addVibeKanbanMcp(jsonPath)
     ok('Vibe Kanban MCP server and agent tool permissions configured')
   }
 
-  // ── Step 9: Project extras (AGENTS.md) ───────────────────
+  ok('permission.task delegation chain enforced in opencode.json')
+  ok('Granular bash permissions applied per agent tier')
+
+  // GitHub Actions
+  if (useGithubActions) {
+    step('Setting up GitHub Actions...')
+    const count = setupGithubActions(projectRoot)
+    if (count > 0) {
+      ok(`${count} workflow file(s) copied to .github/workflows/`)
+      warn('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')
+    }
+  }
+
+  // Project extras
   if (!isGlobal) {
     step('Project-specific setup...')
     const agentsMd = join(projectRoot, 'AGENTS.md')
@@ -437,15 +402,20 @@ async function main() {
 
 ## Language
 <!-- Set your preferred language for agent responses here -->
+<!-- Example: Always respond in Turkish. Keep code, comments, and docs in English. -->
 
 ## Commands
 <!-- Specify how to run commands in this project -->
+<!-- Example: Always run php and npm commands inside Docker:
+  - php → docker compose exec app php ...
+  - npm → docker compose exec node npm ... -->
 
 ## Code Style
 <!-- Any project-specific code style rules beyond what's in the stack skill -->
 
 ## Workflow
 <!-- Any custom workflow preferences -->
+<!-- Example: Always ask before creating new database migrations -->
 
 ## Other Rules
 <!-- Add any other project-specific rules here -->
@@ -469,24 +439,24 @@ async function main() {
     console.log(`    ${agent.padEnd(20)} ${dim(model)}`)
   }
   console.log('')
+
   if (useVibeKanban) {
     console.log(`  ${bold('Vibe Kanban:')} ${green('✓')} MCP server + agent tool permissions configured`)
     console.log(`  ${dim('Open Vibe Kanban, create a project, then run /team:init')}`)
-  } else {
-    console.log(`  ${bold('Vibe Kanban:')} ${dim('Not enabled — re-run install script to add later')}`)
   }
+  if (useGithubActions) {
+    console.log(`  ${bold('GitHub Actions:')} ${green('✓')} 4 workflows installed`)
+    console.log(`  ${dim('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')}`)
+    console.log(`  ${dim('Then try: /oc fix this  (comment on any issue or PR)')}`)
+  }
+  console.log(`  ${bold('Security:')} ${green('✓')} permission.task + granular bash permissions active`)
+  console.log(`  ${bold('Custom Tools:')} ${green('✓')} memory-search, complexity-score, debt-summary, stack-detect`)
   console.log('')
   console.log(`  ${bold('Next steps:')}`)
   if (!isGlobal) {
     console.log(`  1. ${cyan('Edit AGENTS.md')} — add your project rules`)
-    if (useVibeKanban) {
-      console.log(`  2. ${cyan('Open Vibe Kanban')} — create a project and note your project ID`)
-      console.log(`  3. ${cyan('Run /team:init')} — generates project-stack skill and sets Kanban project ID`)
-      console.log(`  4. ${cyan('/team:new-feature <description>')} — start building`)
-    } else {
-      console.log(`  2. ${cyan('Run /team:init')} — generates the project-stack skill`)
-      console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
-    }
+    console.log(`  2. ${cyan('Run /team:init')} — generates project-stack skill (uses stack-detect tool)`)
+    console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
   } else {
     console.log(`  1. In each project: ${cyan('run /team:init')} to generate the project-stack skill`)
     console.log(`  2. ${cyan('/team:new-feature <description>')} — start building`)

@@ -12,6 +12,7 @@ A technical debt item needs to be resolved:
 ## Step 1 — Retrieve the debt record
 
 Use the `memory_search` tool:
+
 ```
 memory_search({ query: "[debt title or keywords from the argument]", category: "debt" })
 ```
@@ -21,6 +22,7 @@ Read the full debt record — pay attention to: location, issue description, acc
 ## Step 2 — Mark as in-progress
 
 Invoke @librarian to update the status:
+
 ```
 ACTION: write
 TYPE: debt
@@ -45,6 +47,7 @@ Wait for implementation + review + QA to complete (follow the normal team:task f
 ## Step 4 — Close the debt record
 
 When all acceptance criteria are met, invoke @librarian to mark the debt as resolved:
+
 ```
 ACTION: write
 TYPE: debt
@@ -56,6 +59,7 @@ CONTENT:
 ```
 
 Report to the user:
+
 ```
 ✅ Debt resolved: [title]
 Files changed: [list]

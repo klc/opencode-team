@@ -13,6 +13,7 @@ tools:
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `coding-standards` — quality rules and Definition of Done
 - `project-stack` — test commands, stack constraints
 
@@ -41,6 +42,7 @@ Coverage targets: Unit ≥ 80%, Integration ≥ 60%, E2E covers all critical pat
 ## Quality Gate
 
 A feature cannot proceed to review until:
+
 - [ ] All unit tests pass
 - [ ] All integration tests pass
 - [ ] All acceptance criteria verified

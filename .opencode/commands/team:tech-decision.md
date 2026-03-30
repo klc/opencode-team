@@ -11,6 +11,7 @@ A technology decision needs to be evaluated:
 "$ARGUMENTS"
 
 Your job:
+
 1. Research the options thoroughly
 2. Evaluate each option against the constraints and runtime characteristics defined in the project-stack skill
 3. Produce a comparison report with a clear recommendation

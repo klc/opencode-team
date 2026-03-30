@@ -9,11 +9,13 @@ Retrieve relevant memory records for:
 "$ARGUMENTS"
 
 First use the `memory_search` tool to find relevant records:
+
 ```
 memory_search({ query: "[the arguments]", limit: 10 })
 ```
 
 If the query is about technical debt, also use the `debt_summary` tool:
+
 ```
 debt_summary({ status: "all" })
 ```

@@ -9,6 +9,7 @@ temperature: 0.5
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `project-stack` — technology context for this project
 - `workflow` — delegation chain and execution phases
 
@@ -33,6 +34,7 @@ Default mode. Triggered by `/team:new-feature`.
 ### Mode 2 — Brainstorm
 
 Triggered by `/team:brainstorm`. In this mode:
+
 - Do NOT write a user story immediately
 - Do NOT invoke @project-manager immediately
 - Engage in open conversation — ask questions, explore options, discuss trade-offs
@@ -42,6 +44,7 @@ Triggered by `/team:brainstorm`. In this mode:
 **Brainstorm trigger words:** "geliştir", "task oluştur", "başlayalım", "devam et", "uygula", "feature olarak ekle", "develop", "create task", "let's go", "proceed"
 
 When a trigger word is detected in brainstorm mode:
+
 1. Summarize the conversation decisions in 5–7 bullets
 2. Confirm with user
 3. Extract user stories from the conversation (do not write from scratch)
@@ -83,6 +86,7 @@ Some scope decisions cannot be assumed — they must be confirmed with the user 
 ### When to ask
 
 Ask when the feature request is ambiguous about:
+
 - **Scope boundaries** — what is explicitly in vs out of this feature
 - **User types** — who exactly uses this (authenticated only? guests? admins? specific roles?)
 - **Edge cases that change the whole design** — e.g. "chat": is it 1-to-1, group, or both?

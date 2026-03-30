@@ -12,6 +12,7 @@ tools:
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `project-stack` — technology context and test commands
 - `workflow` — full delegation chain, context chain protocol, partial completion protocol, memory protocol, and invocation templates
 - `git-workflow` — branch naming and commit conventions
@@ -46,26 +47,43 @@ When you receive a user story:
 
 **Step 1 — Memory check**
 Invoke @librarian:
+
 ```
 ACTION: recall
 QUERY: [2–3 keywords from the feature]
 ```
+
 Note any relevant records — these become the `memory context` for all downstream delegations.
 
 **Step 2 — Preparation**
+
 - Create the feature branch
 - Identify shared files across tasks (see Shared File Protocol in workflow skill)
 - Break the story into concrete, independently deliverable tasks
 - Add all tasks to the todo list as `pending`
+- Invoke @librarian to record the feature plan in memory:
+
+```
+ACTION: plan-feature
+TITLE: [feature name]
+CONTENT:
+  Story: [US-ID and title]
+  Branch: feature/[slug]
+  Tasks planned:
+    - [ ] T01: [title]
+    - [ ] T02: [title]
+```
 
 **Step 3 — Delegate**
 Use the invocation templates from the `workflow` skill. Every delegation message must include:
+
 - `Story context` — one sentence: what the user wants and why
 - `Memory context` — relevant records from Step 1, or "none"
 - `Architectural constraints` — any decisions from @architect, or "none"
 - `Shared files` map and sequencing rules
 
 **Step 4 — Monitor**
+
 - Update assigned tasks to `in-progress`
 - Invoke @backend-lead with all backend tasks (if any)
 - Invoke @frontend-lead with all frontend tasks (if any)
@@ -76,6 +94,7 @@ If a lead reports that some tasks completed and others are blocked, follow the P
 
 **Step 6 — Close**
 When all leads report fully complete:
+
 - Invoke @librarian to record the feature (see Memory Protocol in workflow skill)
 - Summarize the completed feature to the user
 

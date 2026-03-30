@@ -21,6 +21,7 @@ Your job:
 The output must be concrete enough that any frontend developer can implement a new component without asking design questions.
 
 If no design brief is provided, ask the user:
+
 - What is the product's personality? (minimal, bold, playful, professional, etc.)
 - Who are the users? (developers, consumers, enterprise, etc.)
 - Any references or inspirations?

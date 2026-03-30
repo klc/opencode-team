@@ -12,6 +12,7 @@ A small fix has been requested:
 ## Rules for This Command
 
 This command is for changes that meet ALL of these criteria:
+
 - Touches 1–3 files maximum
 - No new logic — only corrections to existing behavior
 - No schema changes

@@ -3,6 +3,7 @@
 ## Stack Overview
 
 **Backend:**
+
 - Language: PHP 8.3+ (readonly properties, fibers, enums)
 - Framework: Laravel 12
 - Runtime: Laravel Octane + Swoole — **persistent workers, no FPM lifecycle**
@@ -10,6 +11,7 @@
 - Auth: Laravel Sanctum / Fortify
 
 **Frontend:**
+
 - Language: TypeScript 5
 - Framework: Vue 3 — Composition API, `<script setup>`
 - Meta-framework: Inertia.js — Laravel controller returns `Inertia::render()`, not JSON
@@ -20,16 +22,19 @@
 - Testing: Vitest + Vue Testing Library (unit), Playwright (E2E)
 
 **Databases:**
+
 - Primary: MySQL 8 — Eloquent ORM
 - Cache / Session / Queues: Redis — prefix all keys per domain
 - Analytics: ClickHouse — time-series and raw events, NOT via Eloquent
 - Queue dashboard: Laravel Horizon at `/horizon`
 
 **Testing:**
+
 - Backend: Pest PHP (feature + unit)
 - Frontend: Vitest + Vue Testing Library
 
 **Infrastructure:**
+
 - Containers: Docker + docker-compose
 - Queue manager: Laravel Horizon (Redis-backed)
 
@@ -154,11 +159,13 @@ onMounted(() => { isMobile.value = window.innerWidth < 768 })
 ## Architecture Patterns
 
 ### Request handling (backend)
+
 ```
 Route → Controller (thin) → FormRequest (validation) → Action (business logic) → Response
 ```
 
 ### Inertia page response
+
 ```php
 public function index(Request $request): Response
 {
@@ -170,6 +177,7 @@ public function index(Request $request): Response
 ```
 
 ### Forms — always use useForm()
+
 ```typescript
 import { useForm } from '@inertiajs/vue3'
 const form = useForm({ email: '', password: '' })

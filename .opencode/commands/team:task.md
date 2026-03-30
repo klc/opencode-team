@@ -11,9 +11,11 @@ A direct task has been assigned:
 
 **Step 0 — Memory check**
 Use the `memory_search` tool before starting:
+
 ```
 memory_search({ query: "[extract 2–3 keywords from the task description]" })
 ```
+
 If relevant prior decisions, bugs, or research records exist, pass them to the developer as context.
 
 1. Determine scope: backend, frontend, or both

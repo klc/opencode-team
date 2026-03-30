@@ -11,9 +11,11 @@ A production hotfix is required:
 
 **Step 0 — Memory check**
 Use the `memory_search` tool immediately — do not skip even in urgent situations:
+
 ```
 memory_search({ query: "[extract component or symptom keywords]" })
 ```
+
 A prior bug record may point directly to the root cause and save significant time.
 
 1. Create hotfix branch: `git checkout -b hotfix/<short-description>`

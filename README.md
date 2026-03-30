@@ -57,12 +57,14 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 ## Commands (21)
 
 ### Setup
+
 | Command | Use when |
 |---|---|
 | `/team:init` | **Start here.** Scans the project (using `stack-detect` tool), auto-detects the stack, and writes the `project-stack` skill. |
 | `/team:designer <brief>` | Define the project's visual design system. |
 
 ### Feature development
+
 | Command | Use when |
 |---|---|
 | `/team:brainstorm <idea>` | Explore an idea first. product-owner + architect discuss with you. Say "develop" to kick off the full pipeline. |
@@ -72,12 +74,14 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 | `/team:tweak <description>` | Single file / single function change |
 
 ### Bug handling
+
 | Command | Use when |
 |---|---|
 | `/team:bugfix <description>` | Debugger finds root cause, lead coordinates fix, tester verifies |
 | `/team:hotfix <description>` | Production is broken — hotfix branch, debugger triage, fast-track review |
 
 ### Code quality & analysis
+
 | Command | Use when |
 |---|---|
 | `/team:audit [scope]` | Full project audit — security, performance, and code quality in parallel |
@@ -86,18 +90,21 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 | `/team:review <file or area>` | Manually trigger a code review |
 
 ### Research & decisions
+
 | Command | Use when |
 |---|---|
 | `/team:research <topic>` | Technology research — comparison report with recommendation |
 | `/team:tech-decision <question>` | Architectural decision — researcher investigates, architect writes ADR |
 
 ### Planning & tracking
+
 | Command | Use when |
 |---|---|
 | `/team:sprint <stories>` | Plan a sprint — surfaces debt backlog, breaks down tasks |
 | `/team:standup` | Daily status — reads todo board, git log, and high-priority debt |
 
 ### Memory
+
 | Command | Use when |
 |---|---|
 | `/team:remember <description>` | Manually save something to team memory |
@@ -105,6 +112,7 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 | `/team:resolve-debt <title>` | Pick up and resolve a specific debt item |
 
 ### Maintenance
+
 | Command | Use when |
 |---|---|
 | `/team:update-docs <description>` | Update README, API docs, architecture docs, or inline comments |
@@ -193,6 +201,7 @@ npm run install-team
 ```
 
 The script will:
+
 1. Ask: **project** (`.opencode/` in current dir) or **global** (`~/.config/opencode/`)
 2. Fetch available models via `opencode models`
 3. Assign a **strong model** and a **fast model** across the team
@@ -285,6 +294,7 @@ See `.opencode/opencode.json`. Key additions in v1.7.0:
 PRs welcome. If you've built a `project-stack` skill for a different stack (Next.js, NestJS, Django, Rails, Go, etc.), add it under `examples/` and open a PR.
 
 When modifying agent prompts, keep these invariants:
+
 - Delegation chain must remain strict — no step can be skipped
 - `permission.task` in `opencode.json` must match the prompt rules
 - Review must run before QA

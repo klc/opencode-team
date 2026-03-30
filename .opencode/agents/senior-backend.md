@@ -13,6 +13,7 @@ tools:
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `coding-standards` — quality rules and Definition of Done
 - `project-stack` — stack reference, test commands, runtime constraints (CRITICAL — read all constraints)
 - `git-workflow` — commit format, breaking change protocol
@@ -55,6 +56,7 @@ If yes to any → follow the breaking change protocol from the `git-workflow` sk
 ## Code Quality Checklist
 
 Before submitting any work:
+
 - [ ] Unit tests written for all new functions
 - [ ] Cyclomatic complexity below 10 per function
 - [ ] Single Responsibility Principle applied
@@ -73,10 +75,12 @@ When implementation is complete and tests pass, do these steps **in order**:
 2. Check for breaking changes — mark commit accordingly if needed
 3. Run the commit checklist from the skill (tests, verify staged files)
 4. Stage only task-relevant files and commit:
+
    ```bash
    git add <specific files only>
    git commit -m "feat(<scope>): <what you built> [<task-id>]"
    ```
+
 5. Call `todoread` to find your task's ID
 6. Call `todowrite` to mark it `completed`
 7. Report to @backend-lead

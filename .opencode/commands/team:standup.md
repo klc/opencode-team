@@ -13,14 +13,17 @@ Generate a standup report for the current state of the project.
 1. Call `todoread` to get the current state of the todo list
 
 2. Check git log for commits since yesterday:
+
    ```bash
    git log --oneline --since="24 hours ago"
    ```
 
 3. Use the `debt_summary` tool to surface high-priority open debt:
+
    ```
    debt_summary({ status: "open", priority: "high" })
    ```
+
    Include only **high priority** items with status `open` or `in-progress` in the standup report.
 
 4. Produce the standup report:

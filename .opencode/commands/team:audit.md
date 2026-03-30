@@ -18,6 +18,7 @@ If arguments are provided, focus the audit on that area. Otherwise, audit the fu
 Run all three audits in parallel — they are independent:
 
 **Task 1 → @security-auditor**
+
 ```
 Audit the codebase for security vulnerabilities.
 Focus on: authentication, authorization, injection, sensitive data handling, OWASP Top 10.
@@ -26,6 +27,7 @@ Return your findings report to me when complete.
 ```
 
 **Task 2 → @performance-analyst**
+
 ```
 Analyze the codebase for performance bottlenecks.
 Focus on: N+1 queries, missing indexes, bundle size, slow endpoints, cache opportunities.
@@ -35,6 +37,7 @@ Return your findings report to me when complete.
 ```
 
 **Task 3 → @code-reviewer**
+
 ```
 Review the codebase for code quality and technical debt.
 Focus on: coding standards violations, missing tests, complexity hotspots, dead code, duplication.

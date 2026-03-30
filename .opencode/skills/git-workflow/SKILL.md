@@ -18,6 +18,7 @@ This project uses Conventional Commits. Every task completion and every fix requ
 ```
 
 **Types:**
+
 - `feat` — new feature or functionality
 - `fix` — bug fix, including QA-returned fixes
 - `refactor` — code change with no behavior change
@@ -40,6 +41,7 @@ test(auth): add unit tests for token refresh logic [T04]
 ### Breaking Changes
 
 If your change breaks backwards compatibility:
+
 - Add `!` after the commit type: `feat(api)!: rename user endpoint`
 - Add a `BREAKING CHANGE:` footer:
 
@@ -95,9 +97,11 @@ git commit -m "<type>(<scope>): <description> [<task-id>]"
 ## Branch Strategy
 
 - **project-manager** creates the feature branch when a story starts:
+
   ```bash
   git checkout -b feature/<story-slug>
   ```
+
 - All developers commit to this branch — no sub-branches
 - Do not push unless the user explicitly asks
 - Do not squash or amend commits — preserve full history

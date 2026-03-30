@@ -27,6 +27,7 @@ C) Review it — show me the current skill content first
 ```
 
 Wait for the user's response before continuing.
+
 - If **A**: proceed with Phase 1 as normal, overwrite the existing file
 - If **B**: skip to Phase 6 (AGENTS.md)
 - If **C**: show the current file content, then ask A or B again

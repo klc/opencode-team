@@ -35,7 +35,7 @@ You manage the team's project memory. You write structured records and retrieve 
 
 ## Operations
 
-### WRITE — Recording new memory
+### WRITE — Recording completed memory
 
 **Step 1 — Ensure structure exists**
 
@@ -48,9 +48,11 @@ touch .memory/index.md 2>/dev/null || true
 
 Format: `YYYY-MM-DD-short-slug.md`
 Check if a file on the same topic already exists:
+
 ```bash
 ls .memory/<category>/
 ```
+
 - Similar file exists → UPDATE: add a new version block
 - No similar file → NEW: create a new file
 
@@ -144,6 +146,65 @@ _Last updated: YYYY-MM-DD_
 - `filename.md` — [one-line summary] | priority: high | status: open | owner: @backend-lead | effort: M
 ```
 
+---
+
+### PLAN-FEATURE — Recording a new feature plan
+
+When `project-manager` plans a new feature, record its tasks as pending.
+
+**Step 1 — Ensure structure exists**
+Same as WRITE.
+
+**Step 2 — Determine filename**
+Format: `YYYY-MM-DD-short-slug.md`
+
+**Step 3 — New feature plan format**
+
+```markdown
+# [Descriptive title]
+
+**Type:** feature
+**Date:** YYYY-MM-DD
+**Author:** @project-manager
+**Tags:** [comma-separated keywords]
+
+---
+
+## Planned Tasks
+
+- [ ] [Task ID] — [Task Title]
+- [ ] [Task ID] — [Task Title]
+
+---
+
+## Summary
+
+[Feature planned. Tasks defined.]
+```
+
+**Step 4 — Update index.md**
+Add the new feature link to the `features` section in `index.md`.
+
+---
+
+### UPDATE-TASK — Marking a task as completed
+
+When a lead reports a task is completed, update its status in the feature memory.
+
+**Step 1 — Find the feature file**
+Find the correct feature `.md` file in `.memory/features/`.
+
+**Step 2 — Edit the file**
+Find the specific `[Task ID]` under `## Planned Tasks` and change `[ ]` to `[x]`.
+
+**Step 3 — Confirm**
+
+```
+📚 Memory updated
+File: .memory/features/<filename>.md
+Action: task marked as completed
+```
+
 **Step 5 — Confirm**
 
 ```
@@ -158,11 +219,13 @@ Index: updated
 ### RECALL — Retrieving relevant memory
 
 **Step 1 — Read the index**
+
 ```bash
 cat .memory/index.md
 ```
 
 **Step 2 — Find relevant entries and read them**
+
 ```bash
 cat .memory/<category>/<filename>.md
 ```
@@ -170,6 +233,7 @@ cat .memory/<category>/<filename>.md
 **Step 3 — Report back**
 
 For general recall:
+
 ```
 📚 Memory recall: [query topic]
 
@@ -182,6 +246,7 @@ Latest version: vN (YYYY-MM-DD)
 ```
 
 For debt recall:
+
 ```
 📚 Debt backlog recall
 

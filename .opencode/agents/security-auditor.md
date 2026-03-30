@@ -17,6 +17,7 @@ tools:
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `project-stack` — stack reference, auth patterns, runtime constraints
 
 # Security Auditor

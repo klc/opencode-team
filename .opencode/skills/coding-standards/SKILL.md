@@ -13,13 +13,15 @@ description: Universal code quality rules, Definition of Done, review severity l
 
 ## Universal Code Quality Rules
 
-### Every function / method must:
+### Every function / method must
+
 - Do one thing and name itself after that thing
 - Have a cyclomatic complexity below 10
 - Handle its errors explicitly — no silent failures
 - Never log sensitive data (passwords, tokens, PII)
 
-### Every pull request must:
+### Every pull request must
+
 - [ ] Have unit tests for all new logic
 - [ ] Have all existing tests passing
 - [ ] Have no hardcoded secrets or environment-specific values

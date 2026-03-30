@@ -11,6 +11,7 @@ Research the following topic:
 Load the `project-stack` skill first to understand this project's constraints and filter recommendations accordingly.
 
 Produce a research report with:
+
 - Comparison matrix (performance, DX, community, license, compatibility with this project's stack)
 - Detailed analysis per option
 - A clear recommendation with reasoning grounded in the project's constraints

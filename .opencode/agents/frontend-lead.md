@@ -12,6 +12,7 @@ tools:
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `coding-standards` — quality rules and Definition of Done
 - `project-stack` — stack reference, build commands, SSR constraints if any
 - `workflow` — delegation chain, context chain protocol, partial completion protocol, shared file protocol, error recovery, security automation, and memory protocols
@@ -40,6 +41,7 @@ You are a Senior Frontend Team Lead. Your mission is to design frontend architec
 ## Code Quality Checklist
 
 Every task must pass before moving to review:
+
 - [ ] Design system followed (colors, typography, spacing from `project-design` skill)
 - [ ] Component tests written
 - [ ] No hardcoded strings that should be config or i18n

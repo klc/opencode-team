@@ -14,10 +14,12 @@ Execute the full pipeline in sequence. Do not stop between steps unless user inp
 
 **Step 0 — Memory check**
 Before anything else, invoke @librarian or use the `memory_search` tool:
+
 ```
 ACTION: recall
 QUERY: [extract 2–3 keywords from the feature description]
 ```
+
 If relevant records are found (prior decisions, similar features, known bugs in this area), carry that context into Step 1 and all subsequent steps. If nothing is found, proceed normally.
 
 **Step 1 — Scope clarification**

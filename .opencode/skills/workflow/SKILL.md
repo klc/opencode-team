@@ -19,6 +19,7 @@ product-owner
 ```
 
 **Support agents** (invoked by leads or project-manager as needed):
+
 - `@tester` — QA, spawned by leads after all reviews pass
 - `@code-reviewer` — code review, spawned by leads before QA
 - `@security-auditor` — deep security review, spawned by leads when security-sensitive scope is detected
@@ -189,17 +190,21 @@ Spawn @security-auditor in parallel with @code-reviewer when scope involves:
 ## Error Recovery Protocol
 
 **For a developer failure:**
+
 1. Check git log — determine what was actually committed
 2. Re-delegate with explicit instructions:
+
    ```
    RETRY — Task [T0X] did not complete successfully.
    Last known state: [what was committed / what was not]
    Continue from: [specific point]
    Do NOT re-do: [list of already-completed sub-steps]
    ```
+
 3. If the same task fails twice → escalate to the user (Partial Completion Protocol)
 
 **Steps limit prevention** — Leads should split large scopes proactively:
+
 - More than 5 independent files → split into two reviewer invocations
 - More than 3 acceptance criteria → split into two tester invocations
 
@@ -217,15 +222,17 @@ Spawn @security-auditor in parallel with @code-reviewer when scope involves:
 
 ---
 
-
 ## Memory Protocol
 
 | Agent | Invokes @librarian when |
 |---|---|
+| project-manager | After breaking down a feature into tasks (to create the feature plan in memory) |
 | project-manager | All leads report complete |
 | architect | After writing an ADR or resolving a critical decision |
 | backend-lead | After a bug fix or significant architectural change |
+| backend-lead | Whenever a task is marked completed by a developer (or after QA/Review passes) |
 | frontend-lead | After a bug fix or significant architectural change |
+| frontend-lead | Whenever a task is marked completed by a developer (or after QA/Review passes) |
 | debugger | After completing a root cause analysis |
 | researcher | After completing a research report |
 | code-reviewer | When deferring a Required finding (technical debt) |
@@ -243,6 +250,7 @@ Spawn @security-auditor in parallel with @code-reviewer when scope involves:
 | frontend-lead | State management, SSR trade-offs, new UI library |
 
 **Rules:**
+
 1. Never ask a bare question — always bring a researched recommendation
 2. Show options with trade-offs specific to this project's stack
 3. Make it easy to approve: "My recommendation is X — shall I proceed?"
@@ -325,6 +333,33 @@ Branch: feature/[slug]
 What was built: [summary]
 Files to test: [list]
 Test command: [project-specific test command]
+```
+
+### project-manager → librarian (after feature planning)
+
+```
+@librarian
+
+ACTION: plan-feature
+TITLE: [feature name]
+CONTENT:
+  Story: [US-ID and title]
+  Branch: feature/[slug]
+  Tasks planned:
+    - [ ] [Task ID]: [Task Title]
+    - [ ] [Task ID]: [Task Title]
+```
+
+### lead → librarian (after task complete)
+
+```
+@librarian
+
+ACTION: update-task
+TITLE: [feature name]
+CONTENT:
+  Tasks completed:
+    - [x] [Task ID]: [Task Title]
 ```
 
 ### project-manager → librarian (after feature complete)

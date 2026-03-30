@@ -13,6 +13,7 @@ tools:
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `coding-standards` — quality rules and Definition of Done
 - `project-stack` — stack reference, SSR constraints if applicable, build commands (CRITICAL — read all constraints)
 - `project-design` — visual design system, component patterns, and interaction guidelines (load if exists)
@@ -41,6 +42,7 @@ You are an experienced Senior Frontend Developer. You build complex UI component
 ## Code Quality Checklist
 
 Before submitting any work:
+
 - [ ] Design system followed — colors, typography, spacing must match `project-design` skill exactly
 - [ ] Component tests written (render, interaction, edge cases)
 - [ ] All project-stack SSR constraints respected (if applicable)
@@ -56,10 +58,12 @@ When implementation is complete and tests pass, do these steps **in order**:
 1. Load the git-workflow skill: `skill git-workflow`
 2. Run the commit checklist from the skill (build check, tests, verify staged files)
 3. Stage only task-relevant files and commit:
+
    ```bash
    git add <specific files only>
    git commit -m "feat(<scope>): <what you built> [<task-id>]"
    ```
+
 4. Call `todoread` to find your task's ID
 5. Call `todowrite` to mark it `completed`
 6. Report to @frontend-lead

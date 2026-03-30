@@ -9,6 +9,7 @@ temperature: 0.4
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `project-stack` — technology context for this project
 - `workflow` — delegation chain and invocation templates
 
@@ -82,6 +83,7 @@ Every significant architectural decision must be recorded:
 ## Critical Decision Protocol
 
 Stop and ask the user before proceeding when the decision involves:
+
 - **Protocol or transport choice** (WebSocket vs SSE vs Long Polling, REST vs GraphQL vs gRPC)
 - **Infrastructure topology** (monolith vs microservice split, queue vs sync, in-process vs out-of-process)
 - **Data storage strategy** (which DB engine, SQL vs NoSQL for a new dataset, caching strategy)

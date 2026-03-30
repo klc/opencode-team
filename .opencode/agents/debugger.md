@@ -10,6 +10,7 @@ temperature: 0.1
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `project-stack` — stack reference, runtime constraints, architecture patterns
 
 # Debugger

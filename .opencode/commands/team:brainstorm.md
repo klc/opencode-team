@@ -38,6 +38,7 @@ Keep it short — this is a conversation, not a report.
 ```
 
 While architect responds, add your own perspective:
+
 - What is the user value of this idea?
 - What user problem does it solve?
 - How would you frame the scope?
@@ -61,11 +62,12 @@ When the user says any of the following, switch to action mode:
 
 **Trigger phrases:** "develop", "create task", "let's build this", "let's go", "proceed", "implement", "add as feature", "start"
 
-### Action steps (when triggered):
+### Action steps (when triggered)
 
 1. **Summarize the conversation** — 5–7 bullet points covering decisions, trade-offs, and out-of-scope items.
 
 2. **Confirm with the user:**
+
 ```
 Here's a summary of what we discussed:
 - [Decision 1]
@@ -76,9 +78,9 @@ Here's a summary of what we discussed:
 Does this look right? I'll hand off to @project-manager once you confirm.
 ```
 
-3. **On confirmation → invoke @project-manager** with the summary and extracted stories.
+1. **On confirmation → invoke @project-manager** with the summary and extracted stories.
 
-4. @project-manager takes over and the normal pipeline runs.
+2. @project-manager takes over and the normal pipeline runs.
 
 ---
 

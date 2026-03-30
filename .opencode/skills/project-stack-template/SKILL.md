@@ -14,12 +14,14 @@ description: Template for documenting this project stack. Copy to project-stack/
 ## Stack Overview
 
 **Backend:**
+
 - Language & version: [e.g. PHP 8.3 / Node 22 / Python 3.12 / Go 1.23]
 - Framework: [e.g. Laravel 12 / NestJS / FastAPI / Gin]
 - API style: [e.g. REST / GraphQL / tRPC / gRPC]
 - Runtime notes: [e.g. long-lived process, FPM, serverless — affects state management rules]
 
 **Frontend:**
+
 - Language: [e.g. TypeScript 5]
 - Framework: [e.g. Vue 3 / React 18 / Svelte 5]
 - Meta-framework / routing: [e.g. Inertia.js / Next.js / Nuxt / SvelteKit / none]
@@ -28,12 +30,14 @@ description: Template for documenting this project stack. Copy to project-stack/
 - SSR: [yes / no — if yes, list SSR-unsafe patterns to avoid]
 
 **Databases:**
+
 - Primary DB: [e.g. MySQL 8 / PostgreSQL 16 / MongoDB 7]
 - Cache / queue backend: [e.g. Redis 7 / none]
 - Analytics / OLAP: [e.g. ClickHouse / BigQuery / none]
 - ORM / query builder: [e.g. Eloquent / Prisma / SQLAlchemy / GORM]
 
 **Infrastructure:**
+
 - Containerization: [e.g. Docker + docker-compose / Kubernetes / none]
 - CI/CD: [e.g. GitHub Actions / GitLab CI / none]
 - Cloud / hosting: [e.g. AWS / GCP / Hetzner / bare metal]

@@ -13,11 +13,13 @@ Load the `project-stack` skill and `workflow` skill before starting.
 ## Step 0 — Debt backlog review
 
 Before breaking down any stories, use the `debt_summary` tool to surface open technical debt:
+
 ```
 debt_summary({ status: "open", priority: "high" })
 ```
 
 From the returned debt backlog:
+
 - List all **high priority** open debt items to the user
 - Ask whether any should be included in this sprint alongside the new stories
 - If the user confirms debt items to include, add them as explicit tasks in the sprint plan
@@ -27,6 +29,7 @@ Wait for the user's response before proceeding to Step 1.
 ## Step 1 — Story breakdown
 
 For each user story or requirement:
+
 1. Break it into concrete backend and frontend tasks
 2. Estimate story points for each task (1, 2, 3, 5, 8)
 3. Identify dependencies between tasks
@@ -60,6 +63,7 @@ Produce a sprint plan table:
 ## Step 3 — Execute
 
 Do not stop after producing the plan — call the leads:
+
 1. Call @backend-lead with all backend tasks (new + debt) via Task tool
 2. Call @frontend-lead with all frontend tasks (new + debt) via Task tool
 

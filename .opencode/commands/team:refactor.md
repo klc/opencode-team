@@ -12,6 +12,7 @@ A refactor has been requested:
 ## What Is a Refactor
 
 A refactor changes **how** code works internally without changing **what** it does externally. Valid refactor goals:
+
 - Extract repeated logic into a shared function or class
 - Rename for clarity
 - Reduce cyclomatic complexity

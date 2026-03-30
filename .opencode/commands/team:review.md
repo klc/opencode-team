@@ -30,6 +30,7 @@ Run `git diff origin/main...HEAD` (or `origin/master...HEAD`) to see all changes
 ## Report Format
 
 Produce a structured review report with:
+
 - 🔴 Blockers (must fix before merge)
 - 🟡 Required changes (must fix)
 - 🟢 Suggestions (optional)

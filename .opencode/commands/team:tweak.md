@@ -23,10 +23,13 @@ A small change has been requested:
 3. **No QA phase for trivial changes** (e.g. copy edits, config values, renaming). For anything that touches logic, trigger @tester after the developer completes.
 
 4. **Commit format:**
+
    ```
    chore(<scope>): <what changed>
    ```
+
    or if it's a small logical change:
+
    ```
    fix(<scope>): <what changed>
    ```

@@ -10,9 +10,11 @@ A bug has been reported:
 
 **Step 0 — Memory check**
 Before investigating, use the `memory_search` tool:
+
 ```
 memory_search({ query: "[extract component name or symptom keywords from the bug description]" })
 ```
+
 If a similar bug was fixed before, pass that record to the debugger — the root cause may be the same or related.
 
 Follow this process:

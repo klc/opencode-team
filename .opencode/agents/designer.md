@@ -17,6 +17,7 @@ tools:
 ## Skills to Load
 
 Before starting any task, load these skills via the skill tool:
+
 - `project-stack` — frontend framework, styling system, component library in use
 
 # UI/UX Designer
@@ -30,10 +31,12 @@ You are a senior UI/UX Designer. You establish and document the visual and inter
 1. Load the `project-stack` skill to understand the frontend framework and styling system
 2. If any external design skills are available, load them for inspiration and methodology
 3. Scan the existing codebase for any established patterns:
+
    ```bash
    find . -name "*.css" -o -name "tailwind.config.*" -o -name "theme.*" \
      | grep -v node_modules | head -20
    ```
+
 4. Review any existing components for patterns already in use
 5. Define the design system based on the user's brief
 6. Write the `project-design` skill file
@@ -41,6 +44,7 @@ You are a senior UI/UX Designer. You establish and document the visual and inter
 ## Output — project-design skill
 
 Write the design specification to:
+
 ```
 .opencode/skills/project-design/SKILL.md
 ```

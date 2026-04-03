@@ -189,7 +189,8 @@ export const KanbanTriggerPlugin: Plugin = async ({
         "error",
         `Failed to trigger @${agentId} for ${payload.taskId}: ${err}`
       );
-      // Delete failed trigger - watchdog will retry
+      // Archive the failed trigger — prevents spam and repeated retries
+      archiveTrigger(triggerPath, triggerFile, "failed");
     }
   }
 
@@ -302,6 +303,35 @@ export const KanbanTriggerPlugin: Plugin = async ({
     } catch {
       // Continue silently if nudge fails
     }
+
+    // Write a watchdog retry trigger for each stalled task
+    // This re-alerts the assigned agent so it can resume the task
+    ensureDirs();
+    for (const t of stalledTasks) {
+      const retryFile = `watchdog-retry-${t.id}-${Date.now()}.json`;
+      const retryPath = join(triggerDir, retryFile);
+      // Skip if a retry trigger for this task already exists in the queue
+      if (existsSync(retryPath)) continue;
+      const existingRetries = existsSync(triggerDir)
+        ? readdirSync(triggerDir).filter((f) => f.startsWith(`watchdog-retry-${t.id}`))
+        : [];
+      if (existingRetries.length > 0) continue;
+
+      const retryPayload = {
+        taskId: t.id,
+        status: t.status,
+        assignedTo: t.assignedTo,
+        previousStatus: t.status,
+        createdAt: new Date().toISOString(),
+        message: `[WATCHDOG RETRY] Task **${t.id}** (${t.title}) has not been updated for ${t.stalledMinutes} minutes.\n\nPlease call \`kanban_update_task\` to update the status or add a progress note. If the task is blocked, explain the reason.`,
+      };
+      try {
+        writeFileSync(retryPath, JSON.stringify(retryPayload, null, 2));
+        log("info", `Watchdog retry trigger created for ${t.id}`);
+      } catch (err) {
+        log("warn", `Failed to write watchdog retry trigger for ${t.id}: ${err}`);
+      }
+    }
   }
 
   // ── Session ID tracking ──────────────────────────────────
@@ -309,6 +339,8 @@ export const KanbanTriggerPlugin: Plugin = async ({
   let currentSessionId: string | null = null;
   let triggerInterval: ReturnType<typeof setInterval> | null = null;
   let watchdogInterval: ReturnType<typeof setInterval> | null = null;
+  // Mutex: prevents race condition between interval polling and session.idle handler
+  let isProcessingTrigger = false;
 
   // ─────────────────────────────────────────────────────────
   // Event handlers
@@ -330,6 +362,8 @@ export const KanbanTriggerPlugin: Plugin = async ({
         // Start trigger polling
         if (!triggerInterval) {
           triggerInterval = setInterval(async () => {
+            // Race condition guard: skip if another trigger is already being processed
+            if (isProcessingTrigger) return;
             try {
               if (!currentSessionId || !existsSync(triggerDir)) return;
 
@@ -343,9 +377,12 @@ export const KanbanTriggerPlugin: Plugin = async ({
               files.sort();
               const nextFile = files[0];
 
+              isProcessingTrigger = true;
               await processTrigger(nextFile, currentSessionId);
             } catch (err) {
               log("error", `Trigger polling error: ${err}`);
+            } finally {
+              isProcessingTrigger = false;
             }
           }, TRIGGER_CHECK_INTERVAL_MS);
         }
@@ -379,6 +416,8 @@ export const KanbanTriggerPlugin: Plugin = async ({
 
       // Process pending triggers when session is idle
       if (event.type === "session.idle" && currentSessionId) {
+        // Race condition guard: skip if the interval is already processing a trigger
+        if (isProcessingTrigger) return;
         if (!existsSync(triggerDir)) return;
 
         const files = readdirSync(triggerDir).filter((f) =>
@@ -388,13 +427,18 @@ export const KanbanTriggerPlugin: Plugin = async ({
         if (files.length > 0) {
           log(
             "info",
-            `Session idle — processing ${files.length} pending trigger(s)`
+            `Session idle — processing next pending trigger (${files.length} in queue)`
           );
-          // Process sequentially (short delay between parallel triggers to prevent deadlock)
-          for (const file of files.sort()) {
-            await processTrigger(file, currentSessionId);
-            // Short delay between parallel triggers (deadlock prevention)
-            await new Promise((r) => setTimeout(r, 500));
+          // Process only ONE trigger — not all of them.
+          // The interval will handle the remaining triggers in subsequent cycles.
+          // Processing all triggers in a loop here causes session deadlock.
+          try {
+            isProcessingTrigger = true;
+            await processTrigger(files.sort()[0], currentSessionId);
+          } catch (err) {
+            log("error", `Idle trigger processing error: ${err}`);
+          } finally {
+            isProcessingTrigger = false;
           }
         }
       }

@@ -210,6 +210,92 @@ Spawn @security-auditor in parallel with @code-reviewer when scope involves:
 
 ---
 
+## Heartbeat Protocol
+
+Every sub-agent (developer, tester, reviewer) **MUST** write a Kanban progress note at least every 15 steps.
+
+**Rule:** If you have taken 15 steps since your last Kanban update, stop and write one before continuing:
+
+```
+kanban_update_task({
+  id: "[KAN-XXX]",
+  note: "In progress — [what I just did, what remains]",
+  agentName: "[your-agent-name]"
+})
+```
+
+**Why:** If you go silent, the lead agent cannot detect whether you are working or stuck. A heartbeat note is proof of life.
+
+**Minimum heartbeat events** (regardless of step count):
+- After completing each acceptance criterion
+- Before starting a long-running bash command
+- After a bash command that takes more than a few seconds
+
+---
+
+## Bash Timeout Rule
+
+Any bash command that may run indefinitely **MUST** be wrapped with `timeout`:
+
+```bash
+# Pattern
+timeout <seconds> <command> || { echo "TIMEOUT: <command>"; exit 1; }
+
+# Examples
+timeout 120 npm install || { echo "TIMEOUT: npm install"; exit 1; }
+timeout 60 npx tsc --noEmit || { echo "TIMEOUT: tsc"; exit 1; }
+timeout 180 npm run build || { echo "TIMEOUT: build"; exit 1; }
+timeout 30 git clone <url> || { echo "TIMEOUT: git clone"; exit 1; }
+```
+
+**Commands that always require a timeout:**
+- `npm install` / `yarn install` / `bun install` → 120s
+- `npm run build` / `npm run test` → 180s
+- `npx ...` → 60s
+- `git clone` → 30s
+- Any network request via curl/wget → 30s
+
+**On timeout:** Stop immediately, report `TIMEOUT: <command>` to the lead agent, do not retry silently.
+
+---
+
+## Stuck Detection Protocol
+
+**For lead agents (backend-lead, frontend-lead):**
+
+A sub-agent is considered **stuck** if any of the following are true:
+
+| Signal | Meaning |
+|---|---|
+| No Kanban note within 15 steps of delegation | Agent not making progress |
+| Same Kanban note written twice in a row | Agent looping |
+| Agent reports completion but criteria unmet | Silent failure |
+| Bash timeout error received | Command hung |
+| No response after steps limit is reached | Steps exhausted without report |
+
+**When stuck is detected, leads MUST:**
+
+1. Check the last Kanban note and git log:
+   ```bash
+   git log --oneline HEAD~5..HEAD
+   ```
+
+2. Re-delegate immediately using RETRY format:
+   ```
+   RETRY — [T0X] appears stuck or incomplete.
+   Last known state: [last Kanban note / last git commit]
+   Continue from: [specific step to resume]
+   Do NOT re-do: [list of already-completed steps]
+   Bash timeout required on: [any long commands]
+   ```
+
+3. If the same task fails twice after RETRY → apply **Partial Completion Protocol** and escalate to user.
+
+**Self-check rule for all agents:**
+> Before completing your turn, ask yourself: "Did I update Kanban with my final status?" If not, do it now.
+
+---
+
 ## Todo List Protocol
 
 | Agent | Action | Status transition |

@@ -1,0 +1,13 @@
+{
+  "name": "opencode-kanban-board",
+  "version": "1.8.1",
+  "description": "Simple Kanban Board UI for OpenCode Agent Team",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

@@ -99,7 +99,7 @@ export const KanbanTriggerPlugin: Plugin = async ({
   }
 
   function ensureDirs(): void {
-    if (!existsSync(kanbanDir)) return; // Kanban not set up, skip
+    if (!existsSync(kanbanDir)) return; // Kanban isn't set up, skip
     if (!existsSync(triggerDir)) mkdirSync(triggerDir, { recursive: true });
     if (!existsSync(processedDir)) mkdirSync(processedDir, { recursive: true });
   }

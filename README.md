@@ -80,7 +80,8 @@ Every phase is mandatory. Every status change triggers the next agent automatica
 
 | Command | Use when |
 |---|---|
-| `/team:kanban board` | See all active tasks grouped by status |
+| `/team:kanban board` | See all active tasks grouped by status (CLI view) |
+| `npm run kanban-board` | Launch the beautiful local web-based Kanban Board GUI |
 | `/team:kanban status KAN-001` | Full details of a specific task including history |
 | `/team:kanban watch` | Check for stalled tasks and pending triggers |
 | `/team:kanban new-feature <description>` | Alias for `/team:new-feature` |
@@ -131,23 +132,26 @@ Every phase is mandatory. Every status change triggers the next agent automatica
 
 ---
 
-## Kanban System (v1.8.0)
+## Kanban System (v1.8.1)
 
 ### How It Works
 
 The Kanban system consists of three layers:
 
 **1. File-based storage (`.kanban/`)**
-Tasks live as JSON files. Every status change is recorded in the task history. The `index.json` provides a fast summary view.
+Tasks live as JSON files. Every status change is recorded in the task history along with execution triggers. The `index.json` provides a fast summary view.
 
-**2. Custom tools** — agents call these to read/write tasks
+**2. Visual Web Dashboard (`kanban-board/`)** *(New in v1.8.1)*
+Run `npm run kanban-board` to spin up a local Vue/Tailwind Express dashboard at `http://localhost:3000`. You can manage multi-project boards securely and dive deep into task histories, parsing Markdown test notes natively, visualizing triggers in timeline sequences.
+
+**3. Custom tools** — agents call these to read/write tasks
 - `kanban_create_task` — create a new tracked task
 - `kanban_update_task` — update status, notes, assignee (this is what triggers the next agent)
 - `kanban_get_task` — read full task details + history
 - `kanban_list_tasks` — board view with filters
 - `kanban_watch` — stall detection report
 
-**3. kanban-trigger plugin** — the automation backbone
+**4. kanban-trigger plugin** — the automation backbone
 - Watches `.kanban/triggers/` every 5 seconds
 - When a trigger file appears (written by `kanban_update_task`), reads the assigned agent and calls `session.prompt()` to notify them
 - Runs a watchdog every 2 minutes that alerts on tasks stalled >30 minutes
@@ -193,7 +197,7 @@ Both teams work independently. Each moves through review → testing → done on
 
 ---
 
-## Custom Tools (v1.8.0)
+## Custom Tools (v1.8.1)
 
 Nine TypeScript tools in `.opencode/tools/`:
 
@@ -258,7 +262,7 @@ Four workflows in `.github/workflows/`:
 └── debt/             ← technical debt backlog
 ```
 
-Since v1.8.0, memory records are enriched with Kanban task history — how many times a task was reopened, which agents worked on it, and what notes were left by reviewers and testers.
+Since v1.8.0+, memory records are enriched with Kanban task history — how many times a task was reopened, which agents worked on it, and what notes were left by reviewers and testers.
 
 ---
 
@@ -329,6 +333,11 @@ The update script:
     ├── debt-summary.ts
     └── stack-detect.ts
 
+kanban-board/                  ← Visual Kanban Board App (v1.8.1)
+├── index.html                 ← Vue + Tailwind frontend
+├── server.js                  ← Express server API & native macOS folder picker
+└── package.json               ← Dependencies
+
 .github/
 └── workflows/
     ├── opencode.yml
@@ -360,7 +369,7 @@ examples/
 
 ## Configuration
 
-See `.opencode/opencode.json`. Key additions in v1.8.0 — agent descriptions now reference Kanban:
+See `.opencode/opencode.json`. Key additions in v1.8.1 — agent descriptions now reference Kanban:
 
 ```json
 "product-owner": {

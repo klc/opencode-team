@@ -119,9 +119,14 @@ touch .memory/index.md 2>/dev/null || true
 
 ### RECALL
 
-```bash
-cat .memory/index.md
-cat .memory/<category>/<filename>.md
+Use the `memory_search` tool — do NOT manually cat files:
+```
+memory_search({ query: "[query terms]", category: "all", limit: 5 })
+```
+
+If the caller asks for a specific file, use read to fetch it directly:
+```
+read .memory/<category>/<filename>.md
 ```
 
 Report back with full summary sections.

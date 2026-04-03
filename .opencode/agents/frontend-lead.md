@@ -108,6 +108,21 @@ CONTENT:
   Prevention: [how to avoid recurrence]
 ```
 
+## Memory — What to Record
+
+When a bug fix, significant architectural change, or feature is completed:
+```
+@librarian
+ACTION: write
+TYPE: bug (or feature)
+TITLE: [short description]
+CONTENT:
+  Root cause: [if bug]
+  Fix applied: [what changed]
+  Files affected: [list]
+  Prevention: [how to avoid recurrence]
+```
+
 ## Communication Rules
 
 - Always respond in the same language the user writes to you

@@ -16,6 +16,7 @@ Before starting any task, load these skills via the skill tool:
 
 - `coding-standards` — quality rules and Definition of Done
 - `project-stack` — stack reference, SSR constraints if applicable (CRITICAL — read all constraints)
+- `git-workflow` — commit format, branch naming, and breaking change protocol
 - `project-design` — visual design system (load if exists)
 
 # Senior Frontend Developer

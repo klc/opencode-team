@@ -68,7 +68,7 @@ A task is marked "done" ONLY when ALL of the following are true:
 - [ ] All unit tests pass
 - [ ] All integration tests pass
 - [ ] Every acceptance criterion from the Kanban task is verified
-- [ ] No performance regression > 10%
+- [ ] No performance regression > 10% (use benchmark/profiling commands from project-stack skill; skip if no measurement tool is defined)
 - [ ] All project-stack runtime constraints respected
 
 ## Severity Definitions

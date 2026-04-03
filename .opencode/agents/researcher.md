@@ -2,6 +2,7 @@
 description: Researcher - Technology research, library comparison, and recommendation reports
 model: my-provider/my-fast-model
 mode: subagent
+hidden: true
 color: '#818cf8'
 temperature: 0.6
 ---

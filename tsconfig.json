@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "rootDir": ".",
+    "lib": ["ESNext", "DOM"]
+  },
+  "include": [
+    ".opencode/**/*.ts",
+    "*.mjs"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

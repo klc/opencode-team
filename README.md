@@ -1,32 +1,35 @@
 # OpenCode Agent Team
 
-A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, designer, security auditor, performance analyst, and librarian — all coordinated through a strict delegation chain with parallel execution, git integration, GitHub Actions, and a live todo board.
+A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, designer, security auditor, performance analyst, and librarian — all coordinated through a **Kanban-driven automated pipeline** with strict delegation, parallel execution, git integration, GitHub Actions, and persistent team memory.
 
 ---
 
 ## How It Works
 
 ```
-/team:new-feature <description>
+/team:new-feature "User profile photo upload"
         ↓
-product-owner — clarifies scope, writes user story
+KAN-001 created (backlog) → @product-owner auto-triggered
         ↓
-architect — resolves critical technical decisions
+product-owner writes story → KAN-001 → planning → @project-manager auto-triggered
         ↓
-project-manager — creates branch, breaks into tasks, updates todo board
+project-manager creates KAN-002 (backend) + KAN-003 (frontend)
         ↓
-backend-lead + frontend-lead (parallel)
+KAN-002 in-progress → @backend-lead auto-triggered  ┐ parallel
+KAN-003 in-progress → @frontend-lead auto-triggered ┘
         ↓
-senior/junior developers (parallel per task)
+lead delegates to developer → developer commits
         ↓
-code-reviewer (+ security-auditor if security-sensitive)
+lead → KAN-00X → review → @code-reviewer auto-triggered
         ↓
-tester
+PASS → KAN-00X → testing → @tester auto-triggered
+FAIL → KAN-00X → reopened → developer auto-routed back
         ↓
-librarian — records feature to team memory
+PASS → KAN-00X → done ✅
+FAIL → KAN-00X → reopened → developer auto-routed back
 ```
 
-Every phase is mandatory. Every commit follows conventional format. Every agent has bounded tool permissions — junior developers cannot push, leads cannot skip review.
+Every phase is mandatory. Every status change triggers the next agent automatically. Agents never need to manually invoke each other — the Kanban system handles routing.
 
 ---
 
@@ -34,23 +37,23 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 
 | Agent | Role | Mode |
 |---|---|---|
-| `product-owner` | Clarifies scope, writes user stories, facilitates brainstorm sessions | primary |
-| `project-manager` | Creates branches, breaks stories into tasks, coordinates leads | primary |
+| `product-owner` | Clarifies scope, writes user stories, creates Kanban tasks | primary |
+| `project-manager` | Creates branches, splits into subtasks, coordinates leads via Kanban | primary |
 | `architect` | Technical decisions, ADR writing, infrastructure design | primary |
-| `backend-lead` | Delegates backend tasks, owns review → QA for backend | primary |
-| `frontend-lead` | Delegates frontend tasks, owns review → QA for frontend | primary |
+| `backend-lead` | Delegates backend tasks, moves Kanban to review when done | primary |
+| `frontend-lead` | Delegates frontend tasks, moves Kanban to review when done | primary |
 | `designer` | Establishes visual design system, writes `project-design` skill | primary |
 | `senior-backend` 🔒 | Complex backend features, integrations, performance | subagent |
 | `junior-backend` 🔒 | CRUD, bug fixes, test writing | subagent |
 | `senior-frontend` 🔒 | Complex components, state management, SSR | subagent |
 | `junior-frontend` 🔒 | Simple UI, styling fixes, component tests | subagent |
-| `tester` 🔒 | QA per scope — spawned in parallel by leads after review passes | subagent |
-| `code-reviewer` 🔒 | Review per scope — spawned in parallel by leads before QA | subagent |
-| `debugger` 🔒 | Root cause analysis for bugs and production incidents | subagent |
+| `tester` 🔒 | Runs tests, verifies acceptance criteria, moves Kanban to done or reopened | subagent |
+| `code-reviewer` 🔒 | Reviews code, moves Kanban to testing or reopened | subagent |
+| `debugger` 🔒 | Root cause analysis, can create Kanban bug tasks | subagent |
 | `researcher` | Technology research, library comparison, spike reports | subagent |
-| `security-auditor` 🔒 | OWASP Top 10, auth flaws, injection vulnerabilities | subagent |
-| `performance-analyst` 🔒 | N+1 queries, missing indexes, bundle size, cache opportunities | subagent |
-| `librarian` 🔒 | Team memory manager — decisions, features, bugs, research, debt | subagent |
+| `security-auditor` 🔒 | OWASP Top 10, invoked alongside code-reviewer for security-sensitive scopes | subagent |
+| `performance-analyst` 🔒 | N+1 queries, missing indexes, bundle size | subagent |
+| `librarian` 🔒 | Team memory manager — enriches records with Kanban history | subagent |
 
 ---
 
@@ -60,7 +63,7 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 
 | Command | Use when |
 |---|---|
-| `/team:init` | **Start here.** Scans the project (using `stack-detect` tool), auto-detects the stack, and writes the `project-stack` skill. |
+| `/team:init` | **Start here.** Scans the project, auto-detects the stack, writes `project-stack` skill. |
 | `/team:designer <brief>` | Define the project's visual design system. |
 
 ### Feature development
@@ -68,23 +71,32 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 | Command | Use when |
 |---|---|
 | `/team:brainstorm <idea>` | Explore an idea first. product-owner + architect discuss with you. Say "develop" to kick off the full pipeline. |
-| `/team:new-feature <description>` | Full pipeline — scope → architect → implementation → review → QA |
-| `/team:task <description>` | Single well-defined task — skips planning, goes directly to the right developer |
+| `/team:new-feature <description>` | Full Kanban-driven pipeline — creates KAN task, auto-triggers agents end-to-end |
+| `/team:task <description>` | Single well-defined task — skips planning, goes directly to the right lead |
 | `/team:quick-fix <description>` | 1–3 file correction, no new logic |
 | `/team:tweak <description>` | Single file / single function change |
+
+### Kanban board
+
+| Command | Use when |
+|---|---|
+| `/team:kanban board` | See all active tasks grouped by status |
+| `/team:kanban status KAN-001` | Full details of a specific task including history |
+| `/team:kanban watch` | Check for stalled tasks and pending triggers |
+| `/team:kanban new-feature <description>` | Alias for `/team:new-feature` |
 
 ### Bug handling
 
 | Command | Use when |
 |---|---|
 | `/team:bugfix <description>` | Debugger finds root cause, lead coordinates fix, tester verifies |
-| `/team:hotfix <description>` | Production is broken — hotfix branch, debugger triage, fast-track review |
+| `/team:hotfix <description>` | Production is broken — hotfix branch, fast-track review |
 
 ### Code quality & analysis
 
 | Command | Use when |
 |---|---|
-| `/team:audit [scope]` | Full project audit — security, performance, and code quality in parallel |
+| `/team:audit [scope]` | Full project audit — security, performance, code quality in parallel |
 | `/team:refactor <description>` | Improve code structure without changing behavior |
 | `/team:add-test <description>` | Add tests to code that lacks coverage |
 | `/team:review <file or area>` | Manually trigger a code review |
@@ -100,8 +112,8 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 
 | Command | Use when |
 |---|---|
-| `/team:sprint <stories>` | Plan a sprint — surfaces debt backlog, breaks down tasks |
-| `/team:standup` | Daily status — reads todo board, git log, and high-priority debt |
+| `/team:sprint <stories>` | Plan a sprint — surfaces Kanban board + debt backlog, breaks down tasks |
+| `/team:standup` | Daily status — reads Kanban board, git log, and high-priority debt |
 
 ### Memory
 
@@ -119,74 +131,134 @@ Every phase is mandatory. Every commit follows conventional format. Every agent 
 
 ---
 
-## Custom Tools (v1.7.0)
+## Kanban System (v1.8.0)
 
-Four TypeScript tools in `.opencode/tools/` extend what agents can do:
+### How It Works
+
+The Kanban system consists of three layers:
+
+**1. File-based storage (`.kanban/`)**
+Tasks live as JSON files. Every status change is recorded in the task history. The `index.json` provides a fast summary view.
+
+**2. Custom tools** — agents call these to read/write tasks
+- `kanban_create_task` — create a new tracked task
+- `kanban_update_task` — update status, notes, assignee (this is what triggers the next agent)
+- `kanban_get_task` — read full task details + history
+- `kanban_list_tasks` — board view with filters
+- `kanban_watch` — stall detection report
+
+**3. kanban-trigger plugin** — the automation backbone
+- Watches `.kanban/triggers/` every 5 seconds
+- When a trigger file appears (written by `kanban_update_task`), reads the assigned agent and calls `session.prompt()` to notify them
+- Runs a watchdog every 2 minutes that alerts on tasks stalled >30 minutes
+
+### Status Flow
+
+```
+backlog → planning → in-progress → review → testing → done
+                                      ↑          ↑
+                                   reopened ←────┘ (on failure)
+```
+
+| Status | Auto-triggered agent |
+|---|---|
+| `backlog` | @product-owner |
+| `planning` | @project-manager |
+| `in-progress` | @backend-lead (backend scope) / @frontend-lead (frontend scope) |
+| `review` | @code-reviewer |
+| `testing` | @tester |
+| `done` | — (notification only) |
+| `reopened` | Last developer who worked on the task |
+
+### Parallel Execution
+
+Features with `scope: "both"` are split by project-manager into two subtasks:
+- `KAN-00X — Backend` → @backend-lead (triggered immediately)
+- `KAN-00Y — Frontend` → @frontend-lead (triggered immediately, in parallel)
+
+Both teams work independently. Each moves through review → testing → done on its own timeline. No conflict, no blocking.
+
+### File Structure
+
+```
+.kanban/
+├── index.json              ← Task summary index (fast lookups)
+├── KAN-001.json            ← Full task data with history
+├── KAN-002.json
+├── trigger.log             ← Plugin activity log
+└── triggers/
+    ├── KAN-001-1234.json   ← Pending trigger (plugin picks this up)
+    └── processed/          ← Processed triggers (audit trail)
+```
+
+---
+
+## Custom Tools (v1.8.0)
+
+Nine TypeScript tools in `.opencode/tools/`:
 
 | Tool | Used by | What it does |
 |---|---|---|
-| `memory_search` | All agents, team:recall | Semantic search over `.memory/` — finds relevant past decisions, bugs, and research |
-| `complexity_score` | code-reviewer, performance-analyst, team:audit | Cyclomatic complexity per function/file — flags hotspots above threshold |
-| `debt_summary` | project-manager, team:sprint, team:standup | Prioritized debt backlog from `.memory/debt/` grouped by priority and owner |
-| `stack_detect` | architect, team:init | Auto-detects backend/frontend framework, databases, test commands, and runtime constraints |
-
-Tools are placed in `.opencode/tools/` and are automatically available to all agents as native tool calls — no MCP server required.
+| `kanban_create_task` | All agents, commands | Create tracked tasks with auto-assignment |
+| `kanban_update_task` | All agents | Update status — triggers next agent automatically |
+| `kanban_get_task` | All agents | Read full task context + history |
+| `kanban_list_tasks` | All agents, `/team:kanban` | Board view with filters |
+| `kanban_watch` | Watchdog, `/team:kanban watch` | Stall detection |
+| `memory_search` | All agents, `/team:recall` | Semantic search over `.memory/` |
+| `complexity_score` | code-reviewer, `/team:audit` | Cyclomatic complexity analysis |
+| `debt_summary` | project-manager, sprint/standup | Prioritized debt backlog |
+| `stack_detect` | architect, `/team:init` | Auto-detects project stack |
 
 ---
 
-## Security (v1.7.0)
+## Security (v1.7.0+)
 
 ### permission.task — Delegation chain at API level
 
-Every agent has an explicit allowlist of agents it can invoke via the Task tool. Chain-skipping is impossible even if a rogue prompt tried to instruct it:
-
-- `junior-backend` → `"task": {"*": "deny"}` — cannot spawn any subagents
+Every agent has an explicit allowlist. Chain-skipping is impossible:
+- `junior-backend` → `"task": {"*": "deny"}` — cannot spawn subagents
 - `product-owner` → can only call project-manager, architect, librarian
-- `backend-lead` → can only call its developers, reviewers, testers, and librarian
+- `backend-lead` → can only call its developers, reviewers, testers, librarian
 
-### Granular bash permissions per tier
+### Bash permissions per tier
 
 | Tier | Who | Rules |
 |---|---|---|
-| `lead` | backend-lead, frontend-lead | All commands allowed; `git push` requires approval |
+| `lead` | backend-lead, frontend-lead | All allowed; `git push` requires approval |
 | `senior` | senior devs, tester | All allowed; push/rebase/reset/rm-rf require approval; sudo denied |
-| `junior` | junior devs | Only safe ops allowed (status/diff/add/commit/grep/find/cat/ls); push/rebase/reset/rm-rf denied |
-| `readonly` | code-reviewer, debugger, auditors, librarian | Read commands allowed; push and sudo denied |
+| `junior` | junior devs | Only safe ops (status/diff/add/commit/grep/find/cat/ls); push/rebase/reset/rm-rf denied |
+| `readonly` | code-reviewer, debugger, auditors, librarian | Read allowed; push and sudo denied |
 
 ---
 
-## GitHub Actions (v1.7.0)
+## GitHub Actions (v1.7.0+)
 
 Four workflows in `.github/workflows/`:
 
 | Workflow | Trigger | What happens |
 |---|---|---|
-| `opencode.yml` | `/oc` or `/opencode` comment on issue/PR | OpenCode reads the thread and executes the request (fix, explain, implement) |
-| `opencode-pr-review.yml` | PR opened, synchronized, or reopened | Automatic code review against coding-standards and project-stack constraints |
-| `opencode-security-audit.yml` | Every Monday 09:00 UTC (or manual dispatch) | Full OWASP Top 10 scan — opens issues for Critical/High findings |
-| `opencode-issue-triage.yml` | New issue opened | Classifies, labels, and comments on the issue (bot/spam-filtered) |
+| `opencode.yml` | `/oc` comment on issue/PR | OpenCode executes the request |
+| `opencode-pr-review.yml` | PR opened/synchronized | Automatic code review |
+| `opencode-security-audit.yml` | Every Monday 09:00 UTC | Full OWASP Top 10 scan |
+| `opencode-issue-triage.yml` | New issue opened | Classifies and labels the issue |
 
 **Setup:** Add `ANTHROPIC_API_KEY` to GitHub → Settings → Secrets → Actions.
 
-The install script asks whether to set these up. The update script detects and offers to install any missing workflows.
-
 ---
 
-## Team Memory
-
-The team accumulates knowledge in `.memory/` (committed to git):
+## Team Memory (v1.6.0+)
 
 ```
 .memory/
-├── index.md          ← master index of all records
+├── index.md          ← master index
 ├── decisions/        ← architectural decisions and ADRs
-├── features/         ← completed feature summaries
+├── features/         ← completed feature summaries (enriched with Kanban history)
 ├── bugs/             ← root cause analyses and fixes
 ├── research/         ← technology research reports
 └── debt/             ← technical debt backlog
 ```
 
-Agents write to memory automatically after significant work. The `memory_search` tool lets any agent recall relevant history before starting new work.
+Since v1.8.0, memory records are enriched with Kanban task history — how many times a task was reopened, which agents worked on it, and what notes were left by reviewers and testers.
 
 ---
 
@@ -201,15 +273,15 @@ npm run install-team
 ```
 
 The script will:
-
-1. Ask: **project** (`.opencode/` in current dir) or **global** (`~/.config/opencode/`)
+1. Ask: **project** (`.opencode/`) or **global** (`~/.config/opencode/`)
 2. Fetch available models via `opencode models`
 3. Assign a **strong model** and a **fast model** across the team
-4. Optionally customize models per individual agent
-5. Ask whether to set up GitHub Actions workflows
-6. Copy all agent, command, skill, and tool files
+4. Optionally customize models per agent
+5. Ask whether to set up GitHub Actions
+6. Copy all agent, command, skill, tool, and plugin files
 7. Generate or merge `opencode.json` with permission.task + bash permissions
-8. Create `AGENTS.md` for project installs
+8. Create `AGENTS.md` for project rules
+9. Create `.kanban/` directory with empty index
 
 ## Updating
 
@@ -222,7 +294,12 @@ npm run update-team
 node update.mjs --dry-run
 ```
 
-The update script reads your current model assignments before overwriting anything and restores them after copying new files. It also checks for missing GitHub Actions workflows and offers to install them.
+The update script:
+- Reads your model assignments before overwriting
+- Restores them after copying new files
+- Checks for missing GitHub Actions workflows
+- Checks and migrates Kanban directory structure
+- Never overwrites `.kanban/` task data
 
 ---
 
@@ -230,19 +307,27 @@ The update script reads your current model assignments before overwriting anythi
 
 ```
 .opencode/
-├── opencode.json              ← providers, model assignments, tool permissions, delegation chain
-├── agents/                    ← 17 agent prompt files
+├── opencode.json              ← providers, model assignments, permissions, delegation chain
+├── agents/                    ← 17 agent prompt files (all Kanban-integrated)
 ├── commands/                  ← 21 command files
+├── plugins/
+│   └── kanban-trigger.ts      ← Kanban automation backbone
 ├── skills/
-│   ├── workflow/SKILL.md      ← delegation chain, invocation templates
-│   ├── git-workflow/SKILL.md  ← conventional commits, branch strategy
-│   ├── coding-standards/SKILL.md ← quality rules, DoD, review severity
-│   └── project-stack-template/SKILL.md ← template for /team:init
+│   ├── workflow/SKILL.md
+│   ├── git-workflow/SKILL.md
+│   ├── coding-standards/SKILL.md
+│   └── project-stack-template/SKILL.md
 └── tools/
-    ├── memory-search.ts       ← semantic search over .memory/
-    ├── complexity-score.ts    ← cyclomatic complexity analysis
-    ├── debt-summary.ts        ← prioritized debt backlog
-    └── stack-detect.ts        ← auto-detects project stack
+    ├── _kanban-core.ts        ← Shared Kanban types and helpers
+    ├── kanban-create.ts
+    ├── kanban-update.ts
+    ├── kanban-get.ts
+    ├── kanban-list.ts
+    ├── kanban-watch.ts
+    ├── memory-search.ts
+    ├── complexity-score.ts
+    ├── debt-summary.ts
+    └── stack-detect.ts
 
 .github/
 └── workflows/
@@ -251,7 +336,14 @@ The update script reads your current model assignments before overwriting anythi
     ├── opencode-security-audit.yml
     └── opencode-issue-triage.yml
 
-.memory/                       ← team memory (commit to git)
+.kanban/                       ← Kanban board (commit to git)
+├── index.json
+├── KAN-001.json
+├── trigger.log
+└── triggers/
+    └── processed/
+
+.memory/                       ← Team memory (commit to git)
 ├── index.md
 ├── decisions/
 ├── features/
@@ -261,31 +353,22 @@ The update script reads your current model assignments before overwriting anythi
 
 examples/
 └── laravel-octane-inertia/
-    └── project-stack/SKILL.md ← ready-made for Laravel 12 + Octane + Inertia SSR
+    └── project-stack/SKILL.md
 ```
 
 ---
 
 ## Configuration
 
-See `.opencode/opencode.json`. Key additions in v1.7.0:
+See `.opencode/opencode.json`. Key additions in v1.8.0 — agent descriptions now reference Kanban:
 
 ```json
-"junior-backend": {
-  "permission": {
-    "bash": {
-      "*": "ask",
-      "git status": "allow",
-      "git add *": "allow",
-      "git commit *": "allow",
-      "git push": "deny",
-      "rm -rf *": "deny",
-      "sudo *": "deny"
-    },
-    "task": { "*": "deny" }
-  }
+"product-owner": {
+  "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager. Never writes code."
 }
 ```
+
+The Kanban plugin is loaded automatically from `.opencode/plugins/kanban-trigger.ts` at startup.
 
 ---
 
@@ -294,9 +377,8 @@ See `.opencode/opencode.json`. Key additions in v1.7.0:
 PRs welcome. If you've built a `project-stack` skill for a different stack (Next.js, NestJS, Django, Rails, Go, etc.), add it under `examples/` and open a PR.
 
 When modifying agent prompts, keep these invariants:
-
 - Delegation chain must remain strict — no step can be skipped
-- `permission.task` in `opencode.json` must match the prompt rules
+- `permission.task` must match prompt rules
+- Agents must call `kanban_update_task` when their phase is done — never just report in text
 - Review must run before QA
-- Todo board and git commit steps must remain mandatory for developers
-- Parallel execution rules must remain — independent tasks always run in parallel
+- Parallel execution: backend + frontend run in parallel, each team is sequential internally

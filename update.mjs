@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Update Script v1.7.0
+// OpenCode Agent Team — Update Script v1.8.0
 // Preserves model assignments, MCP settings, and project rules.
 // Node.js 18+, no external dependencies
 
@@ -115,11 +115,48 @@ function updateOpencodeJson(installDir, currentModels) {
   catch (e) { warn(`Could not write opencode.json: ${e.message}`) }
 }
 
-
 // ── permission.task check ─────────────────────────────────────
 function hasTaskPermissions(jsonPath) {
   try { const c = JSON.parse(readFileSync(jsonPath, 'utf8')); return Object.values(c.agent || {}).some(a => a.permission?.task) }
   catch { return false }
+}
+
+// ── Kanban check ──────────────────────────────────────────────
+function checkKanbanSetup(projectRoot, installDir) {
+  const kanbanDir = join(projectRoot, '.kanban')
+  const pluginDir = join(installDir, 'plugins')
+  const pluginFile = join(pluginDir, 'kanban-trigger.ts')
+  const toolFiles = ['kanban-create.ts', 'kanban-update.ts', 'kanban-get.ts', 'kanban-list.ts', 'kanban-watch.ts', '_kanban-core.ts']
+  const toolsDir = join(installDir, 'tools')
+
+  const missingTools = toolFiles.filter(f => !existsSync(join(toolsDir, f)))
+  const hasPlugin = existsSync(pluginFile)
+  const hasKanbanDir = existsSync(kanbanDir)
+
+  return { missingTools, hasPlugin, hasKanbanDir, kanbanDir, pluginDir, toolsDir }
+}
+
+function setupKanbanDir(projectRoot) {
+  const kanbanDir = join(projectRoot, '.kanban')
+  const triggersDir = join(kanbanDir, 'triggers')
+  const processedDir = join(kanbanDir, 'triggers', 'processed')
+
+  if (!existsSync(kanbanDir)) {
+    mkdirSync(kanbanDir, { recursive: true })
+    mkdirSync(triggersDir, { recursive: true })
+    mkdirSync(processedDir, { recursive: true })
+    writeFileSync(join(kanbanDir, 'index.json'), JSON.stringify({
+      lastId: 0,
+      tasks: {},
+      updatedAt: new Date().toISOString()
+    }, null, 2))
+    return true
+  }
+
+  // Ensure subdirs exist even if .kanban was already there
+  if (!existsSync(triggersDir)) mkdirSync(triggersDir, { recursive: true })
+  if (!existsSync(processedDir)) mkdirSync(processedDir, { recursive: true })
+  return false
 }
 
 // ── GitHub Actions check ─────────────────────────────────────
@@ -153,32 +190,30 @@ function checkCustomTools(installDir) {
 
 // ── Changelog ───────────────────────────────────────────────
 const CHANGELOG = [
+  { version: '1.8.0', changes: [
+    'feat: Kanban system — file-based task tracking in .kanban/',
+    'feat: kanban-trigger plugin — automatic agent triggering on status change',
+    'feat: kanban_create_task tool — create tracked tasks with auto-assignment',
+    'feat: kanban_update_task tool — status updates trigger next agent automatically',
+    'feat: kanban_get_task tool — read full task context including history',
+    'feat: kanban_list_tasks tool — board view grouped by status',
+    'feat: kanban_watch tool — stall detection for watchdog plugin',
+    'feat: watchdog — detects tasks stalled >30 min and injects nudge',
+    'feat: all 17 agents updated with Kanban integration',
+    'feat: /team:kanban command — board/status/watch sub-commands',
+    'feat: /team:new-feature updated to create Kanban task first',
+    'feat: install.mjs creates .kanban/ directory automatically',
+    'feat: update.mjs checks and migrates Kanban setup',
+  ]},
   { version: '1.7.0', changes: [
-    'feat: permission.task — delegation chain enforced at API level, chain-skipping impossible',
+    'feat: permission.task — delegation chain enforced at API level',
     'feat: granular bash permissions — 4 tiers: lead / senior / junior / readonly',
-    'feat: junior agents — git push/rebase/reset/rm-rf denied; safe read+commit ops only',
-    'feat: GitHub Actions — /oc comments trigger team on issues & PRs',
-    'feat: GitHub Actions — auto PR review on pull_request open/sync',
-    'feat: GitHub Actions — weekly scheduled security audit (Monday 09:00 UTC)',
-    'feat: GitHub Actions — auto issue triage with bot/spam filter',
-    'feat: custom tool memory-search — semantic search over .memory/ files',
-    'feat: custom tool complexity-score — cyclomatic complexity per file/directory',
-    'feat: custom tool debt-summary — prioritized debt backlog from .memory/debt/',
-    'feat: custom tool stack-detect — auto-detects project stack for /team:init',
-    'feat: team:init uses stack-detect tool for faster, structured scanning',
-    'feat: team:audit uses complexity-score + debt-summary tools',
-    'feat: team:standup + team:sprint use debt-summary tool',
-    'feat: team:recall uses memory-search tool',
-    'fix: workflow/SKILL.md documents permission.task enforcement',
+    'feat: GitHub Actions — 4 workflows',
+    'feat: custom tools — memory-search, complexity-score, debt-summary, stack-detect',
   ]},
   { version: '1.6.0', changes: [
     'feat: librarian agent — team memory manager',
     'feat: .memory/ structure — decisions, features, bugs, research, debt',
-    'feat: /team:recall + /team:remember commands',
-    'feat: team:init Phase 5c — creates .memory/ structure',
-  ]},
-  { version: '1.5.0', changes: [
-    'feat: team memory system — librarian agent and .memory/ structure',
   ]},
 ]
 
@@ -232,11 +267,11 @@ async function main() {
     const modelCount = Object.keys(currentModels).filter(k => !currentModels[k].includes('my-provider')).length
     ok(`Read ${Object.keys(currentModels).length} model assignments (${modelCount} non-placeholder)`)
 
-    // Copy files
+    // Copy files (preserves opencode.json)
     if (!DRY_RUN) {
-      try { copyDir(sourceDir, dir, ['opencode.json']); ok('Copied updated agent, command, skill, and tool files') }
+      try { copyDir(sourceDir, dir, ['opencode.json']); ok('Copied updated agent, command, skill, tool, and plugin files') }
       catch (e) { err(`File copy failed: ${e.message}`); close(); process.exit(1) }
-    } else dryok('Would copy updated agent, command, skill, and tool files')
+    } else dryok('Would copy updated agent, command, skill, tool, and plugin files')
 
     // Restore models
     const agentsDir = join(dir, 'agents')
@@ -254,24 +289,56 @@ async function main() {
     // permission.task check
     if (!DRY_RUN && existsSync(jsonPath)) {
       if (hasTaskPermissions(jsonPath)) ok('permission.task delegation chain — already configured')
-      else {
-        warn('permission.task is NOT configured in this installation.')
-        console.log(`  ${dim('This enforces the delegation chain at the API level.')}`)
-        console.log(`  ${dim('To apply: re-run install.mjs, or manually add permission.task blocks to opencode.json.')}`)
-        console.log(`  ${dim('Reference: .opencode/opencode.json in the source directory.')}`)
-      }
+      else warn('permission.task is NOT configured. Re-run install.mjs or add it manually.')
     }
 
     // Custom tools check
     if (!DRY_RUN) {
       const toolsCheck = checkCustomTools(dir)
       if (toolsCheck.hasSource) {
-        if (toolsCheck.missing.length === 0) ok(`Custom tools — all ${toolsCheck.sourceFiles.length} installed`)
-        else {
-          // Tools are copied with the main copyDir above, so just verify
-          ok(`Custom tools — ${toolsCheck.sourceFiles.length} tools installed (memory-search, complexity-score, debt-summary, stack-detect)`)
+        ok(`Custom tools — ${toolsCheck.sourceFiles.length} tools installed (memory-search, complexity-score, debt-summary, stack-detect)`)
+      }
+    }
+
+    // ── Kanban check ────────────────────────────────────────
+    if (!DRY_RUN && label === 'project' && root) {
+      step('Checking Kanban system...')
+      const kanban = checkKanbanSetup(root, dir)
+
+      if (kanban.missingTools.length > 0) {
+        warn(`Missing Kanban tool files: ${kanban.missingTools.join(', ')}`)
+        console.log(`  ${dim('These were copied in the file update step above.')}`)
+      } else {
+        ok(`Kanban tools — all 6 files present`)
+      }
+
+      if (!kanban.hasPlugin) {
+        warn('kanban-trigger.ts plugin missing — was copied in the update step above.')
+      } else {
+        ok('kanban-trigger plugin — present')
+      }
+
+      if (!kanban.hasKanbanDir) {
+        const created = setupKanbanDir(root)
+        if (created) ok('Created .kanban/ directory (new in v1.8.0)')
+      } else {
+        // Ensure subdirs exist
+        setupKanbanDir(root)
+        ok('.kanban/ directory — present, subdirs verified')
+      }
+
+      // .gitignore check
+      const gitignorePath = join(root, '.gitignore')
+      if (existsSync(gitignorePath)) {
+        const gitignore = readFileSync(gitignorePath, 'utf8')
+        if (gitignore.includes('.kanban')) {
+          warn('.gitignore contains .kanban — remove it to track Kanban state in git')
+        } else {
+          ok('.kanban/ is not in .gitignore ✓')
         }
       }
+    } else if (DRY_RUN && label === 'project' && root) {
+      dryok('Would check and migrate Kanban system setup')
     }
 
     // GitHub Actions check
@@ -287,14 +354,9 @@ async function main() {
           installGithubWorkflows(root, ghCheck.missing)
           ok(`${ghCheck.missing.length} workflow(s) installed to .github/workflows/`)
           warn('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')
-        } else warn('GitHub Actions skipped')
+        }
       } else if (ghCheck.hasSource) {
         ok('GitHub Actions workflows — all installed')
-      }
-    } else if (DRY_RUN && label === 'project' && root) {
-      const ghCheck = checkGithubActions(root)
-      if (ghCheck.hasSource && ghCheck.missing.length > 0) {
-        dryok(`Would offer to install ${ghCheck.missing.length} missing GitHub Actions workflow(s)`)
       }
     }
   }
@@ -320,16 +382,22 @@ async function main() {
   console.log(bold(green('╚══════════════════════════════════════════╝')))
   console.log('')
   console.log(`  ${bold('What was updated:')}`)
-  console.log(`    ${green('✓')} Agent prompt files (.opencode/agents/)`)
+  console.log(`    ${green('✓')} Agent prompt files — all 17 agents with Kanban integration`)
   console.log(`    ${green('✓')} Command files (.opencode/commands/)`)
   console.log(`    ${green('✓')} Skill files (.opencode/skills/)`)
-  console.log(`    ${green('✓')} Custom tool files (.opencode/tools/)`)
+  console.log(`    ${green('✓')} Custom tool files — existing + 6 new Kanban tools`)
+  console.log(`    ${green('✓')} Plugin files — kanban-trigger plugin`)
+  console.log(`    ${green('✓')} .kanban/ directory structure`)
   console.log('')
   console.log(`  ${bold('What was preserved:')}`)
   console.log(`    ${green('✓')} Your model assignments`)
   console.log(`    ${green('✓')} opencode.json provider + MCP settings`)
   console.log(`    ${green('✓')} AGENTS.md project rules`)
   console.log(`    ${green('✓')} project-stack skill`)
+  console.log(`    ${green('✓')} .kanban/ task data (not overwritten)`)
+  console.log('')
+  console.log(`  ${bold('Kanban system:')} ${green('✓')} active`)
+  console.log(`  ${dim('Start with: /team:new-feature <description>')}`)
   console.log('')
 
   close()

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Setup Script v1.7.0
+// OpenCode Agent Team — Setup Script v1.8.0
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
@@ -86,7 +86,6 @@ function updateAgentModel(filePath, model) {
   writeFileSync(filePath, content)
 }
 
-
 // ── GitHub Actions ────────────────────────────────────────────
 function setupGithubActions(projectRoot) {
   const sourceDir = join(__dirname, '.github', 'workflows')
@@ -103,26 +102,49 @@ function setupGithubActions(projectRoot) {
   return copied
 }
 
+// ── Kanban directory setup ────────────────────────────────────
+function setupKanbanDir(projectRoot) {
+  const kanbanDir = join(projectRoot, '.kanban')
+  const triggersDir = join(kanbanDir, 'triggers')
+  const processedDir = join(kanbanDir, 'triggers', 'processed')
+
+  if (!existsSync(kanbanDir)) {
+    mkdirSync(kanbanDir, { recursive: true })
+    mkdirSync(triggersDir, { recursive: true })
+    mkdirSync(processedDir, { recursive: true })
+
+    // Empty index
+    writeFileSync(join(kanbanDir, 'index.json'), JSON.stringify({
+      lastId: 0,
+      tasks: {},
+      updatedAt: new Date().toISOString()
+    }, null, 2))
+
+    return true
+  }
+  return false
+}
+
 // ── Build agent config block ──────────────────────────────────
 function buildAgentBlock(agentModels) {
   const descriptions = {
-    'product-owner':       'Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.',
-    'project-manager':     'Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.',
+    'product-owner':       'Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager. Never writes code.',
+    'project-manager':     'Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Kanban. Never writes code.',
     'architect':           'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
-    'backend-lead':        'Invoke when backend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
-    'frontend-lead':       'Invoke when frontend tasks arrive from project-manager. Delegates to developers. Triggers review then QA.',
+    'backend-lead':        'Invoke when backend Kanban tasks arrive. Delegates to developers. Updates Kanban to review when done.',
+    'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Delegates to developers. Updates Kanban to review when done.',
     'senior-backend':      'Invoke for complex backend tasks: new architecture, integrations, performance-critical code.',
     'senior-frontend':     'Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code.',
     'junior-backend':      'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes.',
     'junior-frontend':     'Invoke for simple frontend tasks: styling, small presentational components, component tests.',
-    'tester':              'Invoke after review passes. Writes and runs tests, reports bugs. Spawned in parallel per scope by leads.',
-    'code-reviewer':       'Invoke before QA. Reviews code quality, security, and standards. Never modifies code.',
-    'debugger':            'Invoke when root cause of a bug is unclear. Reads logs and stack traces. Analysis only.',
-    'researcher':          'Invoke to evaluate a technology or pattern. Produces comparison report with recommendation.',
+    'tester':              'Invoke after review passes (via Kanban). Writes and runs tests. Updates Kanban to done or reopened.',
+    'code-reviewer':       'Invoke before QA (via Kanban). Reviews code quality. Updates Kanban to testing or reopened.',
+    'debugger':            'Invoke when root cause of a bug is unclear. Analysis only. Can create Kanban bug tasks.',
+    'researcher':          'Invoke to evaluate a technology or pattern. Produces comparison report.',
     'designer':            'Invoke to establish or update the project visual design system. Creates the project-design skill.',
-    'security-auditor':    'Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities.',
-    'performance-analyst': 'Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size.',
-    'librarian':           'Team memory manager. Writes and retrieves structured records from .memory/.',
+    'security-auditor':    'Invoke for security audits — OWASP Top 10, auth flaws. Invoked alongside code-reviewer for security-sensitive scopes.',
+    'performance-analyst': 'Invoke to identify performance bottlenecks.',
+    'librarian':           'Team memory manager. Writes and retrieves structured records from .memory/. Enriches records with Kanban history.',
   }
 
   const modeMap = {
@@ -144,7 +166,6 @@ function buildAgentBlock(agentModels) {
     'designer': 60, 'security-auditor': 60, 'performance-analyst': 60, 'librarian': 40,
   }
 
-  // permission.task — delegation chain enforcement
   const taskPermMap = {
     'product-owner':       { '*': 'deny', 'project-manager': 'allow', 'architect': 'allow', 'librarian': 'allow' },
     'project-manager':     { '*': 'deny', 'backend-lead': 'allow', 'frontend-lead': 'allow', 'architect': 'allow', 'librarian': 'allow' },
@@ -165,7 +186,6 @@ function buildAgentBlock(agentModels) {
     'librarian':           { '*': 'deny' },
   }
 
-  // Granular bash permissions per tier
   const bashPerms = {
     lead:     { '*': 'allow', 'git push': 'ask', 'git push *': 'ask' },
     senior:   { '*': 'allow', 'git push': 'ask', 'git push *': 'ask', 'git rebase *': 'ask', 'git reset --hard *': 'ask', 'rm -rf *': 'ask', 'sudo *': 'deny' },
@@ -230,7 +250,7 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
 async function main() {
   console.log('')
   console.log(bold(cyan('╔══════════════════════════════════════════╗')))
-  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.7.0  ║')))
+  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.8.0  ║')))
   console.log(bold(cyan('╚══════════════════════════════════════════╝')))
   console.log('')
 
@@ -299,19 +319,14 @@ async function main() {
   if (!isGlobal) {
     step('GitHub Actions integration (optional)')
     console.log('')
-    console.log(`  Adds 4 OpenCode workflows to .github/workflows/:`)
-    console.log(`  ${dim('• opencode.yml              — /oc comments trigger the team on issues & PRs')}`)
-    console.log(`  ${dim('• opencode-pr-review.yml    — auto code review when PRs are opened')}`)
-    console.log(`  ${dim('• opencode-security-audit.yml — weekly scheduled security audit (Mon 09:00 UTC)')}`)
-    console.log(`  ${dim('• opencode-issue-triage.yml — auto-triage new issues')}`)
-    console.log('')
+    console.log(`  Adds 4 OpenCode workflows to .github/workflows/`)
     console.log(`  ${dim('Requires: ANTHROPIC_API_KEY secret in GitHub repo Settings → Secrets → Actions')}`)
     console.log('')
     const ghInput = await ask('Set up GitHub Actions workflows? [Y/n]', 'y')
     useGithubActions = ghInput.toLowerCase() !== 'n'
   }
 
-  // ── Step 6: Install files ─────────────────────────────────
+  // ── Step 5: Install files ─────────────────────────────────
   step('Installing files...')
   const sourceDir = join(__dirname, '.opencode')
   if (!existsSync(sourceDir)) {
@@ -321,7 +336,7 @@ async function main() {
   }
 
   copyDir(sourceDir, installDir, ['opencode.json'])
-  ok(`Copied agent, command, skill, and tool files to ${installDir}`)
+  ok(`Copied agent, command, skill, tool, and plugin files to ${installDir}`)
 
   // Apply model assignments
   const agentsDir = join(installDir, 'agents')
@@ -353,26 +368,23 @@ async function main() {
   // Project extras
   if (!isGlobal) {
     step('Project-specific setup...')
+
+    // AGENTS.md
     const agentsMd = join(projectRoot, 'AGENTS.md')
     if (!existsSync(agentsMd)) {
       writeFileSync(agentsMd, `# Project Rules
 
 ## Language
 <!-- Set your preferred language for agent responses here -->
-<!-- Example: Always respond in Turkish. Keep code, comments, and docs in English. -->
 
 ## Commands
 <!-- Specify how to run commands in this project -->
-<!-- Example: Always run php and npm commands inside Docker:
-  - php → docker compose exec app php ...
-  - npm → docker compose exec node npm ... -->
 
 ## Code Style
-<!-- Any project-specific code style rules beyond what's in the stack skill -->
+<!-- Any project-specific code style rules -->
 
 ## Workflow
 <!-- Any custom workflow preferences -->
-<!-- Example: Always ask before creating new database migrations -->
 
 ## Other Rules
 <!-- Add any other project-specific rules here -->
@@ -380,6 +392,27 @@ async function main() {
       ok('Created AGENTS.md (edit this to add your project rules)')
     } else {
       ok('AGENTS.md already exists — skipping')
+    }
+
+    // Kanban directory
+    step('Setting up Kanban system...')
+    const kanbanCreated = setupKanbanDir(projectRoot)
+    if (kanbanCreated) {
+      ok('Created .kanban/ directory with empty index')
+      ok('Kanban trigger plugin will auto-start with the next OpenCode session')
+    } else {
+      ok('.kanban/ directory already exists — skipping')
+    }
+
+    // .gitignore — .kanban should NOT be ignored (it's project state)
+    const gitignorePath = join(projectRoot, '.gitignore')
+    if (existsSync(gitignorePath)) {
+      const gitignore = readFileSync(gitignorePath, 'utf8')
+      if (gitignore.includes('.kanban')) {
+        warn('.gitignore contains .kanban — remove it to track Kanban state in git')
+      } else {
+        ok('.kanban/ is not in .gitignore — Kanban state will be tracked in git ✓')
+      }
     }
   }
 
@@ -397,20 +430,25 @@ async function main() {
   }
   console.log('')
 
-
   if (useGithubActions) {
     console.log(`  ${bold('GitHub Actions:')} ${green('✓')} 4 workflows installed`)
     console.log(`  ${dim('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')}`)
-    console.log(`  ${dim('Then try: /oc fix this  (comment on any issue or PR)')}`)
   }
   console.log(`  ${bold('Security:')} ${green('✓')} permission.task + granular bash permissions active`)
   console.log(`  ${bold('Custom Tools:')} ${green('✓')} memory-search, complexity-score, debt-summary, stack-detect`)
+  console.log(`  ${bold('Kanban Tools:')} ${green('✓')} kanban-create, kanban-update, kanban-get, kanban-list, kanban-watch`)
+  console.log(`  ${bold('Kanban Plugin:')} ${green('✓')} kanban-trigger (auto agent triggering on status change)`)
   console.log('')
   console.log(`  ${bold('Next steps:')}`)
   if (!isGlobal) {
     console.log(`  1. ${cyan('Edit AGENTS.md')} — add your project rules`)
-    console.log(`  2. ${cyan('Run /team:init')} — generates project-stack skill (uses stack-detect tool)`)
-    console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
+    console.log(`  2. ${cyan('Run /team:init')} — generates project-stack skill`)
+    console.log(`  3. ${cyan('/team:new-feature <description>')} — start building (fully automated via Kanban)`)
+    console.log('')
+    console.log(`  ${bold('Kanban commands:')}`)
+    console.log(`    ${cyan('/team:kanban board')}         — see all active tasks`)
+    console.log(`    ${cyan('/team:kanban status KAN-001')} — see task details`)
+    console.log(`    ${cyan('/team:kanban watch')}          — check for stalled tasks`)
   } else {
     console.log(`  1. In each project: ${cyan('run /team:init')} to generate the project-stack skill`)
     console.log(`  2. ${cyan('/team:new-feature <description>')} — start building`)

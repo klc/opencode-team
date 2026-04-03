@@ -12,7 +12,7 @@ export default tool({
     "Status flow: backlog → planning → in-progress → review → testing → done. " +
     "Failure path: review/testing → reopened → in-progress → review → ...",
   args: {
-    id: tool.schema.string().describe("Task ID (e.g. KAN-001)"),
+    id: tool.schema.string().describe("Task ID (e.g. FTR-001)"),
     status: tool.schema
       .enum(["backlog", "planning", "in-progress", "review", "testing", "done", "reopened"])
       .optional()

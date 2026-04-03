@@ -18,7 +18,7 @@ export default tool({
     scope: tool.schema
       .enum(["backend", "frontend", "both", "none"])
       .describe("Which team owns this task. Use 'both' for full-stack features — project-manager will split into subtasks."),
-    parentId: tool.schema.string().optional().describe("Parent task ID if this is a subtask (e.g. KAN-001)"),
+    parentId: tool.schema.string().optional().describe("Parent task ID if this is a subtask (e.g. FTR-001). The new task will receive an ID like FTR-001-001."),
     storyContext: tool.schema.string().optional().describe("One-sentence user story context: what the user wants and why"),
     acceptanceCriteria: tool.schema.array(tool.schema.string()).optional().describe("List of concrete, testable acceptance criteria"),
     initialStatus: tool.schema
@@ -33,7 +33,7 @@ export default tool({
     const worktree = context.worktree;
     ensureKanbanDir(worktree);
 
-    const id = nextId(worktree);
+    const id = nextId(worktree, args.type as TaskType, args.parentId);
     const status: TaskStatus = (args.initialStatus as TaskStatus) || "backlog";
     const assignedTo = args.assignTo || resolveAgent(status, args.scope as TeamScope, "product-owner");
 

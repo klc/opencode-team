@@ -59,7 +59,9 @@ export interface TaskHistoryEntry {
 }
 
 export interface KanbanIndex {
-  lastId: number;
+  lastId: number;                          // kept for backward compatibility
+  prefixCounters: Record<string, number>;  // { FTR: 3, BUG: 1, TSK: 0, DBT: 0 }
+  childCounters: Record<string, number>;   // { "FTR-001": 2 } — tracks subtask count per parent
   tasks: Record<string, TaskSummary>;
   updatedAt: string;
 }
@@ -98,11 +100,22 @@ export function getTaskPath(worktree: string, id: string): string {
 
 export function loadIndex(worktree: string): KanbanIndex {
   const path = getIndexPath(worktree);
-  if (!existsSync(path)) return { lastId: 0, tasks: {}, updatedAt: new Date().toISOString() };
+  const empty: KanbanIndex = {
+    lastId: 0,
+    prefixCounters: {},
+    childCounters: {},
+    tasks: {},
+    updatedAt: new Date().toISOString(),
+  };
+  if (!existsSync(path)) return empty;
   try {
-    return JSON.parse(readFileSync(path, "utf8"));
+    const data = JSON.parse(readFileSync(path, "utf8")) as KanbanIndex;
+    // Backward compat: older indexes may not have these fields
+    if (!data.prefixCounters) data.prefixCounters = {};
+    if (!data.childCounters) data.childCounters = {};
+    return data;
   } catch {
-    return { lastId: 0, tasks: {}, updatedAt: new Date().toISOString() };
+    return empty;
   }
 }
 
@@ -140,11 +153,41 @@ export function updateIndex(worktree: string, task: KanbanTask): void {
   saveIndex(worktree, index);
 }
 
-export function nextId(worktree: string): string {
+// Maps TaskType to its 3-letter ID prefix
+const TYPE_PREFIX: Record<TaskType, string> = {
+  feature: "FTR",
+  bug:     "BUG",
+  task:    "TSK",
+  debt:    "DBT",
+};
+
+/**
+ * Generate a unique task ID.
+ * - Top-level tasks: FTR-001, BUG-001, TSK-001, DBT-001
+ * - Subtasks:        FTR-001-001, FTR-001-002 (derived from parentId)
+ */
+export function nextId(worktree: string, type: TaskType, parentId?: string): string {
   const index = loadIndex(worktree);
-  index.lastId += 1;
+
+  let id: string;
+
+  if (parentId) {
+    // Subtask: increment the child counter for this parent
+    const current = index.childCounters[parentId] ?? 0;
+    const next = current + 1;
+    index.childCounters[parentId] = next;
+    id = `${parentId}-${String(next).padStart(3, "0")}`;
+  } else {
+    // Top-level task: increment the per-prefix counter
+    const prefix = TYPE_PREFIX[type] ?? "TSK";
+    const current = index.prefixCounters[prefix] ?? 0;
+    const next = current + 1;
+    index.prefixCounters[prefix] = next;
+    id = `${prefix}-${String(next).padStart(3, "0")}`;
+  }
+
   saveIndex(worktree, index);
-  return `KAN-${String(index.lastId).padStart(3, "0")}`;
+  return id;
 }
 
 // ─────────────────────────────────────────────────────────────

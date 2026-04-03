@@ -6,7 +6,7 @@ export default tool({
     "Get full details of a specific Kanban task including description, acceptance criteria, notes, and status history. " +
     "Always call this first when you receive a Kanban task assignment.",
   args: {
-    id: tool.schema.string().describe("Task ID (e.g. KAN-001)"),
+    id: tool.schema.string().describe("Task ID (e.g. FTR-001)"),
     includeHistory: tool.schema.boolean().optional().describe("Include full status history. Default: false."),
   },
 

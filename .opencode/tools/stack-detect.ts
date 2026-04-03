@@ -163,7 +163,7 @@ export default tool({
     let buildTool: Detection | null = null;
     let ssr: Detection | null = null;
 
-    if (allDeps["vue"] || allDeps["@vue/core"]) {
+    if (allDeps["vue"] || allDeps["@vue/runtime-core"]) {
       const version = (allDeps["vue"] ?? "").replace(/[^0-9]/g, "")[0] ?? "3";
       frontendFramework = detect(`Vue ${version}`, "high", "package.json");
       if (allDeps["@inertiajs/vue3"] || allDeps["@inertiajs/vue"]) {

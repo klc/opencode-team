@@ -43,7 +43,9 @@ export default tool({
     if (existsSync(triggerDir)) {
       pendingTriggers.push(
         ...readdirSync(triggerDir).filter((f) =>
-          f.endsWith(".json") && /^\w+-\d+\.json$/.test(f)
+          // Match trigger files: KAN-001-1712345678.json
+          // \w+ cannot match hyphens, so we use [\w-]+ instead
+          f.endsWith(".json") && /^[\w-]+-\d+\.json$/.test(f)
         )
       );
     }

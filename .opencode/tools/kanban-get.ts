@@ -21,7 +21,7 @@ export default tool({
       task.history.forEach((h) => {
         const from = h.fromStatus ? `${h.fromStatus} →` : "created →";
         lines.push(
-          `  ${new Date(h.timestamp).toLocaleString("tr-TR")} | ${from} **${h.toStatus}** by @${h.agent}${h.note ? ` — ${h.note}` : ""}`
+          `  ${new Date(h.timestamp).toISOString().replace("T", " ").slice(0, 19)} UTC | ${from} **${h.toStatus}** by @${h.agent}${h.note ? ` — ${h.note}` : ""}`
         );
       });
     }

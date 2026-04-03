@@ -43,7 +43,7 @@ export default tool({
     const queryTerms = args.query
       .toLowerCase()
       .split(/\s+/)
-      .filter((t) => t.length > 2);
+      .filter((t) => t.length > 1); // keep 2+ char terms (e.g. "api", "db", "ui")
 
     if (queryTerms.length === 0) {
       return "Query is too short. Provide at least one keyword with more than 2 characters.";

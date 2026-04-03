@@ -89,11 +89,11 @@ export default tool({
       const date = extract(/\*\*Date:\*\*\s*(.+)/i, "");
 
       // Extract summary section
-      const summaryMatch = content.match(/##\s+Summary\s*\n([\s\S]*?)(?=\n##|\n---|\z)/);
+      const summaryMatch = content.match(/##\s+Summary\s*\n([\s\S]*?)(?=\n##|\n---|$)/);
       const summary = summaryMatch ? summaryMatch[1].trim() : "";
 
       // Extract risk
-      const riskMatch = content.match(/###\s+Risk\s*\n([\s\S]*?)(?=\n###|\n##|\n---|\z)/);
+      const riskMatch = content.match(/###\s+Risk\s*\n([\s\S]*?)(?=\n###|\n##|\n---|$)/);
       const risk = riskMatch ? riskMatch[1].trim().slice(0, 200) : "";
 
       // Extract acceptance criteria
@@ -218,7 +218,7 @@ export default tool({
     }
 
     // Sprint planning suggestion
-    const smallEffort = filtered.filter((r) => r.effort?.includes("S") && r.status === "open");
+    const smallEffort = filtered.filter((r) => r.effort?.trim() === "S" && r.status === "open");
     if (smallEffort.length > 0) {
       output.push(`---`);
       output.push(`## ⚡ Quick Wins (Effort: S, Status: open)`);

@@ -56,11 +56,21 @@ export default tool({
     } else if (args.status && args.status !== previousStatus) {
       let reopenTarget: string | undefined;
       if (args.status === "reopened") {
-        // Find last in-progress agent from history
-        const lastDev = task.history
-          .filter((h) => h.toStatus === "in-progress")
-          .pop();
-        reopenTarget = lastDev?.agent;
+        // Find the agent that was *assigned* when the task last entered in-progress.
+        // We cannot rely on h.agent (who triggered the transition — often project-manager).
+        // Instead, walk history in reverse to find the most recent in-progress entry,
+        // then look one step forward to see who the implementer was (assignedTo snapshot).
+        // Simplest safe fallback: use current assignedTo if it's a developer role.
+        const devRoles = ["senior-backend", "junior-backend", "senior-frontend", "junior-frontend", "backend-lead", "frontend-lead"];
+        if (devRoles.includes(task.assignedTo)) {
+          reopenTarget = task.assignedTo;
+        } else {
+          // Search history for the most recent in-progress transition agent that is a developer
+          const lastDevEntry = [...task.history]
+            .reverse()
+            .find((h) => h.toStatus === "in-progress" && devRoles.includes(h.agent));
+          reopenTarget = lastDevEntry?.agent;
+        }
       }
       task.assignedTo = resolveAgent(
         args.status as TaskStatus,

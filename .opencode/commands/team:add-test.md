@@ -1,5 +1,6 @@
 ---
 description: Add tests to existing code that lacks coverage. Specify a file, class, or feature area. No production code changes.
+agent: tester
 subtask: true
 ---
 

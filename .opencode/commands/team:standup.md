@@ -12,13 +12,21 @@ Generate a standup report for the current state of the project.
 
 1. Call `todoread` to get the current state of the todo list
 
-2. Check git log for commits since yesterday:
+2. Fetch active Kanban tasks for live board state:
+
+   ```
+   kanban_list_tasks({ status: ["in-progress", "review", "blocked"] })
+   ```
+
+   Use the returned tasks to populate the "In Progress" and "Blocked" sections below. Kanban data takes precedence over todo list for task status.
+
+3. Check git log for commits since yesterday:
 
    ```bash
    git log --oneline --since="24 hours ago"
    ```
 
-3. Use the `debt_summary` tool to surface high-priority open debt:
+4. Use the `debt_summary` tool to surface high-priority open debt:
 
    ```
    debt_summary({ status: "open", priority: "high" })
@@ -26,7 +34,7 @@ Generate a standup report for the current state of the project.
 
    Include only **high priority** items with status `open` or `in-progress` in the standup report.
 
-4. Produce the standup report:
+5. Produce the standup report:
 
 ```
 ## Standup — [today's date]
@@ -52,6 +60,6 @@ Generate a standup report for the current state of the project.
 - [any risks that have emerged or changed]
 ```
 
-If the todo list is empty or no git commits exist yet, report that no work has been tracked yet and suggest starting with `/team:new-feature` or `/team:task`.
+If the todo list is empty, no Kanban tasks exist, and no git commits exist yet, report that no work has been tracked yet and suggest starting with `/team:new-feature` or `/team:task`.
 
 Keep the report concise — one line per item unless a blocker or debt item needs explanation.

@@ -203,7 +203,7 @@ If the result is greater than 0, warn the user that placeholder values still exi
 
 ---
 
-## Phase 5c — Initialize Memory
+## Phase 5b — Initialize Memory
 
 ```bash
 mkdir -p .memory/decisions .memory/features .memory/bugs .memory/research .memory/debt

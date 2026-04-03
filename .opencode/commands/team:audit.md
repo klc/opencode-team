@@ -1,5 +1,6 @@
 ---
 description: Full project audit — security vulnerabilities, performance bottlenecks, code quality, and technical debt. Produces a prioritized report with actionable fixes.
+agent: architect
 subtask: true
 ---
 

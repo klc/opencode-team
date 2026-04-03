@@ -1,5 +1,6 @@
 ---
 description: Urgent production fix. Creates a hotfix branch, debugger triages root cause, senior developer fixes, fast-tracks review.
+agent: architect
 subtask: true
 ---
 

@@ -1,5 +1,6 @@
 ---
-description: Small, focused change — a single file, function, config, or copy edit. Skips product-owner and project-manager, goes directly to the right lead.
+description: Small, focused change — a single file, function, config, or copy edit. Skips product-owner and project-manager, goes directly to the right lead. Use for 1-file, zero-new-logic changes. For changes touching 2-3 files or correcting existing behavior, use /team:quick-fix instead.
+agent: architect
 subtask: true
 ---
 

@@ -1,5 +1,6 @@
 ---
 description: Pick up and resolve a specific technical debt item. Pass the debt title or filename. Routes to the appropriate lead and updates the debt record when done.
+agent: project-manager
 subtask: true
 ---
 
@@ -41,6 +42,12 @@ Based on the `Owner` field in the debt record:
 - `@architect` → invoke @architect directly with the debt context
 
 Pass the full debt record context in the delegation.
+
+**If the lead reports that the debt cannot be resolved as described** (e.g. acceptance criteria are outdated, scope has changed, or a dependency is missing):
+
+1. Report the blocker to the user with a clear explanation
+2. Ask whether to: A) Update the debt record with new acceptance criteria and retry, or B) Close as "won't fix" with a reason
+3. Do not close the debt or mark it resolved until the user confirms
 
 Wait for implementation + review + QA to complete (follow the normal team:task flow).
 

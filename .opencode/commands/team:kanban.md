@@ -1,5 +1,6 @@
 ---
-description: Kanban board management. Subcommands: new-feature, status, board, sprint
+description: Kanban board management. Subcommands: new-feature, status, board, watch, sprint
+agent: project-manager
 subtask: false
 ---
 

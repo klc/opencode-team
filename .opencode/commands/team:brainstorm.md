@@ -60,7 +60,7 @@ While architect responds, add your own perspective:
 
 When the user says any of the following, switch to action mode:
 
-**Trigger phrases:** "develop", "create task", "let's build this", "let's go", "proceed", "implement", "add as feature", "start"
+**Trigger phrases:** "develop", "create task", "let's build this", "let's go", "proceed", "implement", "add as feature", "start", "build this", "go ahead", "ship it", "make it"
 
 ### Action steps (when triggered)
 

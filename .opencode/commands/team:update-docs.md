@@ -1,5 +1,6 @@
 ---
 description: Update project documentation — README, API docs, architecture diagrams, or inline code comments. Pass the area or file to document.
+agent: architect
 subtask: true
 ---
 
@@ -25,4 +26,6 @@ Documentation needs to be updated for:
    - Commit: `git commit -m "docs(<scope>): <what was documented>"`
    - Report back with a summary of what was added or changed
 
-3. No code review required for documentation-only changes unless the request involves updating API contracts.
+3. **Code review requirement:**
+   - Documentation-only changes (README, comments, guides): no review required
+   - API contract changes (OpenAPI, Swagger, type definitions): **always** invoke @code-reviewer with the changed files before considering the task complete. The reviewer checks that the documented contract matches the actual implementation.

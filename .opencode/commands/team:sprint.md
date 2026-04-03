@@ -67,6 +67,23 @@ Do not stop after producing the plan — call the leads:
 1. Call @backend-lead with all backend tasks (new + debt) via Task tool
 2. Call @frontend-lead with all frontend tasks (new + debt) via Task tool
 
+## Step 3b — Create Kanban Tasks
+
+For each task in the sprint plan, create a Kanban task:
+
+```
+kanban_create_task({
+  title: "[task title from the sprint table]",
+  description: "[task description + acceptance criteria]",
+  type: "feature",
+  scope: "[backend | frontend | both]",
+  initialStatus: "in-progress",
+  agentName: "project-manager"
+})
+```
+
+Group Kanban tasks by backend and frontend scope. Assign each task to its lead.
+
 ## Step 4 — Update debt status
 
 After delegating any debt tasks to leads, invoke @librarian to mark those debt items as in-progress.

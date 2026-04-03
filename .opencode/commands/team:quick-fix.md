@@ -1,5 +1,6 @@
 ---
-description: Small, contained fix that doesn't need the full team chain. Typos, config values, copy changes, single-line corrections. Goes directly to the right developer, then review.
+description: Small, contained fix that doesn't need the full team chain. Typos, config values, copy changes, single-line corrections — touching 1-3 files max. For a single-file/zero-logic change, use /team:tweak instead. For actual bugs with root cause investigation, use /team:bugfix.
+agent: architect
 subtask: true
 ---
 

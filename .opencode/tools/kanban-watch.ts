@@ -24,7 +24,7 @@ export default tool({
     const stalledTasks = [];
     const pendingTriggers: string[] = [];
 
-    // Stalled task tespiti
+    // Stalled task detection
     for (const summary of Object.values(index.tasks)) {
       if (!["in-progress", "review", "testing", "planning"].includes(summary.status)) continue;
       const task = loadTask(worktree, summary.id);
@@ -38,11 +38,13 @@ export default tool({
       }
     }
 
-    // Bekleyen trigger'lar
+    // Pending triggers - only count files matching the trigger naming pattern
     const triggerDir = join(getKanbanDir(worktree), "triggers");
     if (existsSync(triggerDir)) {
       pendingTriggers.push(
-        ...readdirSync(triggerDir).filter((f) => f.endsWith(".json"))
+        ...readdirSync(triggerDir).filter((f) =>
+          f.endsWith(".json") && /^\w+-\d+\.json$/.test(f)
+        )
       );
     }
 

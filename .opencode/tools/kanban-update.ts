@@ -44,19 +44,19 @@ export default tool({
     if (args.testNotes) task.testNotes = args.testNotes;
     if (args.reopenReason) task.reopenReason = args.reopenReason;
 
-    // Reopen sayacı
+    // Reopen counter
     if (args.status === "reopened") task.reopenCount += 1;
 
     // Done timestamp
     if (args.status === "done") task.completedAt = new Date().toISOString();
 
-    // Agent atama
+    // Agent assignment
     if (args.assignTo) {
       task.assignedTo = args.assignTo;
     } else if (args.status && args.status !== previousStatus) {
       let reopenTarget: string | undefined;
       if (args.status === "reopened") {
-        // History'den son in-progress agent'ını bul
+        // Find last in-progress agent from history
         const lastDev = task.history
           .filter((h) => h.toStatus === "in-progress")
           .pop();
@@ -70,7 +70,7 @@ export default tool({
       );
     }
 
-    // History
+    // History entry
     task.history.push({
       timestamp: new Date().toISOString(),
       fromStatus: previousStatus,
@@ -82,7 +82,7 @@ export default tool({
     saveTask(context.worktree, task);
     updateIndex(context.worktree, task);
 
-    // Status değiştiyse trigger yaz
+    // Write trigger if status changed
     if (args.status && args.status !== previousStatus) {
       writeTrigger(context.worktree, task, previousStatus);
     }

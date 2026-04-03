@@ -8,6 +8,7 @@ import {
   readFileSync,
   writeFileSync,
   readdirSync,
+  statSync,
 } from "fs";
 import { join } from "path";
 
@@ -98,7 +99,11 @@ export function getTaskPath(worktree: string, id: string): string {
 export function loadIndex(worktree: string): KanbanIndex {
   const path = getIndexPath(worktree);
   if (!existsSync(path)) return { lastId: 0, tasks: {}, updatedAt: new Date().toISOString() };
-  return JSON.parse(readFileSync(path, "utf8"));
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return { lastId: 0, tasks: {}, updatedAt: new Date().toISOString() };
+  }
 }
 
 export function saveIndex(worktree: string, index: KanbanIndex): void {
@@ -109,7 +114,11 @@ export function saveIndex(worktree: string, index: KanbanIndex): void {
 export function loadTask(worktree: string, id: string): KanbanTask | null {
   const path = getTaskPath(worktree, id);
   if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf8"));
+  try {
+    return JSON.parse(readFileSync(path, "utf8"));
+  } catch {
+    return null;
+  }
 }
 
 export function saveTask(worktree: string, task: KanbanTask): void {

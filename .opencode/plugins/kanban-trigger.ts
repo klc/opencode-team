@@ -6,6 +6,8 @@ import {
   unlinkSync,
   writeFileSync,
   mkdirSync,
+  appendFileSync,
+  statSync,
 } from "fs";
 import { join } from "path";
 
@@ -13,13 +15,15 @@ import { join } from "path";
 // Config
 // ─────────────────────────────────────────────────────────────
 
-const TRIGGER_CHECK_INTERVAL_MS = 5_000;   // 5 saniyede bir trigger kontrol
-const WATCHDOG_INTERVAL_MS = 2 * 60_000;   // 2 dakikada bir stall kontrol
-const STALL_THRESHOLD_MINUTES = 30;         // 30 dakika hareketsizlik = stall
-const MAX_REOPEN_COUNT = 3;                 // Bu kadar reopen'dan sonra eskalasyon
+const TRIGGER_CHECK_INTERVAL_MS = 5_000;   // Check triggers every 5 seconds
+const WATCHDOG_INTERVAL_MS = 2 * 60_000;   // Check for stalled tasks every 2 minutes
+const STALL_THRESHOLD_MINUTES = 30;         // 30 minutes of inactivity = stalled
+const MAX_REOPEN_COUNT = 3;                 // Escalate after this many reopens
+const MAX_LOG_SIZE = 100_000;               // Rotate log when it exceeds 100KB
+const MAX_LOG_LINES = 500;                  // Keep last 500 lines after rotation
 
 // Agent → OpenCode agent ID mapping
-// Bunlar opencode.json'daki agent key'leri ile eşleşmeli
+// These must match the agent keys in opencode.json
 const AGENT_MAP: Record<string, string> = {
   "product-owner": "product-owner",
   "project-manager": "project-manager",
@@ -73,15 +77,16 @@ export const KanbanTriggerPlugin: Plugin = async ({
     const entry = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${message}\n`;
     try {
       // Append to log file
-      const existing = existsSync(logPath)
-        ? readFileSync(logPath, "utf8")
-        : "";
-      // Son 1000 satırı tut
-      const lines = existing.split("\n");
-      const trimmed = lines.slice(-999).join("\n");
-      writeFileSync(logPath, trimmed + entry);
+      appendFileSync(logPath, entry);
+      // Periodic rotation: if file > 100KB, keep last 500 lines
+      const stats = statSync(logPath);
+      if (stats.size > MAX_LOG_SIZE) {
+        const content = readFileSync(logPath, "utf8");
+        const lines = content.split("\n");
+        writeFileSync(logPath, lines.slice(-MAX_LOG_LINES).join("\n"));
+      }
     } catch {
-      // Log yazılamazsa sessizce devam et
+      // Silently continue if log write fails
     }
 
     client.app.log({
@@ -94,12 +99,12 @@ export const KanbanTriggerPlugin: Plugin = async ({
   }
 
   function ensureDirs(): void {
-    if (!existsSync(kanbanDir)) return; // Kanban kurulmamış, skip
+    if (!existsSync(kanbanDir)) return; // Kanban not set up, skip
     if (!existsSync(triggerDir)) mkdirSync(triggerDir, { recursive: true });
     if (!existsSync(processedDir)) mkdirSync(processedDir, { recursive: true });
   }
 
-  // ── Trigger işleme ──────────────────────────────────────
+  // ── Trigger processing ──────────────────────────────────
 
   async function processTrigger(
     triggerFile: string,
@@ -130,12 +135,12 @@ export const KanbanTriggerPlugin: Plugin = async ({
       `Processing trigger: ${payload.taskId} → status=${payload.status} → @${payload.assignedTo}`
     );
 
-    // Done status'unda agent tetikleme
+    // No agent trigger needed for done status
     if (payload.status === "done") {
       log("info", `Task ${payload.taskId} is done. No agent trigger needed.`);
       archiveTrigger(triggerPath, triggerFile, "done");
 
-      // Kullanıcıya bildirim ekle
+      // Send notification to user
       try {
         await client.session.prompt({
           path: { id: sessionId },
@@ -150,24 +155,21 @@ export const KanbanTriggerPlugin: Plugin = async ({
           },
         });
       } catch {
-        // Bildirim gönderilemezse devam et
+        // Continue if notification fails
       }
       return;
     }
 
-    // Paralel kural: backend-lead ve frontend-lead aynı anda tetiklenebilir
-    // Kendi içinde sıralı: bir task done olmadan aynı agent'a yeni task gelmiyor
-    // Bu zaten kanban_update_task'ın status kontrolüyle sağlanıyor
+    // Parallel rule: backend-lead and frontend-lead can be triggered simultaneously
+    // Internal ordering: a task won't get a new task for the same agent until done
+    // This is already enforced by kanban_update_task's status control
 
     try {
-      // Agent'ı tetikle - session.prompt ile mesajı session'a inject et
-      // noReply: false → agent gerçekten yanıt verecek
+      // Trigger the agent - inject message into session via session.prompt
+      // The @mention in the message text routes to the correct agent
       await client.session.prompt({
         path: { id: sessionId },
         body: {
-          // agent parametresi: hangi agent yanıtlasın
-          // NOT: Bu OpenCode SDK'sında destekleniyorsa kullan
-          // Desteklenmiyorsa mesaj içinde @mention yeterli
           parts: [
             {
               type: "text",
@@ -187,7 +189,7 @@ export const KanbanTriggerPlugin: Plugin = async ({
         "error",
         `Failed to trigger @${agentId} for ${payload.taskId}: ${err}`
       );
-      // Başarısız trigger'ı sil - watchdog tekrar dener
+      // Delete failed trigger - watchdog will retry
     }
   }
 
@@ -218,7 +220,7 @@ export const KanbanTriggerPlugin: Plugin = async ({
     }
   }
 
-  // ── Watchdog: stalled task tespiti ──────────────────────
+  // ── Watchdog: stalled task detection ──────────────────────
 
   async function runWatchdog(sessionId: string): Promise<void> {
     if (!existsSync(kanbanDir)) return;
@@ -270,7 +272,7 @@ export const KanbanTriggerPlugin: Plugin = async ({
 
     log("warn", `Watchdog found ${stalledTasks.length} stalled task(s)`);
 
-    // Stalled task'lar için nudge gönder
+    // Send nudge for stalled tasks
     const nudgeLines = [
       `⚠️ **Kanban Watchdog Alert**`,
       ``,
@@ -298,11 +300,11 @@ export const KanbanTriggerPlugin: Plugin = async ({
         },
       });
     } catch {
-      // Nudge gönderilemezse sessizce devam et
+      // Continue silently if nudge fails
     }
   }
 
-  // ── Session ID tespiti ───────────────────────────────────
+  // ── Session ID tracking ──────────────────────────────────
 
   let currentSessionId: string | null = null;
   let triggerInterval: ReturnType<typeof setInterval> | null = null;
@@ -313,9 +315,9 @@ export const KanbanTriggerPlugin: Plugin = async ({
   // ─────────────────────────────────────────────────────────
 
   return {
-    // Session oluşturulduğunda polling başlat
+    // Start polling when session is created
     event: async ({ event }) => {
-      // Session oluşturuldu
+      // Session created
       if (event.type === "session.created") {
         currentSessionId = event.properties.id;
         ensureDirs();
@@ -325,7 +327,7 @@ export const KanbanTriggerPlugin: Plugin = async ({
           `Kanban trigger plugin initialized for session ${currentSessionId}`
         );
 
-        // Trigger polling başlat
+        // Start trigger polling
         if (!triggerInterval) {
           triggerInterval = setInterval(async () => {
             try {
@@ -337,7 +339,7 @@ export const KanbanTriggerPlugin: Plugin = async ({
 
               if (files.length === 0) return;
 
-              // En eski trigger'dan başla (FIFO)
+              // Start from oldest trigger (FIFO)
               files.sort();
               const nextFile = files[0];
 
@@ -348,16 +350,20 @@ export const KanbanTriggerPlugin: Plugin = async ({
           }, TRIGGER_CHECK_INTERVAL_MS);
         }
 
-        // Watchdog başlat
+        // Start watchdog
         if (!watchdogInterval) {
           watchdogInterval = setInterval(async () => {
-            if (!currentSessionId) return;
-            await runWatchdog(currentSessionId);
+            try {
+              if (!currentSessionId) return;
+              await runWatchdog(currentSessionId);
+            } catch (err) {
+              log("error", `Watchdog error: ${err}`);
+            }
           }, WATCHDOG_INTERVAL_MS);
         }
       }
 
-      // Session silindiğinde temizle
+      // Clean up when session is deleted
       if (event.type === "session.deleted") {
         if (triggerInterval) {
           clearInterval(triggerInterval);
@@ -371,7 +377,7 @@ export const KanbanTriggerPlugin: Plugin = async ({
         log("info", "Kanban trigger plugin cleaned up");
       }
 
-      // Session idle olduğunda bekleyen trigger'ları işle
+      // Process pending triggers when session is idle
       if (event.type === "session.idle" && currentSessionId) {
         if (!existsSync(triggerDir)) return;
 
@@ -384,21 +390,21 @@ export const KanbanTriggerPlugin: Plugin = async ({
             "info",
             `Session idle — processing ${files.length} pending trigger(s)`
           );
-          // Sırayla işle (paralel backend+frontend için iki ayrı trigger olur)
+          // Process sequentially (short delay between parallel triggers to prevent deadlock)
           for (const file of files.sort()) {
             await processTrigger(file, currentSessionId);
-            // Paralel trigger'larda kısa bekleme (deadlock önleme)
+            // Short delay between parallel triggers (deadlock prevention)
             await new Promise((r) => setTimeout(r, 500));
           }
         }
       }
     },
 
-    // Todo güncellemesini de izle (mevcut todo sistemi ile entegrasyon)
+    // Watch todo updates for integration with existing todo system
     "todo.updated": async ({ event }) => {
-      // Mevcut opencode todo'ları ile kanban'ı senkronize et
-      // todo.status === "completed" ise kanban'da eşleşen task'ı güncelle
-      // Bu opsiyonel — kanban kendi başına da çalışır
+      // Sync existing opencode todos with kanban
+      // If todo.status === "completed", update matching kanban task
+      // This is optional — kanban works independently
     },
   };
 };

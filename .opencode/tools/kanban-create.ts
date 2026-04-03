@@ -65,7 +65,7 @@ export default tool({
     saveTask(worktree, task);
     updateIndex(worktree, task);
 
-    // Parent'ın childIds listesine ekle
+    // Add to parent's childIds list
     if (args.parentId) {
       const parent = loadTask(worktree, args.parentId);
       if (parent) {
@@ -76,7 +76,7 @@ export default tool({
       }
     }
 
-    // Trigger yaz → plugin agent'ı tetikler
+    // Write trigger → plugin will notify the agent
     writeTrigger(worktree, task, null);
 
     return [

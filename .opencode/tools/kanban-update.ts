@@ -1,14 +1,49 @@
 import { tool } from "@opencode-ai/plugin";
 import {
-  loadTask, saveTask, updateIndex, resolveAgent, writeTrigger, formatTaskCard,
+  loadTask, saveTask, updateIndex, resolveAgent, formatTaskCard,
   type TaskStatus, type TeamScope,
 } from "./_kanban-core.js";
+
+// ─────────────────────────────────────────────────────────────
+// Self-call handoff instruction builder
+// Returns the MANDATORY next action the calling agent must take.
+// ─────────────────────────────────────────────────────────────
+function buildHandoffInstruction(
+  status: TaskStatus,
+  scope: string,
+  assignedTo: string
+): string {
+  switch (status) {
+    case "planning":
+      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@project-manager**.\nPass the task ID and full context so it can plan the sprint and create subtasks.`;
+    case "in-progress":
+      if (scope === "backend")
+        return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@backend-lead**.\nPass the task ID and full context so it can assess complexity and delegate to the right developer.`;
+      if (scope === "frontend")
+        return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@frontend-lead**.\nPass the task ID and full context so it can assess complexity and delegate to the right developer.`;
+      if (scope === "both")
+        return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **BOTH @backend-lead AND @frontend-lead** (one call each).\nPass the task ID and context to each so they can work in parallel.`;
+      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to notify **@${assignedTo}** with the task context.`;
+    case "review":
+      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@code-reviewer**.\nPass the task ID, acceptance criteria, and any implementation notes.`;
+    case "testing":
+      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@tester**.\nPass the task ID and acceptance criteria so it can verify each one.`;
+    case "done":
+      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to notify **@project-manager** that this task is complete.\nInclude the task ID and a brief summary of what was delivered.`;
+    case "reopened": {
+      const lead = scope === "frontend" ? "frontend-lead" : "backend-lead";
+      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to notify **@${lead}** with the failure details.\nInclude the task ID, reviewNotes or testNotes, and what must be fixed.`;
+    }
+    default:
+      return "";
+  }
+}
 
 export default tool({
   description:
     "Update a Kanban task's status, notes, or assignee. " +
-    "When status changes, the next agent is automatically triggered. " +
     "MANDATORY: Always call this when you finish your part — never just report completion in text. " +
+    "After calling this tool, you MUST use the Task tool to call the next agent as indicated in the response. " +
     "Status flow: backlog → planning → in-progress → review → testing → done. " +
     "Failure path: review/testing → reopened → in-progress → review → ...",
   args: {
@@ -16,7 +51,7 @@ export default tool({
     status: tool.schema
       .enum(["backlog", "planning", "in-progress", "review", "testing", "done", "reopened"])
       .optional()
-      .describe("New status. Triggers the appropriate next agent automatically."),
+      .describe("New status. After updating, you MUST call the next agent via the Task tool."),
     assignTo: tool.schema.string().optional().describe("Override auto-assigned agent"),
     storyContext: tool.schema.string().optional().describe("Set/update the user story context"),
     acceptanceCriteria: tool.schema.array(tool.schema.string()).optional().describe("Set/replace acceptance criteria"),
@@ -56,16 +91,10 @@ export default tool({
     } else if (args.status && args.status !== previousStatus) {
       let reopenTarget: string | undefined;
       if (args.status === "reopened") {
-        // Find the agent that was *assigned* when the task last entered in-progress.
-        // We cannot rely on h.agent (who triggered the transition — often project-manager).
-        // Instead, walk history in reverse to find the most recent in-progress entry,
-        // then look one step forward to see who the implementer was (assignedTo snapshot).
-        // Simplest safe fallback: use current assignedTo if it's a developer role.
         const devRoles = ["senior-backend", "junior-backend", "senior-frontend", "junior-frontend", "backend-lead", "frontend-lead"];
         if (devRoles.includes(task.assignedTo)) {
           reopenTarget = task.assignedTo;
         } else {
-          // Search history for the most recent in-progress transition agent that is a developer
           const lastDevEntry = [...task.history]
             .reverse()
             .find((h) => h.toStatus === "in-progress" && devRoles.includes(h.agent));
@@ -92,11 +121,6 @@ export default tool({
     saveTask(context.worktree, task);
     updateIndex(context.worktree, task);
 
-    // Write trigger if status changed
-    if (args.status && args.status !== previousStatus) {
-      writeTrigger(context.worktree, task, previousStatus);
-    }
-
     const statusChanged = args.status && args.status !== previousStatus;
     const lines = [
       `✅ **Task updated: ${task.id}**`,
@@ -105,10 +129,12 @@ export default tool({
     ];
 
     if (statusChanged) {
+      const handoff = buildHandoffInstruction(task.status, task.scope, task.assignedTo);
       lines.push(
         ``,
         `🔄 **${previousStatus} → ${task.status}**`,
-        `📡 **Trigger queued** → @${task.assignedTo} will be automatically notified.`
+        ``,
+        handoff,
       );
     }
 

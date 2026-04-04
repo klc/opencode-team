@@ -28,7 +28,11 @@ When your lead passes you a Kanban task ID, read it first:
 kanban_get_task({ id: "[KAN-XXX]", includeHistory: true })
 ```
 
-You do NOT update Kanban status — your lead handles that. Your job: implement → commit → report to lead.
+**You do NOT update Kanban status — your lead handles that.**
+
+Your workflow: **implement → commit → report to @backend-lead**.
+
+> ⚠️ **Never call `kanban_update_task` yourself.** The lead owns the Kanban status for your tasks.
 
 ## Scope
 
@@ -64,7 +68,7 @@ You do NOT update Kanban status — your lead handles that. Your job: implement 
    git commit -m "feat(<scope>): <what you built> [<task-id>]"
    ```
 4. Update todowrite to `completed`
-5. Report to @backend-lead:
+5. **Report back to @backend-lead (your response to the Task tool call):**
 
 ```
 ✅ Completed: [what was done]
@@ -72,4 +76,6 @@ You do NOT update Kanban status — your lead handles that. Your job: implement 
 🧪 Tests: [passing / total]
 ⚠️ Notes: [anything the lead should know]
 🔗 Kanban task ID: [KAN-XXX if applicable]
+
+Ready for your review. Please update Kanban to 'review' and call @code-reviewer when satisfied.
 ```

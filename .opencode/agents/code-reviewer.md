@@ -49,7 +49,21 @@ kanban_update_task({
   agentName: "code-reviewer"
 })
 ```
-This automatically triggers @tester.
+
+Then use the **Task tool** to call **@tester (MANDATORY)**:
+```
+@tester — Task [KAN-XXX] is ready for QA testing.
+
+Title: [task title]
+Scope: [backend | frontend | both]
+Acceptance criteria:
+  - [criterion 1]
+  - [criterion 2]
+Review notes: Code review passed. No blockers found.
+Kanban task ID: [KAN-XXX]
+
+Please run the test suite and verify all acceptance criteria.
+```
 
 **Step 3b — If CHANGES REQUIRED**
 ```
@@ -61,7 +75,21 @@ kanban_update_task({
   agentName: "code-reviewer"
 })
 ```
-This routes back to the developer who last worked on it.
+
+Then use the **Task tool** to notify the responsible lead (MANDATORY):
+- If scope is backend → call **@backend-lead**
+- If scope is frontend → call **@frontend-lead**
+
+```
+@backend-lead (or @frontend-lead) — Task [KAN-XXX] has been reopened after code review.
+
+Reason: [reopenReason]
+Required fixes:
+  [reviewNotes — full detail]
+Kanban task ID: [KAN-XXX]
+
+Please re-delegate to the appropriate developer.
+```
 
 **Step 4 — Record deferred debt (if any)**
 If you find issues that are explicitly deferred to a later sprint:

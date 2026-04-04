@@ -216,66 +216,11 @@ export function resolveAgent(
   }
 }
 
-export function writeTrigger(
-  worktree: string,
-  task: KanbanTask,
-  previousStatus: TaskStatus | null
-): void {
-  const triggerDir = join(getKanbanDir(worktree), "triggers");
-  if (!existsSync(triggerDir)) mkdirSync(triggerDir, { recursive: true });
-
-  const payload = {
-    taskId: task.id,
-    status: task.status,
-    assignedTo: task.assignedTo,
-    previousStatus,
-    createdAt: new Date().toISOString(),
-    message: buildTriggerMessage(task, previousStatus),
-  };
-
-  writeFileSync(
-    join(triggerDir, `${task.id}-${Date.now()}.json`),
-    JSON.stringify(payload, null, 2)
-  );
-}
-
-export function buildTriggerMessage(task: KanbanTask, previousStatus: TaskStatus | null): string {
-  const card = formatTaskCard(task);
-  const instructions = buildStatusInstructions(task);
-  return [
-    `📋 **Kanban Task Assignment**`,
-    ``,
-    card,
-    ``,
-    instructions,
-    task.reopenCount > 2
-      ? `\n⚠️ **Warning:** This task has been reopened ${task.reopenCount} times. Consider escalating to @architect.`
-      : "",
-  ].filter(Boolean).join("\n");
-}
-
-function buildStatusInstructions(task: KanbanTask): string {
-  switch (task.status) {
-    case "backlog":
-      return `**Your action:** You are @product-owner. Clarify this feature, write a user story with acceptance criteria, then call \`kanban_update_task\` to set status to 'planning' with storyContext and acceptanceCriteria.`;
-    case "planning":
-      return `**Your action:** You are @project-manager. Read the story context. Create a feature branch. For 'both' scope: create two subtasks (backend + frontend) with \`kanban_create_task\` using initialStatus: 'in-progress'. For single scope: update this task to 'in-progress' and delegate to the appropriate lead.`;
-    case "in-progress":
-      if (task.scope === "backend") return `**Your action:** You are @backend-lead. Assess complexity, delegate to the right developer. When implementation is done, call \`kanban_update_task\` to set status to 'review'.`;
-      if (task.scope === "frontend") return `**Your action:** You are @frontend-lead. Assess complexity, delegate to the right developer. When implementation is done, call \`kanban_update_task\` to set status to 'review'.`;
-      return `**Your action:** Implement this task. When done, call \`kanban_update_task\` to set status to 'review'.`;
-    case "review":
-      return `**Your action:** You are @code-reviewer. Review the implementation. Check git diff. If APPROVED: call \`kanban_update_task\` status='testing'. If CHANGES NEEDED: status='reopened' with reviewNotes explaining what must be fixed.`;
-    case "testing":
-      return `**Your action:** You are @tester. Run the test suite. Verify all acceptance criteria. If ALL PASS: call \`kanban_update_task\` status='done' with testNotes. If FAIL: status='reopened' with testNotes explaining what failed.`;
-    case "reopened":
-      return `**Your action:** Task was reopened. Reason: ${task.reopenReason || "See review/test notes above"}. Fix the issues, commit, then call \`kanban_update_task\` to set status back to 'review'.`;
-    case "done":
-      return `**Task is complete.** No action needed.`;
-    default:
-      return "";
-  }
-}
+// ─────────────────────────────────────────────────────────────
+// REMOVED: writeTrigger, buildTriggerMessage, buildStatusInstructions
+// These were part of the old polling-based trigger system.
+// Agents now call the next agent directly via the Task tool.
+// ─────────────────────────────────────────────────────────────
 
 export function formatTaskCard(task: KanbanTask): string {
   const icon: Record<string, string> = {

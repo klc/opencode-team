@@ -50,6 +50,18 @@ kanban_update_task({
 })
 ```
 
+Then use the **Task tool** to notify **@project-manager (MANDATORY)**:
+```
+@project-manager — Task [KAN-XXX] has been completed and verified.
+
+Title: [task title]
+All acceptance criteria passed.
+Test summary: [brief summary of what was tested]
+Kanban task ID: [KAN-XXX]
+
+No further action needed on this task.
+```
+
 **Step 4b — If ANY FAIL**
 ```
 kanban_update_task({
@@ -60,7 +72,22 @@ kanban_update_task({
   agentName: "tester"
 })
 ```
-This routes back to the developer.
+
+Then use the **Task tool** to notify the responsible lead (MANDATORY):
+- If scope is backend → call **@backend-lead**
+- If scope is frontend → call **@frontend-lead**
+- If scope is both → call **@backend-lead** and/or **@frontend-lead** based on which test failed
+
+```
+@backend-lead (or @frontend-lead) — Task [KAN-XXX] failed QA testing.
+
+Reason: [reopenReason]
+Test failure details:
+  [testNotes — full detail]
+Kanban task ID: [KAN-XXX]
+
+Please investigate and re-delegate to the appropriate developer.
+```
 
 ## Quality Gate
 

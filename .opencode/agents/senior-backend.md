@@ -29,7 +29,11 @@ When your lead passes you a Kanban task ID, read it first:
 kanban_get_task({ id: "[KAN-XXX]", includeHistory: true })
 ```
 
-You do NOT update Kanban status directly — your lead does that after reviewing your completion report. Your job: implement → commit → report to lead.
+**You do NOT update Kanban status directly — your lead does that after reviewing your completion report.**
+
+Your workflow: **implement → commit → report to @backend-lead**.
+
+> ⚠️ **Never call `kanban_update_task` yourself.** The lead owns the Kanban status for your tasks.
 
 If you are given a task without a Kanban ID, work normally and report completion to your lead.
 
@@ -73,7 +77,7 @@ Before committing, check: Am I removing/renaming an API endpoint? Changing a DB 
    git commit -m "feat(<scope>): <what you built> [<task-id>]"
    ```
 4. Update todowrite to `completed`
-5. Report to @backend-lead:
+5. **Report back to @backend-lead (your response to the Task tool call):**
 
 ```
 ✅ Completed: [what was done]
@@ -82,4 +86,6 @@ Before committing, check: Am I removing/renaming an API endpoint? Changing a DB 
 ⚠️ Breaking changes: [none / description]
 📦 New dependencies: [none / list]
 🔗 Kanban task ID: [KAN-XXX if applicable]
+
+Ready for your review. Please update Kanban to 'review' and call @code-reviewer when satisfied.
 ```

@@ -1,14 +1,14 @@
 import { tool } from "@opencode-ai/plugin";
 import {
   ensureKanbanDir, nextId, resolveAgent, saveTask, updateIndex,
-  loadTask, writeTrigger, formatTaskCard,
+  loadTask, formatTaskCard,
   type TaskStatus, type TaskType, type TeamScope, type KanbanTask,
 } from "./_kanban-core.js";
 
 export default tool({
   description:
     "Create a new task on the Kanban board. The task is automatically assigned to the appropriate agent based on status and scope. " +
-    "After creation, the kanban-trigger plugin will automatically notify the assigned agent. " +
+    "After creation, you MUST use the Task tool to notify the assigned agent. " +
     "Use this for new features (scope: 'both'), bug reports, or direct tasks. " +
     "project-manager uses this to create subtasks (scope: 'backend' or 'frontend') with initialStatus: 'in-progress'.",
   args: {
@@ -76,15 +76,12 @@ export default tool({
       }
     }
 
-    // Write trigger → plugin will notify the agent
-    writeTrigger(worktree, task, null);
-
     return [
       `✅ **Task created: ${id}**`,
       ``,
       formatTaskCard(task),
       ``,
-      `📡 **Trigger queued** → @${assignedTo} will be automatically notified.`,
+      `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@${assignedTo}** with the task ID and context.`,
     ].join("\n");
   },
 });

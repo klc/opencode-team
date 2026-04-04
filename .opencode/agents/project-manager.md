@@ -78,9 +78,37 @@ kanban_create_task({
 })
 ```
 
-Both subtasks trigger their respective leads automatically and in parallel.
+**Step 4a — Hand off to Lead(s) (MANDATORY)**
 
-For `scope: "backend"` or `scope: "frontend"` — update the existing task:
+After creating subtasks, you MUST use the **Task tool** to call each lead. For `scope: "both"`, call BOTH in parallel (one Task call each):
+
+Call **@backend-lead**:
+```
+@backend-lead — Backend subtask [KAN-YYY] is ready for implementation.
+
+Title: [backend task title]
+Story context: [context]
+Acceptance criteria:
+  - [backend criterion 1]
+Parent task: [KAN-XXX]
+
+Please assess complexity and delegate to the appropriate developer.
+```
+
+Call **@frontend-lead**:
+```
+@frontend-lead — Frontend subtask [KAN-ZZZ] is ready for implementation.
+
+Title: [frontend task title]
+Story context: [context]
+Acceptance criteria:
+  - [frontend criterion 1]
+Parent task: [KAN-XXX]
+
+Please assess complexity and delegate to the appropriate developer.
+```
+
+For `scope: "backend"` or `scope: "frontend"` — update the existing task and call ONE lead:
 ```
 kanban_update_task({
   id: "[KAN-XXX]",
@@ -88,6 +116,9 @@ kanban_update_task({
   agentName: "project-manager"
 })
 ```
+Then call the corresponding **@backend-lead** or **@frontend-lead** via Task tool with the task context.
+
+Do NOT skip Task tool calls. The system no longer auto-triggers agents.
 
 **Step 5 — Update parent task**
 ```

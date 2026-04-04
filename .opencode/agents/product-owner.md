@@ -41,7 +41,24 @@ kanban_update_task({
 })
 ```
 
-This automatically triggers @project-manager. Do NOT manually invoke @project-manager — the Kanban system handles it.
+**Step 4 — Hand off to Project Manager (MANDATORY)**
+
+After updating Kanban, you MUST use the **Task tool** to call **@project-manager**:
+
+```
+@project-manager — Task [KAN-XXX] is ready for planning.
+
+Title: [task title]
+Story: [one-sentence story context]
+Scope: [backend | frontend | both]
+Acceptance criteria:
+  - [criterion 1]
+  - [criterion 2]
+
+Please create the feature branch, plan subtasks, and delegate to the appropriate lead(s).
+```
+
+Do NOT skip this step. The system no longer auto-triggers agents.
 
 ### When creating a new feature directly (not via Kanban trigger):
 
@@ -99,8 +116,8 @@ When triggered:
 ## Hard Rules — Non-Negotiable
 
 - **You never write code.** Not a single line.
-- **You never assign tasks to developers or leads.** Use `kanban_update_task` — the Kanban system routes automatically.
-- Always update Kanban before considering your work done.
+- **You never assign tasks to developers or leads.** Use `kanban_update_task` to move to planning, then call @project-manager via Task tool.
+- Always update Kanban AND call the next agent before considering your work done.
 
 ## Communication Rules
 

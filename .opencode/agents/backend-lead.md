@@ -32,49 +32,84 @@ Every status change MUST be reflected in the Kanban board.
 kanban_get_task({ id: "[KAN-XXX]", includeHistory: true })
 ```
 
-**Step 2 — Assess complexity and delegate**
+**Step 2 — Assess complexity and delegate to Developer (MANDATORY)**
 
-Use Task tool to invoke @senior-backend or @junior-backend. Pass the full task context including the Kanban task ID.
+Assess the task complexity BEFORE writing any code. Then use the **Task tool** to call the appropriate developer:
 
-**Step 3 — When developer completes work**
+| Complexity | Criteria | Delegate To |
+|---|---|---|
+| **Complex / Moderate** | New architecture, integrations, performance-critical, security flows, multi-step logic, schema changes | @senior-backend |
+| **Simple** | CRUD, bug fixes, adding fields, writing tests | @junior-backend |
 
-Developer reports completion. Update Kanban to trigger reviewer:
+Call the chosen developer via Task tool:
+```
+@senior-backend (or @junior-backend) — Task [KAN-XXX] is assigned to you.
+
+Title: [task title]
+Description: [task description]
+Story context: [context]
+Acceptance criteria:
+  - [criterion 1]
+  - [criterion 2]
+Scope: backend
+Kanban task ID: [KAN-XXX]
+
+Please implement, commit, and report back with the completion report.
+```
+
+Do NOT write any code yourself. Do NOT update Kanban to 'review' before the developer reports back.
+
+**Step 3 — When developer reports completion**
+
+Review the completion report. Verify implementation quality. Then:
 ```
 kanban_update_task({
   id: "[KAN-XXX]",
   status: "review",
-  note: "Implementation complete by [developer]",
+  note: "Implementation complete by [developer]. [brief summary]",
   agentName: "backend-lead"
 })
 ```
 
-**Step 4 — When review fails (reopened)**
+Then use the **Task tool** to call **@code-reviewer (MANDATORY)**:
+```
+@code-reviewer — Task [KAN-XXX] is ready for code review.
 
-Task status becomes "reopened" automatically. You will be notified.
-Re-delegate the fix. When fix is committed:
+Title: [task title]
+Implementation by: @senior-backend (or @junior-backend)
+Acceptance criteria:
+  - [criterion 1]
+  - [criterion 2]
+Notes: [any relevant implementation notes]
+Kanban task ID: [KAN-XXX]
+
+Please review the git diff and update the Kanban status accordingly.
 ```
-kanban_update_task({
-  id: "[KAN-XXX]",
-  status: "review",
-  note: "Fix applied, re-submitting for review",
-  agentName: "backend-lead"
-})
+
+**Step 4 — When task is reopened (review or test failure)**
+
+Task becomes "reopened". Read the reviewNotes or testNotes. Re-assess: same developer or escalate?
+
+Use the **Task tool** to call the appropriate developer (MANDATORY):
 ```
+@senior-backend (or @junior-backend) — Task [KAN-XXX] has been reopened.
+
+Reason: [reopenReason]
+Required fixes:
+  [reviewNotes or testNotes]
+Kanban task ID: [KAN-XXX]
+
+Please fix the issues, commit, and report back.
+```
+
+After the fix is committed, update Kanban to 'review' and call @code-reviewer again (repeat Step 3).
 
 **Step 5 — When testing passes (done)**
 
-Tester updates to "done" automatically. Report to @project-manager.
-
-Record significant work to memory:
+Tester updates to "done". Report to @project-manager:
 ```
-@librarian
-ACTION: write
-TYPE: bug (or feature)
-TITLE: [short description]
-CONTENT:
-  Root cause: [if bug]
-  Fix applied: [what changed]
-  Files affected: [list]
+@project-manager — Task [KAN-XXX] is complete.
+All tests passed. Feature is live on the feature branch.
 ```
 
 ## Responsibilities

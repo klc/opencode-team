@@ -48,7 +48,7 @@ app.get('/api/tasks', (req, res) => {
 
     // Read main tasks
     for (const file of files) {
-      if (file.startsWith('KAN-') && file.endsWith('.json')) {
+      if (file !== 'index.json' && file.endsWith('.json')) {
         const filePath = join(targetDir, file);
         try {
           const fileContent = readFileSync(filePath, 'utf8');

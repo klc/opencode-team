@@ -1,6 +1,6 @@
 ---
 name: coding-standards
-description: Universal code quality rules, Definition of Done, review severity levels, and documentation standards. Load this before reviewing or writing any code.
+description: Universal code quality rules, Definition of Done, review severity levels, and documentation standards. Load before reviewing or writing any code.
 ---
 
 # Coding Standards Skill
@@ -8,6 +8,18 @@ description: Universal code quality rules, Definition of Done, review severity l
 > This file contains universal standards that apply regardless of language or framework.
 > Project-specific conventions (naming, folder structure, test commands) are in the
 > `project-stack` skill. Load both.
+
+---
+
+## The Foundation
+
+Three skills govern all code work in this team. Load them before any implementation:
+
+- **`test-driven-development`** — No code before tests. Iron law.
+- **`verification-before-completion`** — No "it should work." Run it, read the output, then report.
+- **`systematic-debugging`** — No random fixes. Root cause first, always.
+
+Violating these is not a style preference — it is a process failure.
 
 ---
 
@@ -22,12 +34,12 @@ description: Universal code quality rules, Definition of Done, review severity l
 
 ### Every pull request must
 
-- [ ] Have unit tests for all new logic
-- [ ] Have all existing tests passing
-- [ ] Have no hardcoded secrets or environment-specific values
-- [ ] Have input validation on all external data (HTTP requests, file uploads, queue messages)
-- [ ] Have structured logging for key operations
-- [ ] Have all external calls wrapped with timeout and error handling
+- [ ] Tests written BEFORE implementation (TDD — verified by developer)
+- [ ] All existing tests passing (run and verified, not assumed)
+- [ ] No hardcoded secrets or environment-specific values
+- [ ] Input validation on all external data (HTTP requests, file uploads, queue messages)
+- [ ] Structured logging for key operations
+- [ ] All external calls wrapped with timeout and error handling
 
 ---
 
@@ -47,16 +59,21 @@ Apply these regardless of stack:
 
 ## Definition of Done
 
-A task is **Done** when all of the following are true:
+A task is **Done** when ALL of the following are true:
 
-- [ ] Code is implemented and matches the acceptance criteria
-- [ ] Unit tests written and passing (≥ 80% coverage on new code)
-- [ ] Integration tests passing (where applicable)
+- [ ] Tests written BEFORE code (TDD — developer confirms RED→GREEN→REFACTOR)
+- [ ] All tests passing — run and verified, output read, count confirmed
+- [ ] No regressions — full suite passes
 - [ ] No linting errors
 - [ ] All project-stack runtime constraints respected
-- [ ] Code committed with the correct conventional commit format
-- [ ] Todo task marked `completed`
-- [ ] Completion report sent to lead
+- [ ] Code committed with correct conventional commit format
+- [ ] Completion report sent to lead WITH test output evidence
+
+A task is NOT done when:
+- Developer says "tests should pass" without running them
+- Tests pass but were written after the code
+- Only the new tests pass but the full suite wasn't run
+- Acceptance criteria were not checked one by one
 
 ---
 
@@ -66,11 +83,13 @@ Reviewers classify findings into three levels:
 
 | Level | Meaning | Blocks merge? |
 |---|---|---|
-| 🔴 Blocker | Security issue, data loss risk, broken core logic, missing auth | Yes |
+| 🔴 Blocker | Security issue, data loss risk, broken core logic, missing auth, runtime constraint violated | Yes |
 | 🟡 Required | Standards violation, missing test, performance issue with easy fix | Yes |
 | 🟢 Suggestion | Style preference, optional improvement, future consideration | No |
 
 A PR is approved only when there are zero 🔴 Blockers and zero 🟡 Required items.
+
+**Reviewers must read every changed line.** "Looks reasonable" is not a review.
 
 ---
 

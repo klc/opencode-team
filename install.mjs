@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Setup Script v1.8.0
+// OpenCode Agent Team — Setup Script v1.9.0
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
@@ -113,9 +113,10 @@ function setupKanbanDir(projectRoot) {
     mkdirSync(triggersDir, { recursive: true })
     mkdirSync(processedDir, { recursive: true })
 
-    // Empty index
     writeFileSync(join(kanbanDir, 'index.json'), JSON.stringify({
       lastId: 0,
+      prefixCounters: {},
+      childCounters: {},
       tasks: {},
       updatedAt: new Date().toISOString()
     }, null, 2))
@@ -131,15 +132,15 @@ function buildAgentBlock(agentModels) {
     'product-owner':       'Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager. Never writes code.',
     'project-manager':     'Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Kanban. Never writes code.',
     'architect':           'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
-    'backend-lead':        'Invoke when backend Kanban tasks arrive. Delegates to developers. Updates Kanban to review when done.',
-    'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Delegates to developers. Updates Kanban to review when done.',
-    'senior-backend':      'Invoke for complex backend tasks: new architecture, integrations, performance-critical code.',
-    'senior-frontend':     'Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code.',
-    'junior-backend':      'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes.',
-    'junior-frontend':     'Invoke for simple frontend tasks: styling, small presentational components, component tests.',
-    'tester':              'Invoke after review passes (via Kanban). Writes and runs tests. Updates Kanban to done or reopened.',
-    'code-reviewer':       'Invoke before QA (via Kanban). Reviews code quality. Updates Kanban to testing or reopened.',
-    'debugger':            'Invoke when root cause of a bug is unclear. Analysis only. Can create Kanban bug tasks.',
+    'backend-lead':        'Invoke when backend Kanban tasks arrive. Owns full delivery cycle: delegates to developer, calls code-reviewer, calls tester, handles fix loops. Updates Kanban.',
+    'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Owns full delivery cycle: delegates to developer, calls code-reviewer, calls tester, handles fix loops. Updates Kanban.',
+    'senior-backend':      'Invoke for complex backend tasks. Implements via TDD, reports completion with test output evidence to backend-lead.',
+    'senior-frontend':     'Invoke for complex frontend tasks. Implements via TDD, reports completion with test output evidence to frontend-lead.',
+    'junior-backend':      'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Reports to backend-lead.',
+    'junior-frontend':     'Invoke for simple frontend tasks: styling, small presentational components. Reports to frontend-lead.',
+    'tester':              'Invoke after code review passes (called by lead). Runs full test suite, verifies acceptance criteria, reports findings to lead — never updates Kanban.',
+    'code-reviewer':       'Invoke before QA (called by lead). Reviews code quality, reports APPROVED or CHANGES REQUIRED to lead — never updates Kanban.',
+    'debugger':            'Invoke when root cause of a bug is unclear. Uses 4-phase systematic debugging process. Analysis only — never modifies code.',
     'researcher':          'Invoke to evaluate a technology or pattern. Produces comparison report.',
     'designer':            'Invoke to establish or update the project visual design system. Creates the project-design skill.',
     'security-auditor':    'Invoke for security audits — OWASP Top 10, auth flaws. Invoked alongside code-reviewer for security-sensitive scopes.',
@@ -250,7 +251,7 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
 async function main() {
   console.log('')
   console.log(bold(cyan('╔══════════════════════════════════════════╗')))
-  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.8.0  ║')))
+  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.9.0  ║')))
   console.log(bold(cyan('╚══════════════════════════════════════════╝')))
   console.log('')
 
@@ -337,6 +338,7 @@ async function main() {
 
   copyDir(sourceDir, installDir, ['opencode.json'])
   ok(`Copied agent, command, skill, tool, and plugin files to ${installDir}`)
+  ok(`New skills installed: test-driven-development, systematic-debugging, verification-before-completion, receiving-code-review`)
 
   // Apply model assignments
   const agentsDir = join(installDir, 'agents')
@@ -399,12 +401,11 @@ async function main() {
     const kanbanCreated = setupKanbanDir(projectRoot)
     if (kanbanCreated) {
       ok('Created .kanban/ directory with empty index')
-      ok('Kanban trigger plugin will auto-start with the next OpenCode session')
     } else {
       ok('.kanban/ directory already exists — skipping')
     }
 
-    // .gitignore — .kanban should NOT be ignored (it's project state)
+    // .gitignore check
     const gitignorePath = join(projectRoot, '.gitignore')
     if (existsSync(gitignorePath)) {
       const gitignore = readFileSync(gitignorePath, 'utf8')
@@ -437,13 +438,17 @@ async function main() {
   console.log(`  ${bold('Security:')} ${green('✓')} permission.task + granular bash permissions active`)
   console.log(`  ${bold('Custom Tools:')} ${green('✓')} memory-search, complexity-score, debt-summary, stack-detect`)
   console.log(`  ${bold('Kanban Tools:')} ${green('✓')} kanban-create, kanban-update, kanban-get, kanban-list, kanban-watch`)
-  console.log(`  ${bold('Kanban Plugin:')} ${green('✓')} kanban-trigger (auto agent triggering on status change)`)
+  console.log(`  ${bold('New Skills (v1.9.0):')} ${green('✓')} test-driven-development, systematic-debugging,`)
+  console.log(`                           verification-before-completion, receiving-code-review`)
+  console.log('')
+  console.log(`  ${bold('Delivery cycle:')} leads own the full cycle — developers, reviewers, and`)
+  console.log(`                   testers all report back to the lead`)
   console.log('')
   console.log(`  ${bold('Next steps:')}`)
   if (!isGlobal) {
     console.log(`  1. ${cyan('Edit AGENTS.md')} — add your project rules`)
     console.log(`  2. ${cyan('Run /team:init')} — generates project-stack skill`)
-    console.log(`  3. ${cyan('/team:new-feature <description>')} — start building (fully automated via Kanban)`)
+    console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
     console.log('')
     console.log(`  ${bold('Kanban commands:')}`)
     console.log(`    ${cyan('/team:kanban board')}         — see all active tasks`)

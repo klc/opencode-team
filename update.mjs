@@ -1,10 +1,9 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Update Script v1.9.0
+// OpenCode Agent Team — Update Script v2.0.0
 // Preserves model assignments, MCP settings, and project rules.
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
-import { spawnSync } from 'child_process'
 import { existsSync, readdirSync, copyFileSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
 import { homedir } from 'os'
@@ -111,13 +110,29 @@ function updateOpencodeJson(installDir, currentModels) {
   for (const [name, agent] of Object.entries(config.agent || {})) {
     if (currentModels[name] && agent.model !== currentModels[name]) { agent.model = currentModels[name]; updated++ }
   }
-  try { writeFileSync(jsonPath, JSON.stringify(config, null, 2)); if (updated > 0) ok(`Updated ${updated} model references in opencode.json`) }
+  // Ensure seo-auditor has correct permission.task if agent block exists
+  if (config.agent?.['frontend-lead']?.permission?.task) {
+    const ft = config.agent['frontend-lead'].permission.task
+    if (!ft['seo-auditor']) {
+      ft['seo-auditor'] = 'allow'
+      updated++
+      ok('Added seo-auditor to frontend-lead permission.task')
+    }
+  }
+  try { writeFileSync(jsonPath, JSON.stringify(config, null, 2)); if (updated > 0) ok(`Updated ${updated} entries in opencode.json`) }
   catch (e) { warn(`Could not write opencode.json: ${e.message}`) }
 }
 
 function hasTaskPermissions(jsonPath) {
   try { const c = JSON.parse(readFileSync(jsonPath, 'utf8')); return Object.values(c.agent || {}).some(a => a.permission?.task) }
   catch { return false }
+}
+
+function hasSeoAuditorPermission(jsonPath) {
+  try {
+    const c = JSON.parse(readFileSync(jsonPath, 'utf8'))
+    return c.agent?.['frontend-lead']?.permission?.task?.['seo-auditor'] === 'allow'
+  } catch { return false }
 }
 
 function checkKanbanSetup(projectRoot, installDir) {
@@ -153,7 +168,20 @@ function setupKanbanDir(projectRoot) {
   return false
 }
 
-// ── New skills check ─────────────────────────────────────────
+function checkNewAgents(installDir) {
+  const requiredAgents = ['seo-auditor']
+  const agentsDir = join(installDir, 'agents')
+  const missing = requiredAgents.filter(a => !existsSync(join(agentsDir, `${a}.md`)))
+  return { requiredAgents, missing }
+}
+
+function checkNewCommands(installDir) {
+  const requiredCommands = ['team:seo-audit.md']
+  const commandsDir = join(installDir, 'commands')
+  const missing = requiredCommands.filter(c => !existsSync(join(commandsDir, c)))
+  return { requiredCommands, missing }
+}
+
 function checkNewSkills(installDir) {
   const newSkills = [
     'test-driven-development',
@@ -166,7 +194,6 @@ function checkNewSkills(installDir) {
   return { newSkills, missing }
 }
 
-// ── GitHub Actions check ─────────────────────────────────────
 function checkGithubActions(projectRoot) {
   const sourceDir = join(__dirname, '.github', 'workflows')
   if (!existsSync(sourceDir)) return { hasSource: false }
@@ -196,6 +223,19 @@ function checkCustomTools(installDir) {
 
 // ── Changelog ───────────────────────────────────────────────
 const CHANGELOG = [
+  { version: '2.0.0', changes: [
+    'feat: seo-auditor agent — Technical SEO (9 categories) + GEO Readiness Score (0-100)',
+    'feat: team:seo-audit command — manual audit with optional live URL comparison',
+    'feat: frontend-lead — SEO scope detection, seo-auditor runs parallel with code-reviewer for Pages/Layouts changes',
+    'feat: GEO analysis — citability scoring (134-167 word blocks), E-E-A-T (Sept 2025 guidelines), multi-modal signals',
+    'feat: AI crawler access check — 9 crawlers (GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, CCBot, Bytespider, cohere-ai)',
+    'feat: SSR meta rendering check — critical for Inertia/Next.js/Nuxt stacks',
+    'fix: INP replaces FID (removed Sept 2024) in all SEO checks',
+    'fix: deprecated schema awareness — FAQPage (gov/health only), HowTo (deprecated), SpecialAnnouncement (deprecated)',
+    'feat: llms.txt presence check for AI search engine compliance',
+    'feat: opencode.json — seo-auditor added to frontend-lead permission.task',
+    'feat: install/update scripts — seo-auditor model assignment (strong model), color #22d3ee',
+  ]},
   { version: '1.9.0', changes: [
     'feat: lead-owned delivery cycle — reviewer and tester report to lead, not Kanban',
     'feat: skill/test-driven-development — RED-GREEN-REFACTOR Iron Law for all developers',
@@ -216,12 +256,6 @@ const CHANGELOG = [
     'feat: kanban_create_task, kanban_update_task, kanban_get_task, kanban_list_tasks, kanban_watch tools',
     'feat: all 17 agents updated with Kanban integration',
     'feat: /team:kanban command — board/status/watch sub-commands',
-  ]},
-  { version: '1.7.0', changes: [
-    'feat: permission.task — delegation chain enforced at API level',
-    'feat: granular bash permissions — 4 tiers: lead / senior / junior / readonly',
-    'feat: GitHub Actions — 4 workflows',
-    'feat: custom tools — memory-search, complexity-score, debt-summary, stack-detect',
   ]},
 ]
 
@@ -272,6 +306,12 @@ async function main() {
 
     // Read models BEFORE overwriting
     const currentModels = resolveCurrentModels(dir)
+    // Default seo-auditor to strong model if not previously assigned
+    if (!currentModels['seo-auditor']) {
+      const strongCandidate = currentModels['architect'] || currentModels['debugger'] || 'my-provider/my-strong-model'
+      currentModels['seo-auditor'] = strongCandidate
+      ok(`seo-auditor model defaulted to: ${strongCandidate}`)
+    }
     const modelCount = Object.keys(currentModels).filter(k => !currentModels[k].includes('my-provider')).length
     ok(`Read ${Object.keys(currentModels).length} model assignments (${modelCount} non-placeholder)`)
 
@@ -290,23 +330,46 @@ async function main() {
     }
     DRY_RUN ? dryok(`Would restore ${restored} model assignments`) : ok(`Restored ${restored} model assignments to agent files`)
 
-    // Update opencode.json models
+    // Update opencode.json (models + seo-auditor permission)
     const jsonPath = join(dir, 'opencode.json')
     if (existsSync(jsonPath)) updateOpencodeJson(dir, currentModels)
 
-    // permission.task check
+    // permission.task checks
     if (!DRY_RUN && existsSync(jsonPath)) {
-      if (hasTaskPermissions(jsonPath)) ok('permission.task delegation chain — already configured')
+      if (hasTaskPermissions(jsonPath)) ok('permission.task delegation chain — configured')
       else warn('permission.task is NOT configured. Re-run install.mjs or add it manually.')
+
+      if (hasSeoAuditorPermission(jsonPath)) ok('seo-auditor in frontend-lead permission.task — ✓')
+      else warn('seo-auditor NOT in frontend-lead permission.task — run install.mjs to fix')
+    }
+
+    // New agents check (v2.0.0)
+    if (!DRY_RUN) {
+      const agentCheck = checkNewAgents(dir)
+      if (agentCheck.missing.length === 0) {
+        ok(`v2.0.0 agents — seo-auditor installed ✓`)
+      } else {
+        warn(`Missing v2.0.0 agents: ${agentCheck.missing.join(', ')} — these were copied in the file update step above`)
+      }
+    }
+
+    // New commands check (v2.0.0)
+    if (!DRY_RUN) {
+      const cmdCheck = checkNewCommands(dir)
+      if (cmdCheck.missing.length === 0) {
+        ok(`v2.0.0 commands — team:seo-audit installed ✓`)
+      } else {
+        warn(`Missing v2.0.0 commands: ${cmdCheck.missing.join(', ')} — these were copied in the file update step above`)
+      }
     }
 
     // New skills check (v1.9.0)
     if (!DRY_RUN) {
       const skillsCheck = checkNewSkills(dir)
       if (skillsCheck.missing.length === 0) {
-        ok(`v1.9.0 skills — all 4 installed (test-driven-development, systematic-debugging, verification-before-completion, receiving-code-review)`)
+        ok(`v1.9.0 skills — all 4 present (TDD, systematic-debugging, verification, receiving-review)`)
       } else {
-        warn(`Missing v1.9.0 skills: ${skillsCheck.missing.join(', ')} — these were copied in the file update step above`)
+        warn(`Missing v1.9.0 skills: ${skillsCheck.missing.join(', ')} — check file copy above`)
       }
     }
 
@@ -391,30 +454,37 @@ async function main() {
   console.log(bold(green('╚══════════════════════════════════════════╝')))
   console.log('')
   console.log(`  ${bold('What was updated:')}`)
-  console.log(`    ${green('✓')} Agent files — all 17 agents with lead-owned delivery cycle`)
-  console.log(`    ${green('✓')} New skills — test-driven-development, systematic-debugging,`)
-  console.log(`                    verification-before-completion, receiving-code-review`)
-  console.log(`    ${green('✓')} coding-standards skill — updated Definition of Done`)
+  console.log(`    ${green('✓')} NEW: seo-auditor agent (18 agents total)`)
+  console.log(`    ${green('✓')} NEW: team:seo-audit command (22 commands total)`)
+  console.log(`    ${green('✓')} UPDATED: frontend-lead — SEO scope detection + seo-auditor parallel call`)
+  console.log(`    ${green('✓')} UPDATED: opencode.json — seo-auditor in frontend-lead permission.task`)
+  console.log(`    ${green('✓')} UPDATED: README.md — seo-auditor docs, updated agent count, new command`)
+  console.log(`    ${green('✓')} Agent files — all 18 agents`)
   console.log(`    ${green('✓')} Command files (.opencode/commands/)`)
   console.log(`    ${green('✓')} Tool files (.opencode/tools/)`)
   console.log(`    ${green('✓')} Plugin files`)
   console.log(`    ${green('✓')} .kanban/ directory structure`)
   console.log('')
   console.log(`  ${bold('What was preserved:')}`)
-  console.log(`    ${green('✓')} Your model assignments`)
+  console.log(`    ${green('✓')} Your model assignments (seo-auditor defaulted to strong model)`)
   console.log(`    ${green('✓')} opencode.json provider + MCP settings`)
   console.log(`    ${green('✓')} AGENTS.md project rules`)
   console.log(`    ${green('✓')} project-stack skill`)
   console.log(`    ${green('✓')} .kanban/ task data (not overwritten)`)
   console.log('')
-  console.log(`  ${bold('v1.9.0 highlights:')}`)
-  console.log(`    ${green('✓')} Leads own the full delivery cycle`)
-  console.log(`    ${green('✓')} Reviewers and testers report to lead — never touch Kanban`)
-  console.log(`    ${green('✓')} TDD enforced for all developers (RED→GREEN→REFACTOR Iron Law)`)
-  console.log(`    ${green('✓')} Verification required before any completion claim`)
-  console.log(`    ${green('✓')} Systematic 4-phase debugging process`)
+  console.log(`  ${bold('v2.0.0 — SEO/GEO Auditor highlights:')}`)
+  console.log(`    ${green('✓')} seo-auditor runs parallel with code-reviewer (no added latency)`)
+  console.log(`    ${green('✓')} Triggers only on Pages/ and Layouts/ changes`)
+  console.log(`    ${green('✓')} Technical SEO: 9 categories (meta, semantic HTML, JSON-LD, SSR,`)
+  console.log(`                   INP/CWV, AI crawlers, security headers, llms.txt, IndexNow)`)
+  console.log(`    ${green('✓')} GEO Readiness Score: 0-100 (citability, readability, multi-modal,`)
+  console.log(`                   E-E-A-T Sept 2025 guidelines, technical accessibility)`)
+  console.log(`    ${green('✓')} Deprecated schema blocked: FAQPage (gov/health only), HowTo, SpecialAnnouncement`)
+  console.log(`    ${green('✓')} FID removed — INP (< 200ms) used throughout`)
+  console.log(`    ${green('✓')} /team:seo-audit for manual audits + live URL comparison`)
   console.log('')
   console.log(`  ${dim('Start with: /team:new-feature <description>')}`)
+  console.log(`  ${dim('Manual SEO audit: /team:seo-audit [optional-url]')}`)
   console.log('')
 
   close()

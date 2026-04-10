@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Setup Script v1.9.0
+// OpenCode Agent Team — Setup Script v2.0.0
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
@@ -133,13 +133,14 @@ function buildAgentBlock(agentModels) {
     'project-manager':     'Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Kanban. Never writes code.',
     'architect':           'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
     'backend-lead':        'Invoke when backend Kanban tasks arrive. Owns full delivery cycle: delegates to developer, calls code-reviewer, calls tester, handles fix loops. Updates Kanban.',
-    'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Owns full delivery cycle: delegates to developer, calls code-reviewer, calls tester, handles fix loops. Updates Kanban.',
+    'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Owns full delivery cycle: delegates to developer, calls code-reviewer (+ seo-auditor when Pages/Layouts change), calls tester, handles fix loops. Updates Kanban.',
     'senior-backend':      'Invoke for complex backend tasks. Implements via TDD, reports completion with test output evidence to backend-lead.',
     'senior-frontend':     'Invoke for complex frontend tasks. Implements via TDD, reports completion with test output evidence to frontend-lead.',
     'junior-backend':      'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Reports to backend-lead.',
     'junior-frontend':     'Invoke for simple frontend tasks: styling, small presentational components. Reports to frontend-lead.',
     'tester':              'Invoke after code review passes (called by lead). Runs full test suite, verifies acceptance criteria, reports findings to lead — never updates Kanban.',
     'code-reviewer':       'Invoke before QA (called by lead). Reviews code quality, reports APPROVED or CHANGES REQUIRED to lead — never updates Kanban.',
+    'seo-auditor':         'Invoke when Pages/ or Layouts/ files change (called by frontend-lead, parallel with code-reviewer). Checks Technical SEO (9 categories: meta, semantic HTML, JSON-LD, SSR rendering, Core Web Vitals/INP, AI crawler access, security headers, llms.txt) and GEO readiness score (0-100: citability, readability, multi-modal, E-E-A-T, technical). Reports APPROVED or CHANGES REQUIRED to frontend-lead — never updates Kanban. Never modifies code.',
     'debugger':            'Invoke when root cause of a bug is unclear. Uses 4-phase systematic debugging process. Analysis only — never modifies code.',
     'researcher':          'Invoke to evaluate a technology or pattern. Produces comparison report.',
     'designer':            'Invoke to establish or update the project visual design system. Creates the project-design skill.',
@@ -154,6 +155,7 @@ function buildAgentBlock(agentModels) {
     'senior-backend': 'subagent', 'senior-frontend': 'subagent',
     'junior-backend': 'subagent', 'junior-frontend': 'subagent',
     'tester': 'subagent', 'code-reviewer': 'subagent',
+    'seo-auditor': 'subagent',
     'debugger': 'subagent', 'researcher': 'subagent',
     'security-auditor': 'subagent', 'performance-analyst': 'subagent', 'librarian': 'subagent',
   }
@@ -163,7 +165,9 @@ function buildAgentBlock(agentModels) {
     'backend-lead': 100, 'frontend-lead': 100,
     'senior-backend': 80, 'senior-frontend': 80,
     'junior-backend': 40, 'junior-frontend': 40,
-    'tester': 60, 'code-reviewer': 40, 'debugger': 60, 'researcher': 40,
+    'tester': 60, 'code-reviewer': 40,
+    'seo-auditor': 60,
+    'debugger': 60, 'researcher': 40,
     'designer': 60, 'security-auditor': 60, 'performance-analyst': 60, 'librarian': 40,
   }
 
@@ -172,13 +176,14 @@ function buildAgentBlock(agentModels) {
     'project-manager':     { '*': 'deny', 'backend-lead': 'allow', 'frontend-lead': 'allow', 'architect': 'allow', 'librarian': 'allow' },
     'architect':           { '*': 'deny', 'researcher': 'allow', 'librarian': 'allow' },
     'backend-lead':        { '*': 'deny', 'senior-backend': 'allow', 'junior-backend': 'allow', 'code-reviewer': 'allow', 'tester': 'allow', 'security-auditor': 'allow', 'performance-analyst': 'allow', 'debugger': 'allow', 'researcher': 'allow', 'librarian': 'allow' },
-    'frontend-lead':       { '*': 'deny', 'senior-frontend': 'allow', 'junior-frontend': 'allow', 'code-reviewer': 'allow', 'tester': 'allow', 'security-auditor': 'allow', 'performance-analyst': 'allow', 'debugger': 'allow', 'researcher': 'allow', 'librarian': 'allow', 'designer': 'allow' },
+    'frontend-lead':       { '*': 'deny', 'senior-frontend': 'allow', 'junior-frontend': 'allow', 'code-reviewer': 'allow', 'tester': 'allow', 'security-auditor': 'allow', 'seo-auditor': 'allow', 'performance-analyst': 'allow', 'debugger': 'allow', 'researcher': 'allow', 'librarian': 'allow', 'designer': 'allow' },
     'senior-backend':      { '*': 'deny', 'librarian': 'allow' },
     'senior-frontend':     { '*': 'deny', 'librarian': 'allow' },
     'junior-backend':      { '*': 'deny' },
     'junior-frontend':     { '*': 'deny' },
     'tester':              { '*': 'deny' },
     'code-reviewer':       { '*': 'deny', 'librarian': 'allow' },
+    'seo-auditor':         { '*': 'deny' },
     'debugger':            { '*': 'deny', 'librarian': 'allow' },
     'researcher':          { '*': 'deny', 'librarian': 'allow' },
     'designer':            { '*': 'deny', 'librarian': 'allow' },
@@ -192,6 +197,8 @@ function buildAgentBlock(agentModels) {
     senior:   { '*': 'allow', 'git push': 'ask', 'git push *': 'ask', 'git rebase *': 'ask', 'git reset --hard *': 'ask', 'rm -rf *': 'ask', 'sudo *': 'deny' },
     junior:   { '*': 'ask', 'git status': 'allow', 'git diff *': 'allow', 'git log *': 'allow', 'git add *': 'allow', 'git commit *': 'allow', 'grep *': 'allow', 'find *': 'allow', 'cat *': 'allow', 'ls *': 'allow', 'npm run *': 'allow', 'git push': 'deny', 'git push *': 'deny', 'git rebase *': 'deny', 'git reset *': 'deny', 'rm -rf *': 'deny', 'sudo *': 'deny' },
     readonly: { '*': 'allow', 'git push': 'deny', 'git push *': 'deny', 'sudo *': 'deny' },
+    // seo-auditor: readonly + webfetch (no write/edit tools, same bash tier as code-reviewer)
+    seo:      { '*': 'allow', 'git push': 'deny', 'git push *': 'deny', 'sudo *': 'deny', 'rm -rf *': 'deny' },
   }
 
   const bashTierMap = {
@@ -200,11 +207,35 @@ function buildAgentBlock(agentModels) {
     'junior-backend': 'junior', 'junior-frontend': 'junior',
     'code-reviewer': 'readonly', 'debugger': 'readonly', 'security-auditor': 'readonly',
     'performance-analyst': 'readonly', 'librarian': 'readonly',
+    'seo-auditor': 'seo',
   }
 
   const todoAgents = new Set(['project-manager', 'backend-lead', 'frontend-lead', 'senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester', 'code-reviewer'])
-  const hiddenAgents = new Set(['senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester', 'code-reviewer', 'debugger', 'security-auditor', 'performance-analyst', 'librarian'])
+  const hiddenAgents = new Set(['senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester', 'code-reviewer', 'seo-auditor', 'debugger', 'security-auditor', 'performance-analyst', 'librarian'])
   const editAllowAgents = new Set(['senior-backend', 'senior-frontend', 'junior-backend', 'junior-frontend', 'tester'])
+  const webfetchAgents = new Set(['seo-auditor'])
+
+  const colorMap = {
+    'product-owner': '#a78bfa', 'project-manager': '#60a5fa', 'architect': '#f472b6',
+    'backend-lead': '#34d399', 'frontend-lead': '#fb923c', 'designer': '#e879f9',
+    'senior-backend': '#6ee7b7', 'senior-frontend': '#fdba74',
+    'junior-backend': '#a7f3d0', 'junior-frontend': '#fed7aa',
+    'tester': '#fbbf24', 'code-reviewer': '#f59e0b',
+    'seo-auditor': '#22d3ee',
+    'debugger': '#f87171', 'researcher': '#818cf8',
+    'security-auditor': '#ef4444', 'performance-analyst': '#06b6d4', 'librarian': '#c084fc',
+  }
+
+  const tempMap = {
+    'product-owner': 0.7, 'project-manager': 0.5, 'architect': 0.4,
+    'backend-lead': 0.3, 'frontend-lead': 0.4,
+    'senior-backend': 0.2, 'senior-frontend': 0.3,
+    'junior-backend': 0.3, 'junior-frontend': 0.4,
+    'tester': 0.2, 'code-reviewer': 0.2,
+    'seo-auditor': 0.1,
+    'debugger': 0.1, 'researcher': 0.6, 'designer': 0.7,
+    'security-auditor': 0.1, 'performance-analyst': 0.2, 'librarian': 0.3,
+  }
 
   const block = {}
   for (const name of Object.keys(descriptions)) {
@@ -213,10 +244,13 @@ function buildAgentBlock(agentModels) {
       model: agentModels[name],
       mode: modeMap[name],
       steps: stepsMap[name],
+      color: colorMap[name],
+      temperature: tempMap[name],
     }
 
     const tools = {}
     if (todoAgents.has(name)) { tools.todowrite = true; tools.todoread = true }
+    if (webfetchAgents.has(name)) { tools.webfetch = true }
     if (Object.keys(tools).length > 0) agent.tools = tools
 
     const permission = {}
@@ -233,7 +267,7 @@ function buildAgentBlock(agentModels) {
 }
 
 function writeOpencodeJson(destPath, agentBlock, isProject) {
-  let config = {}
+  let config
   if (existsSync(destPath)) {
     try { config = JSON.parse(readFileSync(destPath, 'utf8')) } catch { config = {} }
     config.agent = agentBlock
@@ -251,7 +285,7 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
 async function main() {
   console.log('')
   console.log(bold(cyan('╔══════════════════════════════════════════╗')))
-  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.9.0  ║')))
+  console.log(bold(cyan('║     OpenCode Agent Team — Setup v2.0.0  ║')))
   console.log(bold(cyan('╚══════════════════════════════════════════╝')))
   console.log('')
 
@@ -288,7 +322,7 @@ async function main() {
   // ── Step 3: Model assignments ─────────────────────────────
   step('Model assignments')
   console.log('')
-  console.log(`  ${bold('Strong')} — leads, architect, senior devs, debugger ${dim('(high-stakes decisions)')}`)
+  console.log(`  ${bold('Strong')} — leads, architect, senior devs, debugger, seo-auditor ${dim('(high-stakes decisions)')}`)
   console.log(`  ${bold('Fast')}   — junior devs, tester, reviewer, researcher ${dim('(high-volume work)')}`)
   console.log('')
 
@@ -302,6 +336,7 @@ async function main() {
     'senior-backend': strongModel, 'senior-frontend': fastModel,
     'junior-backend': fastModel, 'junior-frontend': fastModel,
     'tester': fastModel, 'code-reviewer': fastModel,
+    'seo-auditor': strongModel,
     'debugger': strongModel, 'researcher': fastModel, 'designer': strongModel,
     'security-auditor': strongModel, 'performance-analyst': strongModel, 'librarian': fastModel,
   }
@@ -338,7 +373,8 @@ async function main() {
 
   copyDir(sourceDir, installDir, ['opencode.json'])
   ok(`Copied agent, command, skill, tool, and plugin files to ${installDir}`)
-  ok(`New skills installed: test-driven-development, systematic-debugging, verification-before-completion, receiving-code-review`)
+  ok(`Agents: 18 total (including new seo-auditor)`)
+  ok(`Commands: 22 total (including new team:seo-audit)`)
 
   // Apply model assignments
   const agentsDir = join(installDir, 'agents')
@@ -355,6 +391,7 @@ async function main() {
   writeOpencodeJson(jsonPath, agentBlock, !isGlobal)
 
   ok('permission.task delegation chain enforced in opencode.json')
+  ok('seo-auditor added to frontend-lead permission.task')
   ok('Granular bash permissions applied per agent tier')
 
   // GitHub Actions
@@ -427,7 +464,7 @@ async function main() {
   console.log('')
   console.log(`  ${bold('Model assignments:')}`)
   for (const [agent, model] of Object.entries(agentModels)) {
-    console.log(`    ${agent.padEnd(20)} ${dim(model)}`)
+    console.log(`    ${agent.padEnd(22)} ${dim(model)}`)
   }
   console.log('')
 
@@ -435,14 +472,17 @@ async function main() {
     console.log(`  ${bold('GitHub Actions:')} ${green('✓')} 4 workflows installed`)
     console.log(`  ${dim('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')}`)
   }
-  console.log(`  ${bold('Security:')} ${green('✓')} permission.task + granular bash permissions active`)
-  console.log(`  ${bold('Custom Tools:')} ${green('✓')} memory-search, complexity-score, debt-summary, stack-detect`)
-  console.log(`  ${bold('Kanban Tools:')} ${green('✓')} kanban-create, kanban-update, kanban-get, kanban-list, kanban-watch`)
-  console.log(`  ${bold('New Skills (v1.9.0):')} ${green('✓')} test-driven-development, systematic-debugging,`)
-  console.log(`                           verification-before-completion, receiving-code-review`)
+  console.log(`  ${bold('Security:')}    ${green('✓')} permission.task + granular bash permissions active`)
+  console.log(`  ${bold('Agents:')}      ${green('✓')} 18 agents (seo-auditor added)`)
+  console.log(`  ${bold('Commands:')}    ${green('✓')} 22 commands (team:seo-audit added)`)
+  console.log(`  ${bold('SEO/GEO:')}     ${green('✓')} seo-auditor triggers on Pages/ and Layouts/ changes`)
   console.log('')
-  console.log(`  ${bold('Delivery cycle:')} leads own the full cycle — developers, reviewers, and`)
-  console.log(`                   testers all report back to the lead`)
+  console.log(`  ${bold('v2.0.0 — SEO/GEO Auditor highlights:')}`)
+  console.log(`    ${green('✓')} Runs parallel with code-reviewer (no added latency)`)
+  console.log(`    ${green('✓')} Technical SEO: 9 categories including INP, AI crawlers, SSR`)
+  console.log(`    ${green('✓')} GEO Readiness Score: 0-100 (citability, E-E-A-T, multi-modal)`)
+  console.log(`    ${green('✓')} Deprecated schema awareness (FAQPage, HowTo, SpecialAnnouncement)`)
+  console.log(`    ${green('✓')} /team:seo-audit for manual audit with optional live URL`)
   console.log('')
   console.log(`  ${bold('Next steps:')}`)
   if (!isGlobal) {
@@ -450,10 +490,10 @@ async function main() {
     console.log(`  2. ${cyan('Run /team:init')} — generates project-stack skill`)
     console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
     console.log('')
-    console.log(`  ${bold('Kanban commands:')}`)
-    console.log(`    ${cyan('/team:kanban board')}         — see all active tasks`)
-    console.log(`    ${cyan('/team:kanban status KAN-001')} — see task details`)
-    console.log(`    ${cyan('/team:kanban watch')}          — check for stalled tasks`)
+    console.log(`  ${bold('SEO commands:')}`)
+    console.log(`    ${cyan('/team:seo-audit')}               — audit recent Pages/Layouts changes`)
+    console.log(`    ${cyan('/team:seo-audit https://...')}   — audit live site`)
+    console.log(`    ${cyan('/team:seo-audit path/to/Page.vue')} — audit specific file`)
   } else {
     console.log(`  1. In each project: ${cyan('run /team:init')} to generate the project-stack skill`)
     console.log(`  2. ${cyan('/team:new-feature <description>')} — start building`)

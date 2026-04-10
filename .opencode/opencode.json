@@ -38,7 +38,7 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -93,7 +93,7 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -130,7 +130,7 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -145,6 +145,7 @@
           "code-reviewer": "allow",
           "tester": "allow",
           "security-auditor": "allow",
+          "seo-auditor": "allow",
           "performance-analyst": "allow",
           "debugger": "allow",
           "researcher": "allow",
@@ -169,7 +170,7 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -204,7 +205,7 @@
         "webfetch": true,
         "websearch": true,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -239,7 +240,7 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -282,7 +283,7 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -326,7 +327,7 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -357,7 +358,7 @@
         "webfetch": false,
         "websearch": false,
         "todowrite": true,
-        "todoread": true,
+        "todoread": true
       },
       "permission": {
         "bash": {
@@ -528,6 +529,35 @@
           "*": "allow",
           "git push": "deny",
           "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
+      }
+    },
+    "seo-auditor": {
+      "description": "SEO/GEO Auditor. Invoked by frontend-lead in parallel with code-reviewer when Pages/ or Layouts/ files change. Checks Technical SEO (9 categories: meta, semantic HTML, JSON-LD, SSR rendering, Core Web Vitals/INP, AI crawler access, security headers, llms.txt) and produces a GEO Readiness Score (0-100: citability, readability, multi-modal, E-E-A-T, technical accessibility). Reports APPROVED or CHANGES REQUIRED to frontend-lead — never updates Kanban. Never modifies code.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "#22d3ee",
+      "temperature": 0.1,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": true,
+        "websearch": false
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny",
+          "rm -rf *": "deny"
         },
         "task": {
           "*": "deny"

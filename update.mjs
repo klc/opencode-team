@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Update Script v2.0.0
+// OpenCode Agent Team — Update Script v2.1.0
 // Preserves model assignments, MCP settings, and project rules.
 // Node.js 18+, no external dependencies
 
@@ -176,7 +176,7 @@ function checkNewAgents(installDir) {
 }
 
 function checkNewCommands(installDir) {
-  const requiredCommands = ['team:seo-audit.md']
+  const requiredCommands = ['team:seo-audit.md', 'team:scaffold.md']
   const commandsDir = join(installDir, 'commands')
   const missing = requiredCommands.filter(c => !existsSync(join(commandsDir, c)))
   return { requiredCommands, missing }
@@ -223,18 +223,24 @@ function checkCustomTools(installDir) {
 
 // ── Changelog ───────────────────────────────────────────────
 const CHANGELOG = [
+  { version: '2.1.0', changes: [
+    'feat: team:scaffold command — scaffold new projects from scratch',
+    'feat: stack recommendation via @architect when no stack is specified',
+    'feat: automatic installation or SETUP.md guide — user chooses at runtime',
+    'feat: team:init — redirects to /team:scaffold when the folder is empty',
+    'feat: project-stack skill, AGENTS.md, .kanban/, .memory/ auto-generated after automatic install',
+    'fix: team:init Phase 0 folder check added — prevents running on empty directories',
+  ]},
   { version: '2.0.0', changes: [
     'feat: seo-auditor agent — Technical SEO (9 categories) + GEO Readiness Score (0-100)',
     'feat: team:seo-audit command — manual audit with optional live URL comparison',
     'feat: frontend-lead — SEO scope detection, seo-auditor runs parallel with code-reviewer for Pages/Layouts changes',
-    'feat: GEO analysis — citability scoring (134-167 word blocks), E-E-A-T (Sept 2025 guidelines), multi-modal signals',
-    'feat: AI crawler access check — 9 crawlers (GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, CCBot, Bytespider, cohere-ai)',
+    'feat: GEO analysis — citability scoring, E-E-A-T (Sept 2025 guidelines), multi-modal signals',
+    'feat: AI crawler access check — 9 crawlers',
     'feat: SSR meta rendering check — critical for Inertia/Next.js/Nuxt stacks',
     'fix: INP replaces FID (removed Sept 2024) in all SEO checks',
-    'fix: deprecated schema awareness — FAQPage (gov/health only), HowTo (deprecated), SpecialAnnouncement (deprecated)',
+    'fix: deprecated schema awareness — FAQPage, HowTo, SpecialAnnouncement',
     'feat: llms.txt presence check for AI search engine compliance',
-    'feat: opencode.json — seo-auditor added to frontend-lead permission.task',
-    'feat: install/update scripts — seo-auditor model assignment (strong model), color #22d3ee',
   ]},
   { version: '1.9.0', changes: [
     'feat: lead-owned delivery cycle — reviewer and tester report to lead, not Kanban',
@@ -243,12 +249,6 @@ const CHANGELOG = [
     'feat: skill/verification-before-completion — blocks "should work" claims without evidence',
     'feat: skill/receiving-code-review — protocol for acting on review feedback',
     'feat: all developer agents load TDD + verification skills; completion reports include test output',
-    'feat: tester loads verification + systematic-debugging; quotes exact test output',
-    'feat: debugger loads systematic-debugging; escalates on reopenCount >= 2',
-    'feat: code-reviewer loads verification; must read every changed line before approving',
-    'feat: coding-standards updated — Definition of Done requires test output evidence',
-    'fix: code-reviewer no longer updates Kanban directly — reports to lead',
-    'fix: tester no longer updates Kanban directly — reports to lead',
   ]},
   { version: '1.8.0', changes: [
     'feat: Kanban system — file-based task tracking in .kanban/',
@@ -306,7 +306,6 @@ async function main() {
 
     // Read models BEFORE overwriting
     const currentModels = resolveCurrentModels(dir)
-    // Default seo-auditor to strong model if not previously assigned
     if (!currentModels['seo-auditor']) {
       const strongCandidate = currentModels['architect'] || currentModels['debugger'] || 'my-provider/my-strong-model'
       currentModels['seo-auditor'] = strongCandidate
@@ -330,7 +329,7 @@ async function main() {
     }
     DRY_RUN ? dryok(`Would restore ${restored} model assignments`) : ok(`Restored ${restored} model assignments to agent files`)
 
-    // Update opencode.json (models + seo-auditor permission)
+    // Update opencode.json
     const jsonPath = join(dir, 'opencode.json')
     if (existsSync(jsonPath)) updateOpencodeJson(dir, currentModels)
 
@@ -343,27 +342,27 @@ async function main() {
       else warn('seo-auditor NOT in frontend-lead permission.task — run install.mjs to fix')
     }
 
-    // New agents check (v2.0.0)
+    // New agents check
     if (!DRY_RUN) {
       const agentCheck = checkNewAgents(dir)
       if (agentCheck.missing.length === 0) {
         ok(`v2.0.0 agents — seo-auditor installed ✓`)
       } else {
-        warn(`Missing v2.0.0 agents: ${agentCheck.missing.join(', ')} — these were copied in the file update step above`)
+        warn(`Missing agents: ${agentCheck.missing.join(', ')} — these were copied in the file update step above`)
       }
     }
 
-    // New commands check (v2.0.0)
+    // New commands check (v2.1.0 — includes team:scaffold)
     if (!DRY_RUN) {
       const cmdCheck = checkNewCommands(dir)
       if (cmdCheck.missing.length === 0) {
-        ok(`v2.0.0 commands — team:seo-audit installed ✓`)
+        ok(`v2.1.0 commands — team:scaffold + team:seo-audit installed ✓`)
       } else {
-        warn(`Missing v2.0.0 commands: ${cmdCheck.missing.join(', ')} — these were copied in the file update step above`)
+        warn(`Missing commands: ${cmdCheck.missing.join(', ')} — these were copied in the file update step above`)
       }
     }
 
-    // New skills check (v1.9.0)
+    // New skills check
     if (!DRY_RUN) {
       const skillsCheck = checkNewSkills(dir)
       if (skillsCheck.missing.length === 0) {
@@ -454,11 +453,9 @@ async function main() {
   console.log(bold(green('╚══════════════════════════════════════════╝')))
   console.log('')
   console.log(`  ${bold('What was updated:')}`)
-  console.log(`    ${green('✓')} NEW: seo-auditor agent (18 agents total)`)
-  console.log(`    ${green('✓')} NEW: team:seo-audit command (22 commands total)`)
-  console.log(`    ${green('✓')} UPDATED: frontend-lead — SEO scope detection + seo-auditor parallel call`)
-  console.log(`    ${green('✓')} UPDATED: opencode.json — seo-auditor in frontend-lead permission.task`)
-  console.log(`    ${green('✓')} UPDATED: README.md — seo-auditor docs, updated agent count, new command`)
+  console.log(`    ${green('✓')} NEW: team:scaffold command (23 commands total)`)
+  console.log(`    ${green('✓')} UPDATED: team:init — redirects to /team:scaffold on empty folder`)
+  console.log(`    ${green('✓')} UPDATED: README.md — scaffold docs, Getting Started section`)
   console.log(`    ${green('✓')} Agent files — all 18 agents`)
   console.log(`    ${green('✓')} Command files (.opencode/commands/)`)
   console.log(`    ${green('✓')} Tool files (.opencode/tools/)`)
@@ -466,25 +463,20 @@ async function main() {
   console.log(`    ${green('✓')} .kanban/ directory structure`)
   console.log('')
   console.log(`  ${bold('What was preserved:')}`)
-  console.log(`    ${green('✓')} Your model assignments (seo-auditor defaulted to strong model)`)
+  console.log(`    ${green('✓')} Your model assignments`)
   console.log(`    ${green('✓')} opencode.json provider + MCP settings`)
   console.log(`    ${green('✓')} AGENTS.md project rules`)
   console.log(`    ${green('✓')} project-stack skill`)
   console.log(`    ${green('✓')} .kanban/ task data (not overwritten)`)
   console.log('')
-  console.log(`  ${bold('v2.0.0 — SEO/GEO Auditor highlights:')}`)
-  console.log(`    ${green('✓')} seo-auditor runs parallel with code-reviewer (no added latency)`)
-  console.log(`    ${green('✓')} Triggers only on Pages/ and Layouts/ changes`)
-  console.log(`    ${green('✓')} Technical SEO: 9 categories (meta, semantic HTML, JSON-LD, SSR,`)
-  console.log(`                   INP/CWV, AI crawlers, security headers, llms.txt, IndexNow)`)
-  console.log(`    ${green('✓')} GEO Readiness Score: 0-100 (citability, readability, multi-modal,`)
-  console.log(`                   E-E-A-T Sept 2025 guidelines, technical accessibility)`)
-  console.log(`    ${green('✓')} Deprecated schema blocked: FAQPage (gov/health only), HowTo, SpecialAnnouncement`)
-  console.log(`    ${green('✓')} FID removed — INP (< 200ms) used throughout`)
-  console.log(`    ${green('✓')} /team:seo-audit for manual audits + live URL comparison`)
+  console.log(`  ${bold('v2.1.0 — Scaffold highlights:')}`)
+  console.log(`    ${green('✓')} /team:scaffold — guided new project setup from scratch`)
+  console.log(`    ${green('✓')} Stack recommendation via @architect`)
+  console.log(`    ${green('✓')} Automatic install or SETUP.md guide — user chooses`)
+  console.log(`    ${green('✓')} /team:init now detects empty folders and redirects`)
   console.log('')
-  console.log(`  ${dim('Start with: /team:new-feature <description>')}`)
-  console.log(`  ${dim('Manual SEO audit: /team:seo-audit [optional-url]')}`)
+  console.log(`  ${dim('Existing project: /team:init')}`)
+  console.log(`  ${dim('New project:      /team:scaffold')}`)
   console.log('')
 
   close()

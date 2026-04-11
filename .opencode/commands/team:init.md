@@ -6,9 +6,43 @@ subtask: false
 
 Load the coding-standards skill and git-workflow skill.
 
-You are going to generate the `project-stack` skill for this project by scanning the codebase. This skill is what makes the entire agent team project-aware — without it, no agent knows how to test, build, commit, or structure code correctly.
+## Phase 0 — Folder Check
 
-## Phase 0 — Check for Existing Skill
+First, check whether the current folder contains an existing project:
+
+```bash
+# Look for meaningful files/folders, excluding hidden and tool directories
+find . -mindepth 1 -maxdepth 2 \
+  -not -path './.git/*' \
+  -not -name '.git' \
+  -not -path './.opencode/*' \
+  -not -name '.opencode' \
+  -not -name '.DS_Store' \
+  -not -name 'SETUP.md' \
+  | head -5
+```
+
+**If the folder is empty** (no results returned), tell the user and stop:
+
+```
+This folder appears to be empty. /team:init is for scanning an existing project.
+
+To scaffold a new project from scratch, run:
+
+  /team:scaffold
+
+It will walk you through stack selection, installation, and project setup step by step.
+```
+
+**Stop here.** Do not continue.
+
+---
+
+**If the folder contains files**, continue with the phases below.
+
+---
+
+## Phase 0b — Check for Existing Skill
 
 Before scanning, check if a `project-stack` skill already exists:
 
@@ -273,7 +307,6 @@ Stack detection:
   Database: [summary]
   Test:     [command]
   Build:    [command]
-
 
 Assumed (please verify):
   - [anything inferred but not confirmed]

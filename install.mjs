@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Setup Script v2.0.0
+// OpenCode Agent Team — Setup Script v2.1.0
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
@@ -197,7 +197,6 @@ function buildAgentBlock(agentModels) {
     senior:   { '*': 'allow', 'git push': 'ask', 'git push *': 'ask', 'git rebase *': 'ask', 'git reset --hard *': 'ask', 'rm -rf *': 'ask', 'sudo *': 'deny' },
     junior:   { '*': 'ask', 'git status': 'allow', 'git diff *': 'allow', 'git log *': 'allow', 'git add *': 'allow', 'git commit *': 'allow', 'grep *': 'allow', 'find *': 'allow', 'cat *': 'allow', 'ls *': 'allow', 'npm run *': 'allow', 'git push': 'deny', 'git push *': 'deny', 'git rebase *': 'deny', 'git reset *': 'deny', 'rm -rf *': 'deny', 'sudo *': 'deny' },
     readonly: { '*': 'allow', 'git push': 'deny', 'git push *': 'deny', 'sudo *': 'deny' },
-    // seo-auditor: readonly + webfetch (no write/edit tools, same bash tier as code-reviewer)
     seo:      { '*': 'allow', 'git push': 'deny', 'git push *': 'deny', 'sudo *': 'deny', 'rm -rf *': 'deny' },
   }
 
@@ -285,7 +284,7 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
 async function main() {
   console.log('')
   console.log(bold(cyan('╔══════════════════════════════════════════╗')))
-  console.log(bold(cyan('║     OpenCode Agent Team — Setup v2.0.0  ║')))
+  console.log(bold(cyan('║     OpenCode Agent Team — Setup v2.1.0  ║')))
   console.log(bold(cyan('╚══════════════════════════════════════════╝')))
   console.log('')
 
@@ -373,8 +372,8 @@ async function main() {
 
   copyDir(sourceDir, installDir, ['opencode.json'])
   ok(`Copied agent, command, skill, tool, and plugin files to ${installDir}`)
-  ok(`Agents: 18 total (including new seo-auditor)`)
-  ok(`Commands: 22 total (including new team:seo-audit)`)
+  ok(`Agents: 18 total`)
+  ok(`Commands: 23 total (including team:scaffold and team:seo-audit)`)
 
   // Apply model assignments
   const agentsDir = join(installDir, 'agents')
@@ -473,30 +472,36 @@ async function main() {
     console.log(`  ${dim('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')}`)
   }
   console.log(`  ${bold('Security:')}    ${green('✓')} permission.task + granular bash permissions active`)
-  console.log(`  ${bold('Agents:')}      ${green('✓')} 18 agents (seo-auditor added)`)
-  console.log(`  ${bold('Commands:')}    ${green('✓')} 22 commands (team:seo-audit added)`)
-  console.log(`  ${bold('SEO/GEO:')}     ${green('✓')} seo-auditor triggers on Pages/ and Layouts/ changes`)
+  console.log(`  ${bold('Agents:')}      ${green('✓')} 18 agents`)
+  console.log(`  ${bold('Commands:')}    ${green('✓')} 23 commands (team:scaffold + team:seo-audit)`)
+  console.log('')
+  console.log(`  ${bold('v2.1.0 — Scaffold highlights:')}`)
+  console.log(`    ${green('✓')} /team:scaffold — scaffold new projects from scratch`)
+  console.log(`    ${green('✓')} Stack recommendation via @architect when no stack is specified`)
+  console.log(`    ${green('✓')} Automatic installation or SETUP.md guide — user chooses`)
+  console.log(`    ${green('✓')} /team:init redirects to /team:scaffold when folder is empty`)
+  console.log(`    ${green('✓')} project-stack skill, AGENTS.md, .kanban/, .memory/ auto-generated after install`)
   console.log('')
   console.log(`  ${bold('v2.0.0 — SEO/GEO Auditor highlights:')}`)
-  console.log(`    ${green('✓')} Runs parallel with code-reviewer (no added latency)`)
+  console.log(`    ${green('✓')} seo-auditor triggers on Pages/ and Layouts/ changes`)
   console.log(`    ${green('✓')} Technical SEO: 9 categories including INP, AI crawlers, SSR`)
-  console.log(`    ${green('✓')} GEO Readiness Score: 0-100 (citability, E-E-A-T, multi-modal)`)
-  console.log(`    ${green('✓')} Deprecated schema awareness (FAQPage, HowTo, SpecialAnnouncement)`)
+  console.log(`    ${green('✓')} GEO Readiness Score: 0-100`)
   console.log(`    ${green('✓')} /team:seo-audit for manual audit with optional live URL`)
   console.log('')
   console.log(`  ${bold('Next steps:')}`)
   if (!isGlobal) {
-    console.log(`  1. ${cyan('Edit AGENTS.md')} — add your project rules`)
-    console.log(`  2. ${cyan('Run /team:init')} — generates project-stack skill`)
-    console.log(`  3. ${cyan('/team:new-feature <description>')} — start building`)
+    console.log(`  ${bold('Existing project:')}`)
+    console.log(`    1. ${cyan('Edit AGENTS.md')} — add your project rules`)
+    console.log(`    2. ${cyan('Run /team:init')} — generates project-stack skill`)
+    console.log(`    3. ${cyan('/team:new-feature <description>')} — start building`)
     console.log('')
-    console.log(`  ${bold('SEO commands:')}`)
-    console.log(`    ${cyan('/team:seo-audit')}               — audit recent Pages/Layouts changes`)
-    console.log(`    ${cyan('/team:seo-audit https://...')}   — audit live site`)
-    console.log(`    ${cyan('/team:seo-audit path/to/Page.vue')} — audit specific file`)
+    console.log(`  ${bold('New / empty project:')}`)
+    console.log(`    1. ${cyan('Run /team:scaffold')} — stack selection, installation, full setup`)
+    console.log(`    2. ${cyan('/team:new-feature <description>')} — start building`)
   } else {
-    console.log(`  1. In each project: ${cyan('run /team:init')} to generate the project-stack skill`)
-    console.log(`  2. ${cyan('/team:new-feature <description>')} — start building`)
+    console.log(`  In each project, choose one:`)
+    console.log(`    ${cyan('/team:init')}     — existing project (scan & detect stack)`)
+    console.log(`    ${cyan('/team:scaffold')} — new/empty project (guided setup from scratch)`)
   }
   console.log('')
 

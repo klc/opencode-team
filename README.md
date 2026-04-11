@@ -51,7 +51,7 @@ ANY FAIL → Lead re-delegates to developer → back to review → back to test
 | `junior-frontend` 🔒 | Simple UI, styling fixes; reports to frontend-lead | subagent |
 | `tester` 🔒 | Runs tests, verifies acceptance criteria, reports findings to lead | subagent |
 | `code-reviewer` 🔒 | Reviews code, reports findings to lead | subagent |
-| `seo-auditor` 🔒 | **NEW** Technical SEO, GEO/AEO readiness, E-E-A-T, AI crawler access, SSR meta rendering; reports findings to frontend-lead | subagent |
+| `seo-auditor` 🔒 | Technical SEO, GEO/AEO readiness, E-E-A-T, AI crawler access, SSR meta rendering; reports findings to frontend-lead | subagent |
 | `debugger` 🔒 | Root cause analysis using systematic 4-phase process | subagent |
 | `researcher` | Technology research, library comparison, spike reports | subagent |
 | `security-auditor` 🔒 | OWASP Top 10, invoked alongside code-reviewer for security-sensitive scopes | subagent |
@@ -60,7 +60,7 @@ ANY FAIL → Lead re-delegates to developer → back to review → back to test
 
 ---
 
-## Lead-Owned Delivery Cycle (v2.0.0)
+## Lead-Owned Delivery Cycle
 
 The lead is the single coordinator for every task it owns. The full frontend cycle (including SEO):
 
@@ -82,14 +82,10 @@ PHASE 3 — Code Review + SEO Audit (parallel when applicable)
   Lead → @code-reviewer (Task tool)
   Lead → @seo-auditor  (Task tool, parallel — Pages/Layouts only)
 
-  code-reviewer: reads every changed line → reports APPROVED or CHANGES REQUIRED to lead
-  seo-auditor:   checks Technical SEO + GEO Readiness Score (0-100) → reports to lead
-
 PHASE 4 — After Reviews
   BOTH APPROVED → proceed to PHASE 5
   code-reviewer CHANGES REQUIRED → Lead reopens → re-delegates to developer
   seo-auditor   CHANGES REQUIRED → Lead reopens → re-delegates to developer
-  Loop: dev → review + SEO → until both approve
 
 PHASE 5 — Testing
   Lead updates Kanban to "testing"
@@ -101,75 +97,9 @@ PHASE 6 — After Testing
   ANY FAIL → Lead reopens → re-delegates to developer → back to PHASE 3
 ```
 
-**Key principles:**
-- `code-reviewer`, `seo-auditor`, and `tester` never touch Kanban — they report to the lead
-- SEO audit runs in parallel with code review (never blocks or delays it)
-- SEO audit only triggers when Pages/ or Layouts/ files change — not for every frontend task
-
 ---
 
-## SEO/GEO Auditor — What It Checks
-
-### Section 1 — Technical SEO (9 Categories)
-
-| Category | What's Checked |
-|---|---|
-| Meta & Head | title (50-60 chars), description (150-160 chars), canonical, Open Graph, Twitter Card, robots |
-| Semantic HTML | single h1, heading hierarchy, semantic elements, alt attributes, href on anchors |
-| Structured Data | JSON-LD format, page-appropriate schema, **no deprecated schemas** (FAQPage⚠️, HowTo❌, SpecialAnnouncement❌) |
-| SSR / JS Rendering | meta tags in server-rendered HTML, no window/document at setup level (Inertia SSR critical) |
-| Core Web Vitals | LCP eager loading, **INP < 200ms** (FID removed Sept 2024), CLS image dimensions |
-| AI Crawler Access | robots.txt allows GPTBot, ClaudeBot, PerplexityBot, OAI-SearchBot, CCBot, Bytespider, cohere-ai |
-| Security Headers | HTTPS, CSP, HSTS, X-Frame-Options, X-Content-Type-Options |
-| llms.txt | File presence and structure at `/llms.txt` |
-| IndexNow | Protocol support for Bing/Yandex/Naver faster indexing |
-
-### Section 2 — GEO Readiness Score (0-100)
-
-| Dimension | Weight | What's Checked |
-|---|---|---|
-| Citability | 25% | 134-167 word self-contained answer blocks, direct answer in first 40-60 words, sourced statistics |
-| Structural Readability | 20% | Question-based H2/H3 headings, 2-4 sentence paragraphs, comparison tables, semantic lists |
-| Multi-modal Content | 15% | Text+image pairing, video/infographic presence, interactive elements |
-| Authority & E-E-A-T | 20% | Author bylines+credentials, publication dates, primary source citations, first-hand experience signals (Sept 2025 Guidelines) |
-| Technical Accessibility | 20% | AI crawler permissions, llms.txt, SSR correctness for AI crawlers |
-
-**Severity levels:**
-
-| Level | Examples | Blocks merge? |
-|---|---|---|
-| 🔴 Critical | noindex wrong, canonical broken, h1 missing, meta absent, AI crawlers fully blocked, SSR meta not rendering | Yes |
-| 🟠 High | OG missing, JSON-LD absent, INP issues, img alt missing, deprecated schema used, AI crawler partially blocked | Yes |
-| 🟡 Medium | llms.txt absent, citability blocks suboptimal, author info missing, security headers incomplete | No |
-| 🟢 Suggestion | Multi-modal content opportunity, VideoObject schema, IndexNow protocol, entity markup | No |
-
-**Approval condition:** Zero 🔴 Critical and zero 🟠 High findings.
-
----
-
-## `/team:seo-audit` Command
-
-Manual SEO/GEO audit for existing pages or a live site:
-
-```bash
-# Audit recent changes (Pages/ and Layouts/ in last commit)
-/team:seo-audit
-
-# Audit a specific file or directory
-/team:seo-audit resources/js/Pages/Home.vue
-
-# Audit live site (source code + live URL comparison)
-/team:seo-audit https://example.com
-
-# Audit specific page live
-/team:seo-audit https://example.com/about
-```
-
-When a URL is provided, the auditor compares source code findings with the rendered live HTML — detecting SSR mismatches where meta tags exist in code but don't appear in the live page.
-
----
-
-## Skills Library (v2.0.0)
+## Skills Library
 
 ### Core Methodology Skills
 
@@ -192,13 +122,14 @@ When a URL is provided, the auditor compares source code findings with the rende
 
 ---
 
-## Commands (22)
+## Commands (23)
 
 ### Setup
 
 | Command | Use when |
 |---|---|
-| `/team:init` | **Start here.** Scans the project, auto-detects the stack, writes `project-stack` skill. |
+| `/team:scaffold <description>` | **Start here for new projects.** Gathers goals and stack, optionally asks @architect for recommendations, then installs or prepares a setup guide. |
+| `/team:init` | **Start here for existing projects.** Scans the project, auto-detects the stack, writes `project-stack` skill. Redirects to `/team:scaffold` if the folder is empty. |
 | `/team:designer <brief>` | Define the project's visual design system. |
 
 ### Feature development
@@ -233,7 +164,7 @@ When a URL is provided, the auditor compares source code findings with the rende
 | Command | Use when |
 |---|---|
 | `/team:audit [scope]` | Full project audit — security, performance, code quality in parallel |
-| `/team:seo-audit [url or path]` | **NEW** SEO/GEO audit — technical SEO (9 categories) + GEO readiness score (0-100). Supports live URL comparison. |
+| `/team:seo-audit [url or path]` | SEO/GEO audit — technical SEO (9 categories) + GEO readiness score (0-100). Supports live URL comparison. |
 | `/team:refactor <description>` | Improve code structure without changing behavior |
 | `/team:add-test <description>` | Add tests to code that lacks coverage |
 | `/team:review <file or area>` | Manually trigger a code review |
@@ -265,6 +196,28 @@ When a URL is provided, the auditor compares source code findings with the rende
 | Command | Use when |
 |---|---|
 | `/team:update-docs <description>` | Update README, API docs, architecture docs, or inline comments |
+
+---
+
+## Getting Started
+
+### New project (empty folder)
+
+```bash
+mkdir my-project && cd my-project
+/team:scaffold
+```
+
+`/team:scaffold` will ask what you're building, help you choose a tech stack (or recommend one via @architect), and either install everything automatically or generate a `SETUP.md` guide.
+
+### Existing project
+
+```bash
+cd my-existing-project
+/team:init
+```
+
+`/team:init` scans your codebase, auto-detects the stack, and generates the `project-stack` skill. If the folder is empty it will redirect you to `/team:scaffold` automatically.
 
 ---
 
@@ -300,18 +253,7 @@ backlog → planning → in-progress → review → testing → done
 | `memory_search` | all agents | Semantic search over `.memory/` |
 | `complexity_score` | code-reviewer, `/team:audit` | Cyclomatic complexity analysis |
 | `debt_summary` | project-manager, sprint/standup | Prioritized debt backlog |
-| `stack_detect` | architect, `/team:init` | Auto-detects project stack |
-
-### File Structure
-
-```
-.kanban/
-├── index.json          ← Task summary index
-├── KAN-001.json        ← Full task data with history
-├── trigger.log         ← Plugin activity log
-└── triggers/
-    └── processed/      ← Processed triggers (audit trail)
-```
+| `stack_detect` | architect, `/team:init`, `/team:scaffold` | Auto-detects project stack |
 
 ---
 
@@ -410,7 +352,9 @@ The update script preserves your model assignments, `opencode.json` provider set
 .opencode/
 ├── opencode.json
 ├── agents/                    ← 18 agent prompt files
-├── commands/                  ← 22 command files
+├── commands/                  ← 23 command files
+│   ├── team:scaffold.md       ← NEW: scaffold new projects from scratch
+│   └── ...
 ├── plugins/
 │   └── kanban-trigger.ts
 ├── skills/

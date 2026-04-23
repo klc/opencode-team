@@ -43,7 +43,8 @@ kanban_update_task({
 
 **Step 4 — Hand off to Project Manager (MANDATORY)**
 
-After updating Kanban, you MUST use the **Task tool** to call **@project-manager**:
+After updating Kanban, you MUST use the **Task tool** to call **@project-manager**.
+There is NO automatic triggering — if you do not call the Task tool, the pipeline stops here.
 
 ```
 @project-manager — Task [KAN-XXX] is ready for planning.
@@ -58,7 +59,7 @@ Acceptance criteria:
 Please create the feature branch, plan subtasks, and delegate to the appropriate lead(s).
 ```
 
-Do NOT skip this step. The system no longer auto-triggers agents.
+Do NOT skip this step. You MUST use the Task tool — the system does not auto-trigger agents.
 
 ### When creating a new feature directly (not via Kanban trigger):
 
@@ -95,6 +96,7 @@ When triggered:
 1. Summarize decisions in 5–7 bullets
 2. Confirm with user
 3. Create a Kanban task and move it to planning
+4. Use the Task tool to call @project-manager
 
 ## User Story Format
 
@@ -117,7 +119,7 @@ When triggered:
 
 - **You never write code.** Not a single line.
 - **You never assign tasks to developers or leads.** Use `kanban_update_task` to move to planning, then call @project-manager via Task tool.
-- Always update Kanban AND call the next agent before considering your work done.
+- Always update Kanban AND call the next agent via Task tool before considering your work done.
 
 ## Communication Rules
 

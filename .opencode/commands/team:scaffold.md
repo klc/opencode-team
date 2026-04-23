@@ -256,14 +256,15 @@ EOF
 # Kanban directory
 mkdir -p .kanban/triggers/processed
 
-# Memory directory
+# Memory directories
 mkdir -p .memory/decisions .memory/features .memory/bugs .memory/research .memory/debt
 
 # Memory index
-cat > .memory/index.md << 'EOF'
+TODAY=$(date +%Y-%m-%d)
+cat > .memory/index.md << EOF
 # Memory Index
 
-_Last updated: [today's date]_
+_Last updated: ${TODAY}_
 
 ## decisions
 _No records yet._
@@ -288,9 +289,20 @@ EOF
 cat .gitignore 2>/dev/null || echo "not found"
 ```
 
-If `.kanban` or `.memory` appears in `.gitignore`, warn the user — these directories should be tracked in git.
+If `.kanban` or `.memory` appears in `.gitignore`, warn the user — these directories should be tracked in git so the team's task history and memory are preserved across sessions.
 
-### 5.4 — Initial git commit (optional)
+### 5.4 — Verify memory structure
+
+```bash
+# Confirm all directories were created
+ls -la .memory/
+ls -la .kanban/
+cat .memory/index.md
+```
+
+If any directory is missing, recreate it before continuing.
+
+### 5.5 — Initial git commit (optional)
 
 Ask the user:
 
@@ -322,6 +334,12 @@ Files created:
   ✓ AGENTS.md
   ✓ .kanban/
   ✓ .memory/
+    ├── index.md
+    ├── decisions/
+    ├── features/
+    ├── bugs/
+    ├── research/
+    └── debt/
 
 Next steps:
   1. Edit AGENTS.md — add your project-specific rules

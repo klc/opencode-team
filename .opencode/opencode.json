@@ -2,9 +2,9 @@
   "$schema": "https://opencode.ai/config.json",
   "agent": {
     "product-owner": {
-      "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, delegates to project-manager. Never writes code.",
+      "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager via Task tool. Never writes code.",
       "model": "my-provider/my-strong-model",
-      "temperature": 0.7,
+      "temperature": 0.5,
       "steps": 80,
       "tools": {
         "bash": false,
@@ -26,7 +26,7 @@
       "color": "#a78bfa"
     },
     "project-manager": {
-      "description": "Invoke after product-owner delivers a story. Creates branch, breaks story into tasks, assigns to leads, maintains todo board. Never writes code.",
+      "description": "Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Task tool. Never writes code.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.5,
       "steps": 80,
@@ -81,7 +81,7 @@
       "color": "#f472b6"
     },
     "backend-lead": {
-      "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple). Triggers review then QA phases.",
+      "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple) via Task tool. Owns full delivery cycle: delegate → review → test → done.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.3,
       "steps": 100,
@@ -118,7 +118,7 @@
       "color": "#34d399"
     },
     "frontend-lead": {
-      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple). Triggers review then QA phases.",
+      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple) via Task tool. Owns full delivery cycle: delegate → review → SEO audit → test → done.",
       "model": "my-provider/my-fast-model",
       "temperature": 0.4,
       "steps": 100,
@@ -157,9 +157,10 @@
       "color": "#fb923c"
     },
     "senior-backend": {
-      "description": "Invoke for complex backend tasks: new architecture, integrations, performance-critical code, security flows. Full tool access.",
+      "description": "Invoke for complex backend tasks: new architecture, integrations, performance-critical code, security flows. Reports completion to backend-lead via message — never updates Kanban.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.2,
       "steps": 80,
       "tools": {
@@ -188,13 +189,13 @@
           "librarian": "allow"
         }
       },
-      "color": "#6ee7b7",
-      "hidden": true
+      "color": "#6ee7b7"
     },
     "senior-frontend": {
-      "description": "Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code, complex components. Full tool access.",
+      "description": "Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code, complex components. Reports completion to frontend-lead via message — never updates Kanban.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.3,
       "steps": 80,
       "tools": {
@@ -223,13 +224,13 @@
           "librarian": "allow"
         }
       },
-      "color": "#fdba74",
-      "hidden": true
+      "color": "#fdba74"
     },
     "junior-backend": {
-      "description": "Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Does not make architectural decisions.",
+      "description": "Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Reports completion to backend-lead via message — never updates Kanban.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.3,
       "steps": 40,
       "tools": {
@@ -266,13 +267,13 @@
           "*": "deny"
         }
       },
-      "color": "#a7f3d0",
-      "hidden": true
+      "color": "#a7f3d0"
     },
     "junior-frontend": {
-      "description": "Invoke for simple frontend tasks: styling, small presentational components, component tests. Does not touch config, stores, or SSR setup.",
+      "description": "Invoke for simple frontend tasks: styling, small presentational components, component tests. Reports completion to frontend-lead via message — never updates Kanban.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.4,
       "steps": 40,
       "tools": {
@@ -310,13 +311,13 @@
           "*": "deny"
         }
       },
-      "color": "#fed7aa",
-      "hidden": true
+      "color": "#fed7aa"
     },
     "tester": {
-      "description": "Invoke after review passes. Writes and runs tests, verifies acceptance criteria, reports bugs. Spawned in parallel per scope by leads.",
+      "description": "Invoke after code review passes (called by lead via Task tool). Verifies acceptance criteria, reports findings back to lead — never updates Kanban directly.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.2,
       "steps": 60,
       "tools": {
@@ -341,13 +342,13 @@
           "*": "deny"
         }
       },
-      "color": "#fbbf24",
-      "hidden": true
+      "color": "#fbbf24"
     },
     "code-reviewer": {
-      "description": "Invoke before QA. Reviews code quality, security, and standards. Spawned in parallel per scope by leads. Never modifies code.",
+      "description": "Invoke before QA (called by lead via Task tool). Reviews code quality, reports APPROVED or CHANGES REQUIRED back to lead — never updates Kanban directly.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.2,
       "steps": 40,
       "tools": {
@@ -372,13 +373,13 @@
           "librarian": "allow"
         }
       },
-      "color": "#f59e0b",
-      "hidden": true
+      "color": "#f59e0b"
     },
     "debugger": {
-      "description": "Invoke when root cause of a bug is unclear. Reads code, logs, and stack traces. Analysis only — never modifies code.",
+      "description": "Invoke when root cause of a bug is unclear. Uses 4-phase systematic debugging process. Analysis only — never modifies code.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.1,
       "steps": 60,
       "tools": {
@@ -401,13 +402,13 @@
           "librarian": "allow"
         }
       },
-      "color": "#f87171",
-      "hidden": true
+      "color": "#f87171"
     },
     "researcher": {
       "description": "Invoke to evaluate a technology, library, or pattern. Produces comparison report with recommendation. Never writes production code.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
+      "hidden": true,
       "temperature": 0.6,
       "steps": 40,
       "tools": {
@@ -427,7 +428,7 @@
       "color": "#818cf8"
     },
     "security-auditor": {
-      "description": "Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities, sensitive data exposure. More thorough than code-reviewer's security checklist.",
+      "description": "Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities. Invoked alongside code-reviewer for security-sensitive scopes. Reports to lead — never updates Kanban.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "hidden": true,
@@ -454,7 +455,7 @@
       }
     },
     "performance-analyst": {
-      "description": "Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size, slow endpoints, cache opportunities.",
+      "description": "Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size, slow endpoints.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "hidden": true,
@@ -481,7 +482,7 @@
       }
     },
     "designer": {
-      "description": "Invoke to establish or update the project's visual design system. Creates the project-design skill that all frontend developers follow. Use /team:designer with a design brief.",
+      "description": "Invoke to establish or update the project's visual design system. Creates the project-design skill that all frontend developers follow.",
       "model": "my-provider/my-strong-model",
       "mode": "all",
       "hidden": false,
@@ -509,7 +510,7 @@
       }
     },
     "librarian": {
-      "description": "Team memory manager. Invoked by agents to write or retrieve memory records from .memory/. Never writes code or makes technical decisions.",
+      "description": "Team memory manager. Invoked by agents via Task tool to write or retrieve memory records from .memory/. Never writes code or makes technical decisions.",
       "model": "my-provider/my-fast-model",
       "mode": "subagent",
       "hidden": true,
@@ -536,7 +537,7 @@
       }
     },
     "seo-auditor": {
-      "description": "SEO/GEO Auditor. Invoked by frontend-lead in parallel with code-reviewer when Pages/ or Layouts/ files change. Checks Technical SEO (9 categories: meta, semantic HTML, JSON-LD, SSR rendering, Core Web Vitals/INP, AI crawler access, security headers, llms.txt) and produces a GEO Readiness Score (0-100: citability, readability, multi-modal, E-E-A-T, technical accessibility). Reports APPROVED or CHANGES REQUIRED to frontend-lead — never updates Kanban. Never modifies code.",
+      "description": "Invoke when Pages/ or Layouts/ files change (called by frontend-lead in parallel with code-reviewer). Technical SEO + GEO readiness. Reports to frontend-lead — never updates Kanban. Never modifies code.",
       "model": "my-provider/my-strong-model",
       "mode": "subagent",
       "hidden": true,

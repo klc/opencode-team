@@ -1,0 +1,59 @@
+name: opencode-security-audit
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Scope to audit (leave empty for full codebase)"
+        required: false
+        default: ""
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Run OpenCode security audit
+        uses: anomalyco/opencode/github@latest
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514
+          prompt: |
+            Run a security audit on this codebase.
+            Scope: ${{ github.event.inputs.scope || 'full codebase' }}
+
+            Load the project-stack skill first to understand the stack.
+
+            Check for OWASP Top 10 (A01–A10) and:
+            - Hardcoded secrets or API keys in source files
+            - Sensitive data in logs
+            - Missing input validation on API endpoints
+            - Missing rate limiting on public endpoints
+
+            If you find Critical or High severity issues:
+            1. Open a GitHub issue titled "Security: [brief description]" with label "security"
+            2. Include: severity, location, description, impact, remediation steps
+            3. Do NOT include actual exploit code
+
+            If everything looks clean, create a "Weekly Security Audit — Clean ✅" issue as a record.
+
+            Format findings as:
+            # Security Audit — [date]
+            **Overall risk:** 🔴 Critical | 🟠 High | 🟡 Medium | 🟢 Low | ✅ Clean
+            ## Findings
+            [List each finding with severity, location, description, remediation]
+            ## Passed checks
+            [What was verified]

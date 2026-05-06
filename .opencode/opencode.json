@@ -1,0 +1,575 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "product-owner": {
+      "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager via Task tool. Never writes code.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.5,
+      "steps": 80,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      },
+      "permission": {
+        "task": {
+          "*": "deny",
+          "project-manager": "allow",
+          "architect": "allow",
+          "librarian": "allow"
+        }
+      },
+      "mode": "all",
+      "color": "#a78bfa"
+    },
+    "project-manager": {
+      "description": "Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Task tool. Never writes code.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.5,
+      "steps": 80,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask"
+        },
+        "task": {
+          "*": "deny",
+          "backend-lead": "allow",
+          "frontend-lead": "allow",
+          "architect": "allow",
+          "librarian": "allow"
+        }
+      },
+      "mode": "all",
+      "color": "#60a5fa"
+    },
+    "architect": {
+      "description": "Invoke before major structural decisions: protocol/transport choice, new services, schema changes. Writes ADRs. Never writes production code.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.4,
+      "steps": 60,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      },
+      "permission": {
+        "task": {
+          "*": "deny",
+          "researcher": "allow",
+          "librarian": "allow"
+        }
+      },
+      "mode": "all",
+      "color": "#f472b6"
+    },
+    "backend-lead": {
+      "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple) via Task tool. Owns full delivery cycle: delegate → review → test → done.",
+      "model": "my-provider/my-strong-model",
+      "temperature": 0.3,
+      "steps": 100,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask"
+        },
+        "task": {
+          "*": "deny",
+          "senior-backend": "allow",
+          "junior-backend": "allow",
+          "code-reviewer": "allow",
+          "tester": "allow",
+          "security-auditor": "allow",
+          "performance-analyst": "allow",
+          "debugger": "allow",
+          "researcher": "allow",
+          "project-manager": "allow",
+          "librarian": "allow"
+        }
+      },
+      "mode": "all",
+      "color": "#34d399"
+    },
+    "frontend-lead": {
+      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple) via Task tool. Owns full delivery cycle: delegate → review → SEO audit → test → done.",
+      "model": "my-provider/my-fast-model",
+      "temperature": 0.4,
+      "steps": 100,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask"
+        },
+        "task": {
+          "*": "deny",
+          "senior-frontend": "allow",
+          "junior-frontend": "allow",
+          "code-reviewer": "allow",
+          "tester": "allow",
+          "security-auditor": "allow",
+          "seo-auditor": "allow",
+          "performance-analyst": "allow",
+          "debugger": "allow",
+          "researcher": "allow",
+          "project-manager": "allow",
+          "librarian": "allow",
+          "designer": "allow"
+        }
+      },
+      "mode": "all",
+      "color": "#fb923c"
+    },
+    "senior-backend": {
+      "description": "Invoke for complex backend tasks: new architecture, integrations, performance-critical code, security flows. Reports completion to backend-lead via message — never updates Kanban.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.2,
+      "steps": 80,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask",
+          "git rebase *": "ask",
+          "git reset --hard *": "ask",
+          "rm -rf *": "ask",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      },
+      "color": "#6ee7b7"
+    },
+    "senior-frontend": {
+      "description": "Invoke for complex frontend tasks: new pages, state management, SSR-sensitive code, complex components. Reports completion to frontend-lead via message — never updates Kanban.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.3,
+      "steps": 80,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "ask",
+          "git push *": "ask",
+          "git rebase *": "ask",
+          "git reset --hard *": "ask",
+          "rm -rf *": "ask",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      },
+      "color": "#fdba74"
+    },
+    "junior-backend": {
+      "description": "Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Reports completion to backend-lead via message — never updates Kanban.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.3,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git status": "allow",
+          "git diff *": "allow",
+          "git log *": "allow",
+          "git add *": "allow",
+          "git commit *": "allow",
+          "grep *": "allow",
+          "find *": "allow",
+          "cat *": "allow",
+          "ls *": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "git rebase *": "deny",
+          "git reset *": "deny",
+          "rm -rf *": "deny",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny"
+        }
+      },
+      "color": "#a7f3d0"
+    },
+    "junior-frontend": {
+      "description": "Invoke for simple frontend tasks: styling, small presentational components, component tests. Reports completion to frontend-lead via message — never updates Kanban.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.4,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git status": "allow",
+          "git diff *": "allow",
+          "git log *": "allow",
+          "git add *": "allow",
+          "git commit *": "allow",
+          "grep *": "allow",
+          "find *": "allow",
+          "cat *": "allow",
+          "ls *": "allow",
+          "npm run *": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "git rebase *": "deny",
+          "git reset *": "deny",
+          "rm -rf *": "deny",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny"
+        }
+      },
+      "color": "#fed7aa"
+    },
+    "tester": {
+      "description": "Invoke after code review passes (called by lead via Task tool). Verifies acceptance criteria, reports findings back to lead — never updates Kanban directly.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.2,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny"
+        },
+        "edit": "allow",
+        "task": {
+          "*": "deny"
+        }
+      },
+      "color": "#fbbf24"
+    },
+    "code-reviewer": {
+      "description": "Invoke before QA (called by lead via Task tool). Reviews code quality, reports APPROVED or CHANGES REQUIRED back to lead — never updates Kanban directly.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.2,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": false,
+        "todowrite": true,
+        "todoread": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      },
+      "color": "#f59e0b"
+    },
+    "debugger": {
+      "description": "Invoke when root cause of a bug is unclear. Uses 4-phase systematic debugging process. Analysis only — never modifies code.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.1,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      },
+      "color": "#f87171"
+    },
+    "researcher": {
+      "description": "Invoke to evaluate a technology, library, or pattern. Produces comparison report with recommendation. Never writes production code.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "temperature": 0.6,
+      "steps": 40,
+      "tools": {
+        "bash": false,
+        "write": true,
+        "edit": false,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      },
+      "permission": {
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      },
+      "color": "#818cf8"
+    },
+    "security-auditor": {
+      "description": "Invoke for security audits — OWASP Top 10, auth flaws, injection vulnerabilities. Invoked alongside code-reviewer for security-sensitive scopes. Reports to lead — never updates Kanban.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "#ef4444",
+      "temperature": 0.1,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
+      }
+    },
+    "performance-analyst": {
+      "description": "Invoke to identify performance bottlenecks — N+1 queries, missing indexes, bundle size, slow endpoints.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "#06b6d4",
+      "temperature": 0.2,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
+      }
+    },
+    "designer": {
+      "description": "Invoke to establish or update the project's visual design system. Creates the project-design skill that all frontend developers follow.",
+      "model": "my-provider/my-strong-model",
+      "mode": "all",
+      "hidden": false,
+      "color": "#e879f9",
+      "temperature": 0.7,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": true,
+        "websearch": true
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny",
+          "librarian": "allow"
+        }
+      }
+    },
+    "librarian": {
+      "description": "Team memory manager. Invoked by agents via Task tool to write or retrieve memory records from .memory/. Never writes code or makes technical decisions.",
+      "model": "my-provider/my-fast-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "#c084fc",
+      "temperature": 0.3,
+      "steps": 40,
+      "tools": {
+        "bash": true,
+        "write": true,
+        "edit": true,
+        "read": true,
+        "webfetch": false,
+        "websearch": false
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "sudo *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
+      }
+    },
+    "seo-auditor": {
+      "description": "Invoke when Pages/ or Layouts/ files change (called by frontend-lead in parallel with code-reviewer). Technical SEO + GEO readiness. Reports to frontend-lead — never updates Kanban. Never modifies code.",
+      "model": "my-provider/my-strong-model",
+      "mode": "subagent",
+      "hidden": true,
+      "color": "#22d3ee",
+      "temperature": 0.1,
+      "steps": 60,
+      "tools": {
+        "bash": true,
+        "write": false,
+        "edit": false,
+        "read": true,
+        "webfetch": true,
+        "websearch": false
+      },
+      "permission": {
+        "bash": {
+          "*": "allow",
+          "git push": "deny",
+          "git push *": "deny",
+          "sudo *": "deny",
+          "rm -rf *": "deny"
+        },
+        "task": {
+          "*": "deny"
+        }
+      }
+    }
+  },
+  "plugin": [
+    ".opencode/plugins/kanban-trigger.ts",
+    ".opencode/plugins/graphify.js"
+  ]
+}

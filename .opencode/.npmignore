@@ -1,0 +1,4 @@
+node_modules/
+.team-version
+.DS_Store
+**/.DS_Store

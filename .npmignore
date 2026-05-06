@@ -1,0 +1,8 @@
+node_modules/
+.opencode/node_modules/
+kanban-board/node_modules/
+.idea/
+.DS_Store
+**/.DS_Store
+.opencode/.team-version
+npm-debug.log*

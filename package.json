@@ -1,0 +1,40 @@
+{
+  "name": "opencode-agent-team",
+  "version": "1.0.0",
+  "description": "Multi-agent software development team for OpenCode with Kanban automation",
+  "type": "module",
+  "bin": {
+    "opencode-team": "./bin/opencode-team.mjs"
+  },
+  "files": [
+    "bin/",
+    "install.mjs",
+    "update.mjs",
+    "README.md",
+    ".github/workflows/opencode*.yml",
+    ".opencode/opencode.json",
+    ".opencode/package.json",
+    ".opencode/package-lock.json",
+    ".opencode/agents/",
+    ".opencode/commands/",
+    ".opencode/plugins/",
+    ".opencode/skills/",
+    ".opencode/tools/",
+    "kanban-board/index.html",
+    "kanban-board/package.json",
+    "kanban-board/package-lock.json",
+    "kanban-board/server.js"
+  ],
+  "scripts": {
+    "install-team": "node install.mjs",
+    "update-team": "node update.mjs",
+    "update-team:dry": "node update.mjs --dry-run",
+    "kanban-board": "cd kanban-board && npm start"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.14.25"
+  }
+}

@@ -10,15 +10,21 @@ const packageRoot = join(__dirname, '..')
 const usage = `OpenCode Agent Team
 
 Usage:
-  opencode-team              Run the interactive installer
-  opencode-team install      Run the interactive installer
-  opencode-team update       Update an existing installation
-  opencode-team help         Show this help
+  opencode-team install              Run the interactive installer
+  opencode-team update               Update an existing installation
+  opencode-team update --dry-run     Preview an update without writing files
+  opencode-team help                 Show this help
 
-GitHub npx:
-  npx github:<owner>/<repo>
-  npx github:<owner>/<repo> opencode-team
-  npx --package github:<owner>/<repo> opencode-team
+GitHub global install:
+  npm install -g github:klc/opencode-team
+  npm install -g klc/opencode-team
+
+Update the global CLI:
+  npm install -g github:klc/opencode-team
+
+One-time fallback:
+  npx github:klc/opencode-team opencode-team
+  npx --package github:klc/opencode-team opencode-team
 `
 
 function runScript(scriptName, args = []) {

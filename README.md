@@ -9,18 +9,23 @@ A production-ready multi-agent software development team for [OpenCode](https://
 Requirements:
 
 - Node.js 18+
-- npm/npx
+- npm
 - `opencode` installed and available in `PATH`
 
-```bash
-npx github:klc/opencode-team opencode-team
-```
-
-The same package can also be run with npm's explicit package form:
+Install the CLI globally from GitHub:
 
 ```bash
-npx --package github:klc/opencode-team opencode-team
+npm install -g klc/opencode-team
 ```
+
+Then install the team inside any project:
+
+```bash
+cd path/to/your-project
+opencode-team install
+```
+
+The global CLI is only the installer/updater. Run `opencode-team install` from the project directory where you want `.opencode/`, `.kanban/`, and project rules to be created.
 
 For local development or a cloned checkout:
 
@@ -39,11 +44,20 @@ The installer will:
 
 ## Updating
 
+First update the global CLI package from GitHub:
+
 ```bash
-npx github:klc/opencode-team opencode-team update
+npm install -g klc/opencode-team
+```
+
+Then update the installation from the target project directory:
+
+```bash
+cd path/to/your-project
+opencode-team update
 
 # Preview without writing:
-npx github:klc/opencode-team opencode-team update --dry-run
+opencode-team update --dry-run
 ```
 
 From a local checkout:

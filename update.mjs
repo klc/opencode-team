@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Update Script v1.1.0
+// OpenCode Agent Team — Update Script v1.1.1
 // Preserves model assignments, MCP settings, and project rules.
 // Node.js 18+, no external dependencies
 
@@ -279,6 +279,7 @@ async function main() {
   if (detected.type === 'none') {
     err('No existing installation found.')
     console.log(`  Run ${cyan('opencode-team install')} first.`)
+    console.log(`  If the CLI is not installed, run ${cyan('npm install -g klc/opencode-team')}.`)
     console.log(`  From a local checkout, run ${cyan('node install.mjs')}.`)
     close(); process.exit(1)
   }
@@ -432,7 +433,8 @@ async function main() {
   if (DRY_RUN) {
     console.log('')
     console.log(bold(yellow('Dry-run complete — no files were modified.')))
-    console.log(`  Run ${cyan('node update.mjs')} without --dry-run to apply changes.\n`)
+    console.log(`  Run ${cyan('opencode-team update')} without --dry-run to apply changes.`)
+    console.log(`  From a local checkout, run ${cyan('node update.mjs')}.\n`)
     close(); return
   }
 

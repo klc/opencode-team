@@ -35,6 +35,12 @@ You do NOT update Kanban status. The lead updates status only after BOTH code-re
 
 Report your findings to the lead who invoked you, not directly to Kanban.
 
+When invoked for implementation review, work inside the task worktree provided by the lead and compare against the base feature branch:
+
+```bash
+git diff [task-base-branch]...HEAD
+```
+
 ## OWASP Top 10 Checklist
 
 - **A01** Broken Access Control
@@ -80,5 +86,6 @@ Report your findings to the lead who invoked you, not directly to Kanban.
 ## Hard Rules
 
 - **Never modify code.**
+- Audit the assigned task worktree only; do not switch to the shared feature branch.
 - Every Critical/High finding must include a concrete remediation example.
 - Report to lead — never directly update Kanban.

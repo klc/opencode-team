@@ -47,7 +47,26 @@ export interface KanbanTask {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  worktree?: TaskWorktreeState;
   history: TaskHistoryEntry[];
+}
+
+export interface TaskWorktreeState {
+  name: string;
+  directory: string;
+  branch: string;
+  baseBranch: string;
+  status: "created" | "running" | "reviewing" | "testing" | "integrated" | "cleanup" | "failed";
+  sessions: TaskWorktreeSession[];
+  integratedCommits?: string[];
+  lastError?: string;
+}
+
+export interface TaskWorktreeSession {
+  id: string;
+  agent: string;
+  purpose: "implementation" | "review" | "security" | "seo" | "testing" | "fix" | "other";
+  createdAt: string;
 }
 
 export interface TaskHistoryEntry {
@@ -244,6 +263,9 @@ export function formatTaskCard(task: KanbanTask): string {
   if (task.reopenReason) lines.push(`**Reopen reason:** ${task.reopenReason} (reopened ${task.reopenCount}x)`);
   if (task.childIds?.length) lines.push(`**Subtasks:** ${task.childIds.join(", ")}`);
   if (task.parentId) lines.push(`**Parent task:** ${task.parentId}`);
+  if (task.worktree) {
+    lines.push(`**Worktree:** ${task.worktree.name} | **Branch:** ${task.worktree.branch} | **Base:** ${task.worktree.baseBranch} | **Status:** ${task.worktree.status}`);
+  }
 
   return lines.join("\n");
 }

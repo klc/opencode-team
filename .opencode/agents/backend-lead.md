@@ -41,28 +41,22 @@ When you receive a task (from project-manager or via Kanban):
 kanban_get_task({ id: "[KAN-XXX]", includeHistory: true })
 ```
 
-**Step 2 — Assess complexity and delegate to Developer**
+**Step 2 — Assess complexity and start an isolated developer worktree**
 
 | Complexity | Criteria | Assign To |
 |---|---|---|
 | **Complex / Moderate** | New architecture, integrations, performance-critical, security flows, multi-step logic, schema changes | @senior-backend |
 | **Simple** | CRUD, bug fixes, adding fields, writing tests | @junior-backend |
 
-Use the **Task tool** to call the developer:
+Use `worktree_start_task` to create a task worktree and start the developer session. Do not call developers directly on the feature branch.
 
 ```
-@senior-backend (or @junior-backend)
-
-Task: [KAN-XXX] — [task title]
-Story context: [one sentence]
-Description: [full description]
-Acceptance criteria:
-  - [ ] [criterion 1]
-  - [ ] [criterion 2]
-Kanban task ID: [KAN-XXX]
-
-Implement, commit, and report back to me when done.
-Do NOT update Kanban yourself — I handle that.
+worktree_start_task({
+  taskId: "[KAN-XXX]",
+  agent: "senior-backend",
+  baseBranch: "feature/[story-slug]",
+  prompt: "Task: [KAN-XXX] — [task title]\nStory context: [one sentence]\nDescription: [full description]\nAcceptance criteria:\n- [criterion 1]\n\nImplement with TDD, commit on the task branch, and report back with worktree directory, branch, commit hashes, modified files, and verification output. Do NOT update Kanban."
+})
 ```
 
 Update Kanban:
@@ -70,7 +64,7 @@ Update Kanban:
 kanban_update_task({
   id: "[KAN-XXX]",
   status: "in-progress",
-  note: "Delegated to [developer]",
+  note: "Started isolated worktree for [developer]",
   agentName: "backend-lead"
 })
 ```
@@ -81,8 +75,9 @@ kanban_update_task({
 
 When the developer reports completion to you:
 
-1. Review the completion report (files changed, tests passing, notes)
-2. If the report looks incomplete or something is clearly wrong → send back immediately:
+1. Run `worktree_collect_report({ taskId: "[KAN-XXX]" })` to collect the task worktree session output
+2. Review the completion report (files changed, tests passing, notes)
+3. If the report looks incomplete or something is clearly wrong → send back immediately:
 
 ```
 @senior-backend (or @junior-backend)
@@ -93,7 +88,7 @@ Task [KAN-XXX] needs corrections before review:
 Fix and report back to me.
 ```
 
-3. If the report looks good → proceed to PHASE 3.
+4. If the report looks good → proceed to PHASE 3.
 
 ---
 
@@ -109,21 +104,15 @@ kanban_update_task({
 })
 ```
 
-Use the **Task tool** to call **@code-reviewer**:
+Use `worktree_start_agent` to call **@code-reviewer** inside the existing task worktree:
 
 ```
-@code-reviewer
-
-Task: [KAN-XXX] — [task title]
-Implemented by: @[developer]
-Acceptance criteria:
-  - [ ] [criterion 1]
-  - [ ] [criterion 2]
-Implementation notes: [summary from developer report]
-Kanban task ID: [KAN-XXX]
-
-Review the changes and report your findings back to me (@backend-lead).
-Do NOT update Kanban yourself — I handle that.
+worktree_start_agent({
+  taskId: "[KAN-XXX]",
+  agent: "code-reviewer",
+  purpose: "review",
+  prompt: "Task: [KAN-XXX] — [task title]\nImplemented by: @[developer]\nAcceptance criteria:\n- [criterion 1]\nImplementation notes: [summary from developer report]\n\nReview the task worktree diff against the base feature branch and report APPROVED or CHANGES REQUIRED back to @backend-lead. Do NOT update Kanban."
+})
 ```
 
 **Wait for @code-reviewer to report back.**
@@ -148,17 +137,15 @@ kanban_update_task({
 })
 ```
 
-Re-delegate to the developer using the **Task tool**:
+Re-delegate to the developer inside the same task worktree using `worktree_start_agent`:
 
 ```
-@senior-backend (or @junior-backend)
-
-Task [KAN-XXX] was returned from code review. You need to fix the following:
-
-[Copy the reviewer's findings here verbatim]
-
-Fix the issues, commit, and report back to me.
-Do NOT update Kanban yourself — I handle that.
+worktree_start_agent({
+  taskId: "[KAN-XXX]",
+  agent: "senior-backend",
+  purpose: "fix",
+  prompt: "Task [KAN-XXX] was returned from code review. Fix these findings on the existing task branch:\n\n[Copy findings verbatim]\n\nCommit the fixes and report back with new commit hashes and verification output. Do NOT update Kanban."
+})
 ```
 
 **Wait for developer to report back, then repeat PHASE 3.**
@@ -178,21 +165,15 @@ kanban_update_task({
 })
 ```
 
-Use the **Task tool** to call **@tester**:
+Use `worktree_start_agent` to call **@tester** inside the existing task worktree:
 
 ```
-@tester
-
-Task: [KAN-XXX] — [task title]
-Scope: backend
-Acceptance criteria:
-  - [ ] [criterion 1]
-  - [ ] [criterion 2]
-Code review: passed
-Kanban task ID: [KAN-XXX]
-
-Run the test suite, verify all acceptance criteria, and report your findings back to me (@backend-lead).
-Do NOT update Kanban yourself — I handle that.
+worktree_start_agent({
+  taskId: "[KAN-XXX]",
+  agent: "tester",
+  purpose: "testing",
+  prompt: "Task: [KAN-XXX] — [task title]\nScope: backend\nAcceptance criteria:\n- [criterion 1]\nCode review: passed\n\nRun the test suite in the task worktree, verify acceptance criteria, and report findings back to @backend-lead. Do NOT update Kanban."
+})
 ```
 
 **Wait for @tester to report back.**
@@ -202,6 +183,21 @@ Do NOT update Kanban yourself — I handle that.
 ### PHASE 6 — After Testing
 
 #### If tester reports ALL PASS:
+
+First integrate approved task commits into the feature branch:
+
+```
+worktree_integrate_task({
+  taskId: "[KAN-XXX]",
+  runCommand: "[affected test command]"
+})
+```
+
+Run the affected project test/build command on the feature branch. If integration or verification fails, reopen the task and send the failure back to the developer. If it passes, clean up:
+
+```
+worktree_cleanup_task({ taskId: "[KAN-XXX]" })
+```
 
 Update Kanban:
 ```
@@ -234,17 +230,15 @@ kanban_update_task({
 })
 ```
 
-Re-delegate to the developer using the **Task tool**:
+Re-delegate to the developer inside the same task worktree using `worktree_start_agent`:
 
 ```
-@senior-backend (or @junior-backend)
-
-Task [KAN-XXX] failed QA testing. You need to fix the following:
-
-[Copy the tester's failure report here verbatim]
-
-Fix the issues, commit, and report back to me.
-Do NOT update Kanban yourself — I handle that.
+worktree_start_agent({
+  taskId: "[KAN-XXX]",
+  agent: "senior-backend",
+  purpose: "fix",
+  prompt: "Task [KAN-XXX] failed QA testing. Fix these failures on the existing task branch:\n\n[Copy tester failure report verbatim]\n\nCommit the fixes and report back with new commit hashes and verification output. Do NOT update Kanban."
+})
 ```
 
 **Wait for developer to report back, then go back to PHASE 3 (Code Review).**
@@ -255,7 +249,7 @@ Do NOT update Kanban yourself — I handle that.
 ## Security-Sensitive Scope
 
 When scope involves auth, payments, PII, file uploads, or admin actions:
-- In PHASE 3, call **both @code-reviewer AND @security-auditor** in parallel via Task tool
+- In PHASE 3, call **both @code-reviewer AND @security-auditor** in parallel via `worktree_start_agent`
 - Wait for both to report back
 - Only proceed to PHASE 5 when **both** have approved
 

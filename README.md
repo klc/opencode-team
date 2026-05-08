@@ -72,22 +72,25 @@ KAN-002 (backend) → @backend-lead    ┐ parallel
 KAN-003 (frontend) → @frontend-lead  ┘
         ↓
 Lead delegates to developer
+Lead creates isolated task worktree + task branch
         ↓
-Developer implements (TDD: RED→GREEN→REFACTOR)
+Developer implements in task worktree (TDD: RED→GREEN→REFACTOR)
 Developer reports back to Lead with test output evidence
         ↓
-Lead calls @code-reviewer
-[If Pages/ or Layouts/ changed] Lead also calls @seo-auditor (parallel)
-[If security-sensitive] Lead also calls @security-auditor (parallel)
+Lead starts @code-reviewer in the same task worktree
+[If Pages/ or Layouts/ changed] Lead also starts @seo-auditor (parallel)
+[If security-sensitive] Lead also starts @security-auditor (parallel)
         ↓
 ALL APPROVED → Lead calls @tester
 CHANGES REQUIRED → Lead re-delegates to developer → back to review
         ↓
-ALL PASS → Lead marks done → reports to @project-manager
+ALL PASS → Lead cherry-picks task commits into feature branch → verifies → marks done → reports to @project-manager
 ANY FAIL → Lead re-delegates to developer → back to review → back to test
 ```
 
 **The lead owns the entire cycle.** Developers, reviewers, testers, and the SEO auditor all report back to the lead. The lead is the single coordinator — it calls the next agent, updates Kanban, and decides what happens next.
+
+Every developer task runs in its own OpenCode worktree and `task/<KAN-ID>-<slug>` branch. Review, audit, and QA happen in that same task worktree. Only after review and QA pass does the lead cherry-pick the approved commits into the shared `feature/<story-slug>` branch.
 
 There is no automatic Kanban trigger. After creating or updating a task, the current agent must explicitly call the next allowed agent with the Task tool. The `permission.task` matrix enforces this chain.
 
@@ -174,22 +177,22 @@ Solid arrows are normal delivery handoffs. Dashed arrows are conditional support
 The lead is the single coordinator for every task it owns. The full frontend cycle (including SEO):
 
 ```
-PHASE 1 — Delegate to developer
-  Lead → developer (Task tool)
-  Developer: TDD cycle (RED→GREEN→REFACTOR) → commit → report to lead
+PHASE 1 — Start isolated developer worktree
+  Lead → worktree_start_task → developer session
+  Developer: TDD cycle in task worktree (RED→GREEN→REFACTOR) → commit on task branch → report to lead
 
 PHASE 2 — Lead reviews report
   If incomplete → send back to developer immediately
   If complete → proceed
 
 PHASE 3a — SEO Scope Detection (frontend only)
-  Lead runs: git diff origin/main...HEAD --name-only | grep -E "(Pages/|Layouts/)"
-  Pages/ or Layouts/ changed → call @code-reviewer AND @seo-auditor in parallel
-  Only Components/ changed → call @code-reviewer only (no SEO audit)
+  Lead checks task diff against the base feature branch
+  Pages/ or Layouts/ changed → start @code-reviewer AND @seo-auditor in parallel in the task worktree
+  Only Components/ changed → start @code-reviewer only (no SEO audit)
 
 PHASE 3 — Code Review + SEO Audit (parallel when applicable)
-  Lead → @code-reviewer (Task tool)
-  Lead → @seo-auditor  (Task tool, parallel — Pages/Layouts only)
+  Lead → worktree_start_agent(@code-reviewer)
+  Lead → worktree_start_agent(@seo-auditor, parallel — Pages/Layouts only)
 
 PHASE 4 — After Reviews
   BOTH APPROVED → proceed to PHASE 5
@@ -198,11 +201,11 @@ PHASE 4 — After Reviews
 
 PHASE 5 — Testing
   Lead updates Kanban to "testing"
-  Lead → @tester (Task tool)
+  Lead → worktree_start_agent(@tester)
   Tester runs full suite → verifies each acceptance criterion → reports to lead
 
 PHASE 6 — After Testing
-  ALL PASS → Lead updates Kanban to "done" → reports to project-manager
+  ALL PASS → Lead cherry-picks task commits → verifies feature branch → marks done → reports to project-manager
   ANY FAIL → Lead reopens → re-delegates to developer → back to PHASE 3
 ```
 
@@ -444,7 +447,8 @@ backlog → planning → in-progress → review → testing → done
 │   └── ...
 ├── plugins/
 │   ├── kanban-trigger.ts
-│   └── graphify.js
+│   ├── graphify.js
+│   └── worktree-manager.ts
 ├── skills/
 │   ├── test-driven-development/SKILL.md
 │   ├── systematic-debugging/SKILL.md

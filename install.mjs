@@ -187,8 +187,8 @@ function buildAgentBlock(agentModels) {
     'product-owner':       'Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager. Never writes code.',
     'project-manager':     'Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Kanban. Never writes code.',
     'architect':           'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
-    'backend-lead':        'Invoke when backend Kanban tasks arrive. Owns full delivery cycle: delegates to developer, calls code-reviewer, calls tester, handles fix loops. Updates Kanban.',
-    'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Owns full delivery cycle: delegates to developer, calls code-reviewer (+ seo-auditor when Pages/Layouts change), calls tester, handles fix loops. Updates Kanban.',
+    'backend-lead':        'Invoke when backend Kanban tasks arrive. Owns full delivery cycle: starts isolated developer worktrees, calls code-reviewer, calls tester, cherry-picks approved commits, handles fix loops. Updates Kanban.',
+    'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Owns full delivery cycle: starts isolated developer worktrees, calls code-reviewer (+ seo-auditor when Pages/Layouts change), calls tester, cherry-picks approved commits, handles fix loops. Updates Kanban.',
     'senior-backend':      'Invoke for complex backend tasks. Implements via TDD, reports completion with test output evidence to backend-lead.',
     'senior-frontend':     'Invoke for complex frontend tasks. Implements via TDD, reports completion with test output evidence to frontend-lead.',
     'junior-backend':      'Invoke for simple backend tasks: CRUD, adding fields, unit tests, isolated bug fixes. Reports to backend-lead.',
@@ -324,6 +324,7 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
   const requiredPlugins = [
     '.opencode/plugins/kanban-trigger.ts',
     '.opencode/plugins/graphify.js',
+    '.opencode/plugins/worktree-manager.ts',
   ]
   let config
   if (existsSync(destPath)) {

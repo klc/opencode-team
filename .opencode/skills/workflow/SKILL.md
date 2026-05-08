@@ -70,9 +70,11 @@ project-manager creates feature branch + breaks story into tasks + updates todo 
     ↓
 project-manager assigns to backend-lead and frontend-lead in parallel
     ↓
-leads delegate to developers (parallel instances as needed)
+leads create one isolated worktree per developer task and start developers there
     ↓
-developers implement + commit + mark todo completed + report to lead
+developers implement + commit on task branch + report to lead
+    ↓
+lead reviews/tests the same worktree, then cherry-picks approved commits into feature branch
 ```
 
 ### Phase 2 — Review
@@ -116,6 +118,7 @@ project-manager → @librarian
 - **Dependent tasks → sequential.**
 - **Unlimited instances.** Leads may spawn as many developer, tester, or reviewer instances as needed.
 - **Shared files → always sequential.**
+- **Developer tasks → isolated worktrees.** Every developer task must run in its own task worktree and task branch.
 
 ---
 
@@ -133,6 +136,23 @@ Architectural constraints: [decisions that limit implementation options, or "non
 
 ---
 
+## Worktree Isolation Protocol
+
+Every developer task gets a dedicated OpenCode worktree. Leads must not start developers directly on the shared feature branch.
+
+### Rules
+
+1. **Project manager creates only the feature branch.** Use `feature/<story-slug>` for the story integration branch.
+2. **Lead creates task worktrees.** Before calling a developer, the lead must call `worktree_start_task`.
+3. **Task branch format:** `task/<KAN-ID>-<slug>`.
+4. **Developer commits only on the task branch.** Developers must not push and must not update Kanban status.
+5. **Review, security/SEO audit, and QA run in the same task worktree.** Leads start these sessions with `worktree_start_agent`.
+6. **Lead integrates with cherry-pick only after review and QA pass.** Use `worktree_integrate_task` from the feature branch.
+7. **Conflicts are blocking.** If cherry-pick fails, do not resolve silently. Reopen/block the task and send the failure back to the developer.
+8. **Cleanup after integration.** Use `worktree_cleanup_task` only after integration and feature-branch verification pass.
+
+---
+
 ## Shared File Protocol
 
 Before delegating parallel tasks, leads must identify shared files — files that multiple tasks will touch.
@@ -141,7 +161,7 @@ Before delegating parallel tasks, leads must identify shared files — files tha
 
 1. **Identify shared files before starting.** Scan all task file lists for overlap.
 2. **One developer per shared file at a time.**
-3. **Pull before editing a shared file.** Run `git pull` first.
+3. **Prefer task sequencing over parallel edits.** Worktrees isolate branches, but they do not remove semantic merge conflicts.
 4. **If an unexpected conflict occurs:** Stop immediately, do not attempt to resolve. Report to lead.
 
 ---
@@ -151,8 +171,9 @@ Before delegating parallel tasks, leads must identify shared files — files tha
 When some tasks succeed and others fail, leads must:
 
 1. Run `git log --oneline feature/<slug>` to assess what was committed
-2. Classify the failure (developer failure / review blocked / QA fail)
-3. Escalate to user with a clear partial state report:
+2. Run `worktree_collect_report` for the blocked task worktree
+3. Classify the failure (developer failure / review blocked / QA fail / integration conflict)
+4. Escalate to user with a clear partial state report:
 
 ```
 ⚠️ Partial completion — [feature name]
@@ -408,6 +429,9 @@ Tasks assigned to frontend:
 @senior-backend / @junior-backend / @senior-frontend / @junior-frontend
 
 Task: [T0X] — [title]
+Worktree: created by `worktree_start_task`
+Task branch: task/[KAN-ID]-[slug]
+Base branch: feature/[story-slug]
 Story context: [one sentence]
 Memory context: [relevant prior records, or "none"]
 Architectural constraints: [decisions that limit options, or "none"]
@@ -417,6 +441,7 @@ Acceptance criteria:
   - [ ] [criterion]
 Constraints: [files NOT to touch, decisions already made]
 Files likely involved: [list if known]
+Completion report must include: worktree directory, task branch, commit hashes, modified files, and verification output.
 ```
 
 ### lead → code-reviewer
@@ -429,6 +454,8 @@ Scope: [Backend / Frontend] — [area name]
 Feature: [feature name]
 Story context: [one sentence]
 Security-sensitive: [yes / no]
+Worktree directory: [task worktree directory]
+Diff base: [feature branch]...HEAD
 ```
 
 ### lead → tester
@@ -441,6 +468,7 @@ Scope: [Backend / Frontend] — [area name]
 Feature: [feature name]
 Story context: [one sentence]
 Branch: feature/[slug]
+Worktree directory: [task worktree directory]
 What was built: [summary]
 Files to test: [list]
 Test command: [project-specific test command]

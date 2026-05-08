@@ -41,10 +41,12 @@ kanban_get_task({ id: "[KAN-XXX]", includeHistory: true })
 memory_search({ query: "[2–3 keywords from feature]" })
 ```
 
-**Step 3 — Create feature branch**
+**Step 3 — Create feature integration branch**
 ```bash
 git checkout -b feature/[story-slug]
 ```
+
+This is the shared integration branch only. Leads will create isolated developer task worktrees from this branch; do not ask developers to commit directly here.
 
 **Step 4 — Determine scope and create subtasks**
 

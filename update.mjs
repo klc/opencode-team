@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Update Script v1.0.0
+// OpenCode Agent Team — Update Script v1.1.0
 // Preserves model assignments, MCP settings, and project rules.
 // Node.js 18+, no external dependencies
 
@@ -122,13 +122,14 @@ function updateOpencodeJson(installDir, currentModels) {
   const requiredPlugins = [
     '.opencode/plugins/kanban-trigger.ts',
     '.opencode/plugins/graphify.js',
+    '.opencode/plugins/worktree-manager.ts',
   ]
   const existingPlugins = Array.isArray(config.plugin) ? config.plugin : []
   const mergedPlugins = [...new Set([...existingPlugins, ...requiredPlugins])]
   if (mergedPlugins.length !== existingPlugins.length || mergedPlugins.some((plugin, index) => plugin !== existingPlugins[index])) {
     config.plugin = mergedPlugins
     updated++
-    ok('Registered kanban-trigger and graphify plugins in opencode.json')
+    ok('Registered kanban-trigger, graphify, and worktree-manager plugins in opencode.json')
   }
   try { writeFileSync(jsonPath, JSON.stringify(config, null, 2)); if (updated > 0) ok(`Updated ${updated} entries in opencode.json`) }
   catch (e) { warn(`Could not write opencode.json: ${e.message}`) }
@@ -234,7 +235,14 @@ function checkCustomTools(installDir) {
 
 // ── Changelog ───────────────────────────────────────────────
 const CHANGELOG = [
-  { version: '1.0.0', changes: [
+  { version: 'V1.1.0', changes: [
+      'feat: OpenCode worktree-manager plugin for isolated developer task worktrees',
+      'feat: lead-owned cherry-pick integration from task branches into feature branches',
+      'feat: Kanban task worktree metadata for branch, directory, sessions, and integrated commits',
+      'docs: worktree-aware workflow, git workflow, agent prompts, and README',
+      'fix: updater preserves the worktree-manager plugin registration',
+  ]},
+  { version: 'V1.0.0', changes: [
       'First release',
   ]},
 ]
@@ -244,7 +252,7 @@ function showChangelog(installedDir) {
   console.log(`\n  ${bold('Changelog — what is new:')}`)
   const entries = existsSync(markerPath) ? CHANGELOG.slice(0, 1) : CHANGELOG
   for (const entry of entries) {
-    console.log(`\n  ${bold(cyan('v' + entry.version))}`)
+    console.log(`\n  ${bold(cyan(entry.version))}`)
     for (const change of entry.changes) {
       const icon = change.startsWith('feat') ? green('+') : change.startsWith('fix') ? yellow('~') : dim('·')
       console.log(`    ${icon} ${dim(change.replace(/^(feat|fix): /, ''))}`)
@@ -450,11 +458,11 @@ async function main() {
   console.log(`    ${green('✓')} project-stack skill`)
   console.log(`    ${green('✓')} .kanban/ task data (not overwritten)`)
   console.log('')
-  console.log(`  ${bold('v1.0.0 — Release highlights:')}`)
-  console.log(`    ${green('✓')} /team:scaffold — guided new project setup from scratch`)
-  console.log(`    ${green('✓')} Stack recommendation via @architect`)
-  console.log(`    ${green('✓')} Automatic install or SETUP.md guide — user chooses`)
-  console.log(`    ${green('✓')} /team:init now detects empty folders and redirects`)
+  console.log(`  ${bold('V1.1.0 — Release highlights:')}`)
+  console.log(`    ${green('✓')} worktree-manager plugin — isolated worktrees per developer task`)
+  console.log(`    ${green('✓')} Lead-owned cherry-pick integration from task branches`)
+  console.log(`    ${green('✓')} Kanban worktree metadata for directory, branch, sessions, and commits`)
+  console.log(`    ${green('✓')} Worktree-aware agent prompts, workflow skill, git workflow, and README`)
   console.log('')
   console.log(`  ${dim('Existing project: /team:init')}`)
   console.log(`  ${dim('New project:      /team:scaffold')}`)

@@ -102,7 +102,17 @@ git commit -m "<type>(<scope>): <description> [<task-id>]"
   git checkout -b feature/<story-slug>
   ```
 
-- All developers commit to this branch — no sub-branches
+- **leads** create one isolated worktree per developer task with `worktree_start_task`
+- Developer task branches use:
+
+  ```bash
+  task/<KAN-ID>-<slug>
+  ```
+
+- Developers commit only to their task branch
+- Reviewers, auditors, and testers inspect the same task worktree before integration
+- Leads integrate approved task commits into the feature branch with `worktree_integrate_task` (cherry-pick)
+- If cherry-pick conflicts, do not resolve silently — reopen/block the task and send the failure back to the developer
 - Do not push unless the user explicitly asks
 - Do not squash or amend commits — preserve full history
 

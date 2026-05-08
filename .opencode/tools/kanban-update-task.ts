@@ -25,9 +25,9 @@ function buildHandoffInstruction(
         return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **BOTH @backend-lead AND @frontend-lead** (one call each).\nPass the task ID and context to each so they can work in parallel.`;
       return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to notify **@${assignedTo}** with the task context.`;
     case "review":
-      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@code-reviewer**.\nPass the task ID, acceptance criteria, and any implementation notes.`;
+      return `🔔 **MANDATORY NEXT ACTION:** Lead agents should use **worktree_start_agent** to start **@code-reviewer** in the task worktree.\nPass the task ID, acceptance criteria, implementation notes, and worktree context.`;
     case "testing":
-      return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@tester**.\nPass the task ID and acceptance criteria so it can verify each one.`;
+      return `🔔 **MANDATORY NEXT ACTION:** Lead agents should use **worktree_start_agent** to start **@tester** in the task worktree.\nPass the task ID and acceptance criteria so it can verify each one.`;
     case "done":
       return `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to notify **@project-manager** that this task is complete.\nInclude the task ID and a brief summary of what was delivered.`;
     case "reopened": {

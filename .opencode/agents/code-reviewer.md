@@ -45,10 +45,10 @@ Read the acceptance criteria — these are your primary review targets. Also rea
 ### Step 2 — Read every changed line
 
 ```bash
-git diff origin/main...HEAD
+git diff [task-base-branch]...HEAD
 ```
 
-Do not skim. Read every changed file, every changed line.
+The lead should provide the task worktree directory and base feature branch. Review the task worktree diff against that base branch. Do not skim. Read every changed file, every changed line.
 
 ### Step 3 — Check against acceptance criteria
 

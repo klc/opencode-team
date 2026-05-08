@@ -81,7 +81,7 @@
       "color": "#f472b6"
     },
     "backend-lead": {
-      "description": "Invoke when backend tasks arrive from project-manager. Delegates to senior-backend (complex) or junior-backend (simple) via Task tool. Owns full delivery cycle: delegate → review → test → done.",
+      "description": "Invoke when backend tasks arrive from project-manager. Starts isolated task worktrees for senior-backend or junior-backend. Owns full delivery cycle: worktree → review → test → cherry-pick → done.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.3,
       "steps": 100,
@@ -119,7 +119,7 @@
       "color": "#34d399"
     },
     "frontend-lead": {
-      "description": "Invoke when frontend tasks arrive from project-manager. Delegates to senior-frontend (complex) or junior-frontend (simple) via Task tool. Owns full delivery cycle: delegate → review → SEO audit → test → done.",
+      "description": "Invoke when frontend tasks arrive from project-manager. Starts isolated task worktrees for senior-frontend or junior-frontend. Owns full delivery cycle: worktree → review → SEO audit → test → cherry-pick → done.",
       "model": "my-provider/my-fast-model",
       "temperature": 0.4,
       "steps": 100,
@@ -570,6 +570,7 @@
   },
   "plugin": [
     ".opencode/plugins/kanban-trigger.ts",
-    ".opencode/plugins/graphify.js"
+    ".opencode/plugins/graphify.js",
+    ".opencode/plugins/worktree-manager.ts"
   ]
 }

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Update Script v1.1.1
+// OpenCode Agent Team — Update Script v1.1.2
 // Preserves model assignments, MCP settings, and project rules.
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
-import { existsSync, readdirSync, copyFileSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { existsSync, readdirSync, copyFileSync, readFileSync, writeFileSync, mkdirSync, rmSync } from 'fs'
 import { join, dirname } from 'path'
 import { homedir } from 'os'
 import { fileURLToPath } from 'url'
@@ -100,6 +100,19 @@ function applyModel(filePath, model) {
   } catch (e) { warn(`Could not restore model in ${filePath}: ${e.message}`) }
 }
 
+function removeDeprecatedAgents(installDir) {
+  const deprecated = ['product-owner']
+  let removed = 0
+  for (const agent of deprecated) {
+    const fp = join(installDir, 'agents', `${agent}.md`)
+    if (existsSync(fp)) {
+      rmSync(fp)
+      removed++
+    }
+  }
+  if (removed > 0) ok(`Removed ${removed} deprecated agent file${removed === 1 ? '' : 's'}`)
+}
+
 function updateOpencodeJson(installDir, currentModels) {
   const jsonPath = join(installDir, 'opencode.json')
   if (!existsSync(jsonPath)) return
@@ -107,6 +120,11 @@ function updateOpencodeJson(installDir, currentModels) {
   try { config = JSON.parse(readFileSync(jsonPath, 'utf8')) }
   catch { warn('Could not parse opencode.json — skipping json update'); return }
   let updated = 0
+  if (config.agent?.['product-owner']) {
+    delete config.agent['product-owner']
+    updated++
+    ok('Removed deprecated product-owner from opencode.json')
+  }
   for (const [name, agent] of Object.entries(config.agent || {})) {
     if (currentModels[name] && agent.model !== currentModels[name]) { agent.model = currentModels[name]; updated++ }
   }
@@ -235,6 +253,12 @@ function checkCustomTools(installDir) {
 
 // ── Changelog ───────────────────────────────────────────────
 const CHANGELOG = [
+  { version: 'V1.1.2', changes: [
+      'feat: remove product-owner agent from the team',
+      'feat: project-manager now owns feature scoping, story context, and new-feature routing',
+      'fix: updater removes deprecated product-owner agent files and opencode.json entries',
+      'docs: README and workflow hierarchy updated for the simplified delegation chain',
+  ]},
   { version: 'V1.1.0', changes: [
       'feat: OpenCode worktree-manager plugin for isolated developer task worktrees',
       'feat: lead-owned cherry-pick integration from task branches into feature branches',
@@ -296,6 +320,7 @@ async function main() {
 
     // Read models BEFORE overwriting
     const currentModels = resolveCurrentModels(dir)
+    delete currentModels['product-owner']
     if (!currentModels['seo-auditor']) {
       const strongCandidate = currentModels['architect'] || currentModels['debugger'] || 'my-provider/my-strong-model'
       currentModels['seo-auditor'] = strongCandidate
@@ -306,9 +331,13 @@ async function main() {
 
     // Copy files
     if (!DRY_RUN) {
-      try { copyDir(sourceDir, dir, ['opencode.json']); ok('Copied updated agent, command, skill, tool, and plugin files') }
+      try {
+        copyDir(sourceDir, dir, ['opencode.json'])
+        removeDeprecatedAgents(dir)
+        ok('Copied updated agent, command, skill, tool, and plugin files')
+      }
       catch (e) { err(`File copy failed: ${e.message}`); close(); process.exit(1) }
-    } else dryok('Would copy updated agent, command, skill, tool, and plugin files')
+    } else dryok('Would copy updated agent, command, skill, tool, and plugin files and remove deprecated product-owner')
 
     // Restore models
     const agentsDir = join(dir, 'agents')
@@ -321,7 +350,8 @@ async function main() {
 
     // Update opencode.json
     const jsonPath = join(dir, 'opencode.json')
-    if (existsSync(jsonPath)) updateOpencodeJson(dir, currentModels)
+    if (existsSync(jsonPath) && !DRY_RUN) updateOpencodeJson(dir, currentModels)
+    else if (existsSync(jsonPath)) dryok('Would update opencode.json and remove deprecated product-owner agent')
 
     // permission.task checks
     if (!DRY_RUN && existsSync(jsonPath)) {
@@ -447,7 +477,7 @@ async function main() {
   console.log(`    ${green('✓')} NEW: team:scaffold command (23 commands total)`)
   console.log(`    ${green('✓')} UPDATED: team:init — redirects to /team:scaffold on empty folder`)
   console.log(`    ${green('✓')} UPDATED: README.md — scaffold docs, Getting Started section`)
-  console.log(`    ${green('✓')} Agent files — all 18 agents`)
+  console.log(`    ${green('✓')} Agent files — all 17 agents`)
   console.log(`    ${green('✓')} Command files (.opencode/commands/)`)
   console.log(`    ${green('✓')} Tool files (.opencode/tools/)`)
   console.log(`    ${green('✓')} Plugin files`)
@@ -460,11 +490,11 @@ async function main() {
   console.log(`    ${green('✓')} project-stack skill`)
   console.log(`    ${green('✓')} .kanban/ task data (not overwritten)`)
   console.log('')
-  console.log(`  ${bold('V1.1.0 — Release highlights:')}`)
-  console.log(`    ${green('✓')} worktree-manager plugin — isolated worktrees per developer task`)
-  console.log(`    ${green('✓')} Lead-owned cherry-pick integration from task branches`)
-  console.log(`    ${green('✓')} Kanban worktree metadata for directory, branch, sessions, and commits`)
-  console.log(`    ${green('✓')} Worktree-aware agent prompts, workflow skill, git workflow, and README`)
+  console.log(`  ${bold('V1.1.2 — Release highlights:')}`)
+  console.log(`    ${green('✓')} product-owner agent removed`)
+  console.log(`    ${green('✓')} project-manager owns feature scoping and story context`)
+  console.log(`    ${green('✓')} /team:new-feature and /team:brainstorm start with project-manager`)
+  console.log(`    ${green('✓')} updater cleans deprecated product-owner files and config entries`)
   console.log('')
   console.log(`  ${dim('Existing project: /team:init')}`)
   console.log(`  ${dim('New project:      /team:scaffold')}`)

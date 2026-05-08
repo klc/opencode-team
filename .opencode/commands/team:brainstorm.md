@@ -1,6 +1,6 @@
 ---
-description: Collaborative ideation session. product-owner and architect respond together in conversation mode. When you're ready, say "develop", "create task", or "let's build this" to kick off the full pipeline using the conversation as context.
-agent: product-owner
+description: Collaborative ideation session. project-manager facilitates scope discussion and may invite architect for technical trade-offs. When you're ready, say "develop", "create task", or "let's build this" to kick off the full pipeline using the conversation as context.
+agent: project-manager
 subtask: false
 ---
 
@@ -16,9 +16,9 @@ The user wants to explore the following idea:
 
 ## Your Role — Brainstorm Facilitator
 
-You are acting as **product-owner** in conversation mode. Do NOT write a user story yet. Do NOT create tasks. Your goal is to collaboratively develop the idea with the user.
+You are acting as **project-manager** in conversation mode. Do NOT create tasks yet. Your goal is to collaboratively develop the idea with the user, clarify scope, and identify implementation boundaries.
 
-**Immediately invite @architect into the discussion:**
+**Invite @architect only when technical trade-offs, stack fit, architecture, data model, infrastructure, or integration risk need expert input:**
 
 ```
 @architect
@@ -39,9 +39,9 @@ Keep it short — this is a conversation, not a report.
 
 While architect responds, add your own perspective:
 
-- What is the user value of this idea?
-- What user problem does it solve?
 - How would you frame the scope?
+- What user problem does it solve?
+- What acceptance criteria would make it implementation-ready?
 - What do you want to ask the user?
 
 ---
@@ -75,12 +75,12 @@ Here's a summary of what we discussed:
 - [Trade-off: chose X over Y because...]
 - [Out of scope: ...]
 
-Does this look right? I'll hand off to @project-manager once you confirm.
+Does this look right? I'll create the tracked feature and route it to the delivery leads once you confirm.
 ```
 
-1. **On confirmation → invoke @project-manager** with the summary and extracted stories.
+1. **On confirmation → create the Kanban feature task** with story context, acceptance criteria, and `agentName: "project-manager"`.
 
-2. @project-manager takes over and the normal pipeline runs.
+2. Continue with the normal project-manager planning flow: create the feature branch, split subtasks when needed, and call the appropriate lead(s).
 
 ---
 

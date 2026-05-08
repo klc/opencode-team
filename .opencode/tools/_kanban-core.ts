@@ -220,7 +220,7 @@ export function resolveAgent(
   reopenTarget?: string
 ): string {
   switch (status) {
-    case "backlog":    return "product-owner";
+    case "backlog":    return "project-manager";
     case "planning":   return "project-manager";
     case "in-progress":
       if (scope === "backend") return "backend-lead";

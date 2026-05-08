@@ -37,4 +37,4 @@ A small change has been requested:
 
 5. **No branch needed** — commit directly to the current branch unless the user asks otherwise.
 
-Do not invoke @product-owner. Project-manager routes only to leads; leads own developer delegation, review, and optional QA.
+Project-manager routes only to leads; leads own developer delegation, review, and optional QA.

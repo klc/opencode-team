@@ -1,6 +1,6 @@
 ---
-description: Start a new feature end-to-end via the Kanban system. Creates a tracked task, then product-owner explicitly hands off to project-manager.
-agent: product-owner
+description: Start a new feature end-to-end via the Kanban system. Project-manager clarifies scope, writes story context, creates a tracked task, then routes to the appropriate lead(s).
+agent: project-manager
 subtask: false
 ---
 
@@ -10,9 +10,24 @@ A new feature has been requested:
 
 "$ARGUMENTS"
 
-## Step 0 — Create Kanban Task
+## Step 0 — Memory Check
 
-Before anything else, create a Kanban task to track this feature:
+Use the `memory_search` tool:
+```
+memory_search({ query: "[2–3 keywords from feature]" })
+```
+
+## Step 1 — Scope Clarification
+
+If the request is ambiguous, ask the user using the Critical Decision Protocol (max 2–3 questions).
+
+## Step 2 — Architecture Decisions
+
+Invoke @architect if needed. Pass the feature context. Architecture input should resolve technical decisions only; project-manager owns the story context and routing.
+
+## Step 3 — Write Story Context & Create Kanban Task
+
+Write a concise story context and concrete acceptance criteria. Then create the Kanban task:
 
 ```
 kanban_create_task({
@@ -20,59 +35,49 @@ kanban_create_task({
   description: "$ARGUMENTS",
   type: "feature",
   scope: "both",
-  initialStatus: "backlog",
-  agentName: "product-owner"
+  storyContext: "[one sentence: what the user wants and why]",
+  acceptanceCriteria: ["[criterion 1]", "[criterion 2]", ...],
+  initialStatus: "planning",
+  agentName: "project-manager"
 })
 ```
 
 Note the task ID returned (e.g. KAN-001). All subsequent steps must reference this ID.
 
-## Step 1 — Memory Check
+## Step 4 — Plan and Hand Off
 
-Use the `memory_search` tool:
-```
-memory_search({ query: "[2–3 keywords from feature]" })
-```
+Continue with the normal project-manager planning flow:
 
-## Step 2 — Scope Clarification
+1. Create the feature integration branch.
+2. Split `scope: "both"` work into backend and frontend subtasks, or move a single-scope task to `in-progress`.
+3. Use the Task tool to call the appropriate lead(s).
 
-If the request is ambiguous, ask the user using the Critical Decision Protocol (max 2–3 questions).
-
-## Step 3 — Architecture Decisions
-
-Invoke @architect if needed. Pass the Kanban task ID for tracking.
-
-## Step 4 — Write User Story & Update Task
-
-Write the user story. Then update the Kanban task with the story context:
+For `scope: "both"`, call both leads in parallel:
 
 ```
-kanban_update_task({
-  id: "[KAN-XXX]",
-  status: "planning",
-  storyContext: "[one sentence: what the user wants and why]",
-  acceptanceCriteria: ["[criterion 1]", "[criterion 2]", ...],
-  agentName: "product-owner"
-})
-```
+@backend-lead — Backend subtask [KAN-YYY] is ready for implementation.
 
-This only updates Kanban. It does not trigger the next agent automatically.
-
-## Step 5 — Hand off
-
-Use the Task tool to call @project-manager with the task context:
-
-```
-@project-manager — Task [KAN-XXX] is ready for planning.
-
-Title: [task title]
-Story: [one-sentence story context]
-Scope: [backend | frontend | both]
+Title: [backend task title]
+Story context: [context]
 Acceptance criteria:
-  - [criterion 1]
-  - [criterion 2]
+  - [backend criterion 1]
+Parent task: [KAN-XXX]
 
-Please create the feature branch, plan subtasks, and delegate to the appropriate lead(s).
+Please assess complexity and delegate to the appropriate developer.
 ```
 
-Report to the user that the feature is now in planning.
+```
+@frontend-lead — Frontend subtask [KAN-ZZZ] is ready for implementation.
+
+Title: [frontend task title]
+Story context: [context]
+Acceptance criteria:
+  - [frontend criterion 1]
+Parent task: [KAN-XXX]
+
+Please assess complexity and delegate to the appropriate developer.
+```
+
+For `scope: "backend"` or `scope: "frontend"`, move the existing task to `in-progress` and call only the matching lead.
+
+Report to the user that the feature is planned and routed to the lead-owned delivery cycle.

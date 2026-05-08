@@ -1,6 +1,6 @@
 # OpenCode Agent Team
 
-A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — product owner, project manager, tech leads, developers, QA, code reviewer, SEO/GEO auditor, designer, security auditor, performance analyst, and librarian — all coordinated through a **Kanban-driven pipeline** with explicit Task-tool handoffs, strict delegation, lead-owned delivery cycles, git integration, GitHub Actions, and persistent team memory.
+A production-ready multi-agent software development team for [OpenCode](https://opencode.ai). Drop it into any project and get a full team — project manager, tech leads, developers, QA, code reviewer, SEO/GEO auditor, designer, security auditor, performance analyst, and librarian — all coordinated through a **Kanban-driven pipeline** with explicit Task-tool handoffs, strict delegation, lead-owned delivery cycles, git integration, GitHub Actions, and persistent team memory.
 
 ---
 
@@ -78,9 +78,7 @@ The update script preserves your model assignments, `opencode.json` provider set
 ```
 /team:new-feature "User profile photo upload"
         ↓
-KAN-001 created (backlog) → @product-owner writes story
-        ↓
-KAN-001 → planning → @project-manager creates subtasks + branch
+@project-manager clarifies scope, writes story context, creates KAN-001 + branch
         ↓
 KAN-002 (backend) → @backend-lead    ┐ parallel
 KAN-003 (frontend) → @frontend-lead  ┘
@@ -114,11 +112,8 @@ There is no automatic Kanban trigger. After creating or updating a task, the cur
 
 ```mermaid
 flowchart TD
-    PO["product-owner<br/>scope, story, backlog"]
-    PM["project-manager<br/>branch, subtasks, coordination"]
+    PM["project-manager<br/>scope, story, branch, subtasks"]
 
-    PO --> PM
-    PO -. "technical decision" .-> ARCH["architect<br/>ADR, major decisions"]
     PM -. "technical decision" .-> ARCH
     ARCH -. "research support" .-> RES["researcher<br/>technology evaluation"]
 
@@ -160,13 +155,12 @@ Solid arrows are normal delivery handoffs. Dashed arrows are conditional support
 
 ---
 
-## Agents (18)
+## Agents (17)
 
 
 | Agent                    | Role                                                                                                                | Mode     |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------- | -------- |
-| `product-owner`          | Clarifies scope, writes user stories, creates Kanban tasks                                                          | primary  |
-| `project-manager`        | Creates branches, splits into subtasks, coordinates leads via Kanban                                                | primary  |
+| `project-manager`        | Clarifies scope, writes story context, creates branches, splits into subtasks, coordinates leads via Kanban         | primary  |
 | `architect`              | Technical decisions, ADR writing, infrastructure design                                                             | primary  |
 | `backend-lead`           | Owns full backend delivery cycle: delegate → review → test → done                                                | primary  |
 | `frontend-lead`          | Owns full frontend delivery cycle: delegate → review → SEO audit → test → done                                  | primary  |
@@ -266,9 +260,9 @@ PHASE 6 — After Testing
 
 | Command                           | Use when                                                                                                                            |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `/team:brainstorm <idea>`         | Explore an idea first. product-owner + architect discuss with you. Say "develop" to kick off the full pipeline.                     |
-| `/team:new-feature <description>` | Full Kanban-driven pipeline — creates a feature task, product-owner writes the story, then explicitly hands off to project-manager |
-| `/team:task <description>`        | Single well-defined task — skips product-owner story writing; project-manager routes to the right lead                             |
+| `/team:brainstorm <idea>`         | Explore an idea first. project-manager facilitates and may invite architect for technical trade-offs. Say "develop" to kick off the full pipeline. |
+| `/team:new-feature <description>` | Full Kanban-driven pipeline — project-manager clarifies scope, creates a feature task, writes story context, then routes to lead(s) |
+| `/team:task <description>`        | Single well-defined task — project-manager routes to the right lead                                                                |
 | `/team:quick-fix <description>`   | 1–3 file correction, no new logic; project-manager routes to the owning lead                                                       |
 | `/team:tweak <description>`       | Single file / single function change; project-manager routes to the owning lead                                                     |
 
@@ -370,8 +364,8 @@ backlog → planning → in-progress → review → testing → done
 
 | Status        | Who sets it                                                   |
 | ------------- | ------------------------------------------------------------- |
-| `backlog`     | product-owner (on task creation)                              |
-| `planning`    | product-owner (after story is written)                        |
+| `backlog`     | project-manager (on task creation)                            |
+| `planning`    | project-manager (after story context is written)              |
 | `in-progress` | project-manager or lead (when work starts)                    |
 | `review`      | lead (after developer reports completion)                     |
 | `testing`     | lead (after all invoked reviewers/auditors report APPROVED)   |
@@ -383,7 +377,7 @@ backlog → planning → in-progress → review → testing → done
 
 | Tool                 | Used by                                  | What it does                     |
 | -------------------- | ---------------------------------------- | -------------------------------- |
-| `kanban_create_task` | product-owner, project-manager           | Create tracked tasks             |
+| `kanban_create_task` | project-manager                          | Create tracked tasks             |
 | `kanban_update_task` | leads, project-manager                   | Update status and notes          |
 | `kanban_get_task`    | all agents                               | Read full task context + history |
 | `kanban_list_tasks`  | all agents                               | Board view with filters          |
@@ -401,7 +395,6 @@ backlog → planning → in-progress → review → testing → done
 
 | Agent                | Can invoke                                                                                                                                                                 |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `product-owner`      | project-manager, architect, librarian                                                                                                                                      |
 | `project-manager`    | backend-lead, frontend-lead, architect, librarian                                                                                                                          |
 | `backend-lead`       | senior-backend, junior-backend, code-reviewer, tester, security-auditor, performance-analyst, debugger, researcher, project-manager, librarian                             |
 | `frontend-lead`      | senior-frontend, junior-frontend, code-reviewer, tester, security-auditor,**seo-auditor**, performance-analyst, debugger, researcher, project-manager, librarian, designer |

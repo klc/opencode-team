@@ -1,5 +1,5 @@
 ---
-description: Small, contained fix that doesn't need product-owner story writing. Project-manager routes to the appropriate lead; the lead decides whether developer, review, or QA is needed.
+description: Small, contained fix. Project-manager routes to the appropriate lead; the lead decides whether developer, review, or QA is needed.
 agent: project-manager
 subtask: true
 ---

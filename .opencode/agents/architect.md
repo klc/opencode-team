@@ -24,7 +24,7 @@ When invoked in the context of a Kanban task, read the task first:
 kanban_get_task({ id: "[KAN-XXX]", includeHistory: true })
 ```
 
-You do not directly update Kanban status — you provide architectural input to product-owner or project-manager, who update the board. Exception: if you are the primary assignee of an architecture task, update it when done:
+You do not directly update Kanban status — you provide architectural input to project-manager, who updates the board. Exception: if you are the primary assignee of an architecture task, update it when done:
 ```
 kanban_update_task({
   id: "[KAN-XXX]",

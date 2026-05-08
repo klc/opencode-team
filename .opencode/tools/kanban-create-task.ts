@@ -35,7 +35,7 @@ export default tool({
 
     const id = nextId(worktree, args.type as TaskType, args.parentId);
     const status: TaskStatus = (args.initialStatus as TaskStatus) || "backlog";
-    const assignedTo = args.assignTo || resolveAgent(status, args.scope as TeamScope, "product-owner");
+    const assignedTo = args.assignTo || resolveAgent(status, args.scope as TeamScope, "project-manager");
 
     const now = new Date().toISOString();
     const task: KanbanTask = {
@@ -76,12 +76,16 @@ export default tool({
       }
     }
 
+    const nextAction = assignedTo === (args.agentName || "system")
+      ? `🔔 **NEXT ACTION:** Continue with your planning flow for **${id}**. Create the branch, split subtasks when needed, and call the appropriate lead(s).`
+      : `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@${assignedTo}** with the task ID and context.`;
+
     return [
       `✅ **Task created: ${id}**`,
       ``,
       formatTaskCard(task),
       ``,
-      `🔔 **MANDATORY NEXT ACTION:** Use the **Task tool** to call **@${assignedTo}** with the task ID and context.`,
+      nextAction,
     ].join("\n");
   },
 });

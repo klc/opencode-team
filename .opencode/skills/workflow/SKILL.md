@@ -8,14 +8,13 @@ description: Full team delegation chain, execution phases, parallelization rules
 ## Team Hierarchy
 
 ```
-product-owner
-    └─ project-manager
-            ├─ backend-lead
-            │       ├─ senior-backend (parallel, unlimited instances)
-            │       └─ junior-backend (parallel, unlimited instances)
-            └─ frontend-lead
-                    ├─ senior-frontend (parallel, unlimited instances)
-                    └─ junior-frontend (parallel, unlimited instances)
+project-manager
+    ├─ backend-lead
+    │       ├─ senior-backend (parallel, unlimited instances)
+    │       └─ junior-backend (parallel, unlimited instances)
+    └─ frontend-lead
+            ├─ senior-frontend (parallel, unlimited instances)
+            └─ junior-frontend (parallel, unlimited instances)
 ```
 
 **Support agents** (invoked only by agents with matching `permission.task` entries):
@@ -25,7 +24,7 @@ product-owner
 - `@security-auditor` — deep security review, spawned by leads when security-sensitive scope is detected
 - `@performance-analyst` — performance investigation, spawned by leads when bottlenecks are suspected
 - `@debugger` — production incidents and hard-to-reproduce bugs, spawned by leads when root cause is unclear
-- `@architect` — architecture decisions, invoked by product-owner or project-manager before implementation starts
+- `@architect` — architecture decisions, invoked by project-manager before implementation starts
 - `@researcher` — technology evaluation, invoked by architect or leads
 - `@designer` — visual design system work, invoked by frontend-lead
 - `@librarian` — team memory, invoked after significant work completes
@@ -37,7 +36,6 @@ product-owner
 Every step in the chain is mandatory. Steps cannot be skipped.
 
 ```
-product-owner     → project-manager   (never directly to leads or developers)
 project-manager   → backend-lead      (never directly to developers)
 project-manager   → frontend-lead     (never directly to developers)
 backend-lead      → senior-backend    (complex / moderate tasks)
@@ -60,13 +58,11 @@ Phases are strictly sequential.
 ### Phase 1 — Planning & Implementation
 
 ```
-product-owner clarifies scope
+project-manager clarifies scope
     ↓
 architect resolves critical technical decisions (if any)
     ↓
-product-owner writes user story
-    ↓
-project-manager creates feature branch + breaks story into tasks + updates todo list
+project-manager writes story context, creates feature branch, breaks story into tasks, and updates todo list
     ↓
 project-manager assigns to backend-lead and frontend-lead in parallel
     ↓
@@ -372,7 +368,7 @@ Before starting any implementation or investigation task, load codebase context 
 
 | Agent | Asks about |
 |---|---|
-| product-owner | Ambiguous scope, user types, edge cases |
+| project-manager | Ambiguous scope, user types, edge cases, acceptance criteria |
 | architect | Protocol/transport choice, infra topology, storage strategy |
 | backend-lead | Package selection, DB design, queue vs sync |
 | frontend-lead | State management, SSR trade-offs, new UI library |

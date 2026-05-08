@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// OpenCode Agent Team — Setup Script v1.0.0
+// OpenCode Agent Team — Setup Script v1.1.2
 // Node.js 18+, no external dependencies
 
 import { createInterface } from 'readline'
 import { spawnSync } from 'child_process'
-import { existsSync, mkdirSync, readdirSync, copyFileSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readdirSync, copyFileSync, readFileSync, writeFileSync, rmSync } from 'fs'
 import { join, dirname } from 'path'
 import { homedir } from 'os'
 import { fileURLToPath } from 'url'
@@ -70,7 +70,6 @@ async function selectModel(role, recommendation, models) {
 }
 
 const AGENT_ORDER = [
-  'product-owner',
   'project-manager',
   'architect',
   'backend-lead',
@@ -91,7 +90,6 @@ const AGENT_ORDER = [
 ]
 
 const MODEL_TIER_BY_AGENT = {
-  'product-owner': 'strong',
   'architect': 'strong',
   'backend-lead': 'strong',
   'seo-auditor': 'strong',
@@ -141,6 +139,19 @@ function updateAgentModel(filePath, model) {
   writeFileSync(filePath, content)
 }
 
+function removeDeprecatedAgents(installDir) {
+  const deprecated = ['product-owner']
+  let removed = 0
+  for (const agent of deprecated) {
+    const fp = join(installDir, 'agents', `${agent}.md`)
+    if (existsSync(fp)) {
+      rmSync(fp)
+      removed++
+    }
+  }
+  if (removed > 0) ok(`Removed ${removed} deprecated agent file${removed === 1 ? '' : 's'}`)
+}
+
 // ── GitHub Actions ────────────────────────────────────────────
 function setupGithubActions(projectRoot) {
   const sourceDir = join(__dirname, '.github', 'workflows')
@@ -184,8 +195,7 @@ function setupKanbanDir(projectRoot) {
 // ── Build agent config block ──────────────────────────────────
 function buildAgentBlock(agentModels) {
   const descriptions = {
-    'product-owner':       'Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager. Never writes code.',
-    'project-manager':     'Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Kanban. Never writes code.',
+    'project-manager':     'Invoke for new features, requirement changes, and planned tasks. Clarifies scope, writes story context, creates Kanban tasks and subtasks, creates branch, assigns to leads via Kanban. Never writes code.',
     'architect':           'Invoke before major structural decisions. Writes ADRs. Never writes production code.',
     'backend-lead':        'Invoke when backend Kanban tasks arrive. Owns full delivery cycle: starts isolated developer worktrees, calls code-reviewer, calls tester, cherry-picks approved commits, handles fix loops. Updates Kanban.',
     'frontend-lead':       'Invoke when frontend Kanban tasks arrive. Owns full delivery cycle: starts isolated developer worktrees, calls code-reviewer (+ seo-auditor when Pages/Layouts change), calls tester, cherry-picks approved commits, handles fix loops. Updates Kanban.',
@@ -205,7 +215,7 @@ function buildAgentBlock(agentModels) {
   }
 
   const modeMap = {
-    'product-owner': 'all', 'project-manager': 'all', 'architect': 'all',
+    'project-manager': 'all', 'architect': 'all',
     'backend-lead': 'all', 'frontend-lead': 'all', 'designer': 'all',
     'senior-backend': 'subagent', 'senior-frontend': 'subagent',
     'junior-backend': 'subagent', 'junior-frontend': 'subagent',
@@ -216,7 +226,7 @@ function buildAgentBlock(agentModels) {
   }
 
   const stepsMap = {
-    'product-owner': 80, 'project-manager': 80, 'architect': 60,
+    'project-manager': 80, 'architect': 60,
     'backend-lead': 100, 'frontend-lead': 100,
     'senior-backend': 80, 'senior-frontend': 80,
     'junior-backend': 40, 'junior-frontend': 40,
@@ -227,7 +237,6 @@ function buildAgentBlock(agentModels) {
   }
 
   const taskPermMap = {
-    'product-owner':       { '*': 'deny', 'project-manager': 'allow', 'architect': 'allow', 'librarian': 'allow' },
     'project-manager':     { '*': 'deny', 'backend-lead': 'allow', 'frontend-lead': 'allow', 'architect': 'allow', 'librarian': 'allow' },
     'architect':           { '*': 'deny', 'researcher': 'allow', 'librarian': 'allow' },
     'backend-lead':        { '*': 'deny', 'senior-backend': 'allow', 'junior-backend': 'allow', 'code-reviewer': 'allow', 'tester': 'allow', 'security-auditor': 'allow', 'performance-analyst': 'allow', 'debugger': 'allow', 'researcher': 'allow', 'librarian': 'allow' },
@@ -270,7 +279,7 @@ function buildAgentBlock(agentModels) {
   const webfetchAgents = new Set(['seo-auditor'])
 
   const colorMap = {
-    'product-owner': '#a78bfa', 'project-manager': '#60a5fa', 'architect': '#f472b6',
+    'project-manager': '#60a5fa', 'architect': '#f472b6',
     'backend-lead': '#34d399', 'frontend-lead': '#fb923c', 'designer': '#e879f9',
     'senior-backend': '#6ee7b7', 'senior-frontend': '#fdba74',
     'junior-backend': '#a7f3d0', 'junior-frontend': '#fed7aa',
@@ -281,7 +290,7 @@ function buildAgentBlock(agentModels) {
   }
 
   const tempMap = {
-    'product-owner': 0.7, 'project-manager': 0.5, 'architect': 0.4,
+    'project-manager': 0.5, 'architect': 0.4,
     'backend-lead': 0.3, 'frontend-lead': 0.4,
     'senior-backend': 0.2, 'senior-frontend': 0.3,
     'junior-backend': 0.3, 'junior-frontend': 0.4,
@@ -346,7 +355,7 @@ function writeOpencodeJson(destPath, agentBlock, isProject) {
 async function main() {
   console.log('')
   console.log(bold(cyan('╔══════════════════════════════════════════╗')))
-  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.0.0   ║')))
+  console.log(bold(cyan('║     OpenCode Agent Team — Setup v1.1.2   ║')))
   console.log(bold(cyan('╚══════════════════════════════════════════╝')))
   console.log('')
 
@@ -405,7 +414,7 @@ async function main() {
   } else {
     step('Quick model assignments')
     console.log('')
-    console.log(`  ${bold('Strong')} — highest-risk reasoning: product-owner, architect, backend-lead, auditors, debugger, designer`)
+    console.log(`  ${bold('Strong')} — highest-risk reasoning: architect, backend-lead, auditors, debugger, designer`)
     console.log(`  ${bold('Medium')} — delivery coordination and senior execution: project-manager, frontend-lead, seniors, tester, reviewer`)
     console.log(`  ${bold('Fast')}   — high-volume support: juniors, researcher, librarian`)
     console.log('')
@@ -441,8 +450,9 @@ async function main() {
   }
 
   copyDir(sourceDir, installDir, ['opencode.json'])
+  removeDeprecatedAgents(installDir)
   ok(`Copied agent, command, skill, tool, and plugin files to ${installDir}`)
-  ok(`Agents: 18 total`)
+  ok(`Agents: 17 total`)
   ok(`Commands: 23 total (including team:scaffold and team:seo-audit)`)
 
   // Apply model assignments
@@ -542,15 +552,14 @@ async function main() {
     console.log(`  ${dim('Add ANTHROPIC_API_KEY to GitHub → Settings → Secrets → Actions')}`)
   }
   console.log(`  ${bold('Security:')}    ${green('✓')} permission.task + granular bash permissions active`)
-  console.log(`  ${bold('Agents:')}      ${green('✓')} 18 agents`)
+  console.log(`  ${bold('Agents:')}      ${green('✓')} 17 agents`)
   console.log(`  ${bold('Commands:')}    ${green('✓')} 23 commands (team:scaffold + team:seo-audit)`)
   console.log('')
-  console.log(`  ${bold('v1.0.0 — Release highlights:')}`)
-  console.log(`    ${green('✓')} /team:scaffold — scaffold new projects from scratch`)
-  console.log(`    ${green('✓')} Stack recommendation via @architect when no stack is specified`)
-  console.log(`    ${green('✓')} Automatic installation or SETUP.md guide — user chooses`)
-  console.log(`    ${green('✓')} /team:init redirects to /team:scaffold when folder is empty`)
-  console.log(`    ${green('✓')} project-stack skill, AGENTS.md, .kanban/, .memory/ auto-generated after install`)
+  console.log(`  ${bold('v1.1.2 — Release highlights:')}`)
+  console.log(`    ${green('✓')} product-owner role removed from the team`)
+  console.log(`    ${green('✓')} project-manager now owns feature scoping and story context`)
+  console.log(`    ${green('✓')} /team:new-feature and /team:brainstorm start with project-manager`)
+  console.log(`    ${green('✓')} updater cleans deprecated product-owner files from existing installs`)
   console.log('')
   console.log(`  ${bold('SEO/GEO Auditor included:')}`)
   console.log(`    ${green('✓')} seo-auditor triggers on Pages/ and Layouts/ changes`)

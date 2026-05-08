@@ -1,32 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "agent": {
-    "product-owner": {
-      "description": "Invoke for new features or requirement changes. Clarifies scope, writes user stories, creates Kanban tasks, delegates to project-manager via Task tool. Never writes code.",
-      "model": "my-provider/my-strong-model",
-      "temperature": 0.5,
-      "steps": 80,
-      "tools": {
-        "bash": false,
-        "write": true,
-        "edit": true,
-        "read": true,
-        "webfetch": false,
-        "websearch": false
-      },
-      "permission": {
-        "task": {
-          "*": "deny",
-          "project-manager": "allow",
-          "architect": "allow",
-          "librarian": "allow"
-        }
-      },
-      "mode": "all",
-      "color": "#a78bfa"
-    },
     "project-manager": {
-      "description": "Invoke after product-owner delivers a story. Creates Kanban subtasks, creates branch, assigns to leads via Task tool. Never writes code.",
+      "description": "Invoke for new features, requirement changes, and planned tasks. Clarifies scope, writes story context, creates Kanban tasks and subtasks, creates branch, assigns to leads via Task tool. Never writes code.",
       "model": "my-provider/my-strong-model",
       "temperature": 0.5,
       "steps": 80,

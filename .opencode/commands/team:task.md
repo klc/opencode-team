@@ -1,5 +1,5 @@
 ---
-description: Assign a single well-defined task. Skips product-owner story writing; project-manager routes it to the right lead, then the lead owns implementation, review, and QA.
+description: Assign a single well-defined task. Project-manager routes it to the right lead, then the lead owns implementation, review, and QA.
 agent: project-manager
 subtask: true
 ---
